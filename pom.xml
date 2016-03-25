@@ -14,7 +14,6 @@
 	<modules>
 		<module>org.dcs.nifi.webui</module>
 		<module>org.dcs.nifi.processors</module>
-		<module>org.dcs.nifi.services</module>
-		<module>org.dcs.nifi.assembly</module>
+		<module>org.dcs.nifi.services</module>		
 	</modules>
 </project>
