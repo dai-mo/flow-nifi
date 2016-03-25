@@ -65,5 +65,11 @@
         	<artifactId>org.dcs.api</artifactId>
         	<version>1.0.0-SNAPSHOT</version>
         </dependency>
+        <dependency>
+        	<groupId>org.dcs</groupId>
+        	<artifactId>org.dcs.core</artifactId>
+        	<version>1.0.0-SNAPSHOT</version>
+        	<scope>test</scope>
+        </dependency>
     </dependencies>
 </project>

@@ -28,6 +28,8 @@ import org.apache.nifi.annotation.lifecycle.OnEnabled;
 import org.apache.nifi.components.PropertyDescriptor;
 import org.apache.nifi.controller.AbstractControllerService;
 import org.apache.nifi.controller.ConfigurationContext;
+import org.apache.nifi.controller.ControllerServiceInitializationContext;
+import org.apache.nifi.processor.ProcessorInitializationContext;
 import org.apache.nifi.processor.exception.ProcessException;
 import org.apache.nifi.processor.util.StandardValidators;
 import org.apache.nifi.reporting.InitializationException;
@@ -59,6 +61,11 @@ public class ZookeeperDiscoveryService extends AbstractControllerService impleme
     protected List<PropertyDescriptor> getSupportedPropertyDescriptors() {
         return properties;
     }
+
+  	@Override
+  	public void init(final ControllerServiceInitializationContext config){
+  		
+  	}
 
     /**
      * @param context

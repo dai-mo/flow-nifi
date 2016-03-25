@@ -16,31 +16,31 @@
 --%>
 <%@ page contentType="text/html" pageEncoding="UTF-8" session="false" %>
 <div id="header">
-<!--     <div id="nf-logo"></div> -->
-<!--     <div id="nf-logo-name"></div> -->
+    <div id="nf-logo"></div>
+    <div id="nf-logo-name"></div>
     <div id="toolbox-container">
         <div id="toolbox"></div>
         <div id="toolbox-right-edge"></div>
     </div>
     <div id="toolbar">
         <div id="global-controls"></div>
-<!--         <div id="utilities-container"> -->
-<!--             <div id="utilities-border"></div> -->
-<!--             <div id="utility-buttons"> -->
-<!--                 <div id="reporting-link" class="utility-button" title="Summary"></div> -->
-<!--                 <div id="counters-link" class="utility-button" title="Counters"></div> -->
-<!--                 <div id="history-link" class="utility-button" title="Flow Configuration History"></div> -->
-<!--                 <div id="provenance-link" class="utility-button" title="Data Provenance"></div> -->
-<!--                 <div id="flow-settings-link" class="utility-button" title="Controller Settings"></div> -->
-<!--                 <div id="templates-link" class="utility-button" title="Templates"></div> -->
-<!--                 <div id="users-link" class="utility-button" title="Users"><div id="has-pending-accounts" class="hidden"></div></div> -->
-<!--                 <div id="cluster-link" class="utility-button" title="Cluster"></div> -->
-<!--                 <div id="bulletin-board-link" class="utility-button" title="Bulletin Board"></div> -->
-<!--             </div> -->
-<!--         </div> -->
-<!--         <div id="search-container"> -->
-<!--             <input id="search-field" type="text"/> -->
-<!--         </div> -->
+        <div id="utilities-container">
+            <div id="utilities-border"></div>
+            <div id="utility-buttons">
+                <div id="reporting-link" class="utility-button" title="Summary"></div>
+                <div id="counters-link" class="utility-button" title="Counters"></div>
+                <div id="history-link" class="utility-button" title="Flow Configuration History"></div>
+                <div id="provenance-link" class="utility-button" title="Data Provenance"></div>
+                <div id="flow-settings-link" class="utility-button" title="Controller Settings"></div>
+                <div id="templates-link" class="utility-button" title="Templates"></div>
+                <div id="users-link" class="utility-button" title="Users"><div id="has-pending-accounts" class="hidden"></div></div>
+                <div id="cluster-link" class="utility-button" title="Cluster"></div>
+                <div id="bulletin-board-link" class="utility-button" title="Bulletin Board"></div>
+            </div>
+        </div>
+        <div id="search-container">
+            <input id="search-field" type="text"/>
+        </div>
     </div>
     <div id="header-links-container">
         <ul class="links">
