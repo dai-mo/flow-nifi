@@ -28,7 +28,7 @@ import org.dcs.api.service.FlowModuleConstants;
 import org.dcs.api.service.ModuleFactoryService;
 import org.dcs.api.service.RESTException;
 import org.dcs.api.service.TestApiService;
-import org.dcs.core.module.flow.TestFlowModule;
+import org.dcs.core.module.flow.TestFlowModule$;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -74,7 +74,7 @@ public class ZookeeperDiscoveryServiceTest {
 		
 		
 		Properties valueProperties = new Properties();
-		valueProperties.put(TestFlowModule.PROPERTY_USER_NAME_VALUE, user);
+		valueProperties.put(TestFlowModule$.MODULE$.PROPERTY_USER_NAME_VALUE(), user);
 		
 		String testResponseStr = new String(mFactory.trigger(moduleUUID, valueProperties), StandardCharsets.UTF_8);
 		Assert.assertEquals(excepted, testResponseStr);

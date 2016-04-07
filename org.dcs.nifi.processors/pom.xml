@@ -27,7 +27,6 @@
 
     <modules>
         <module>nifi-dcs-processors</module>
-        <module>nifi-dcs-nar</module>
     </modules>
 
 </project>
