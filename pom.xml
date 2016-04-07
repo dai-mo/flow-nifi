@@ -13,8 +13,8 @@
 	<packaging>pom</packaging>
 	<modules>
 		<module>org.dcs.nifi.webui</module>
-		<module>org.dcs.nifi.processors</module>
 		<module>org.dcs.nifi.services</module>
+		<module>org.dcs.nifi.processors</module>		
 	</modules>
 	<properties>
 		<nifi.dir>nifi</nifi.dir>
