@@ -2,23 +2,128 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-	<parent>
-		<groupId>org.apache.nifi</groupId>
-		<artifactId>nifi</artifactId>
-		<version>0.5.1</version>
-	</parent>
 	<groupId>org.dcs</groupId>
 	<artifactId>org.dcs.nifi</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<packaging>pom</packaging>
-	<modules>
-		<module>org.dcs.nifi.webui</module>
+	<modules>		
 		<module>org.dcs.nifi.services</module>
 		<module>org.dcs.nifi.processors</module>		
 	</modules>
 	<properties>
 		<nifi.dir>nifi</nifi.dir>
+		<nifi.version>0.5.1</nifi.version>
+		<mockito.version>1.10.19</mockito.version>
+		<project.source.version>1.8</project.source.version>
+		<project.target.version>1.8</project.target.version>
 	</properties>
+
+	<repositories>
+        <repository>
+			<id>artifactory-snapshots</id>
+			<url>http://artifactory.openshift.nanonet/artifactory/libs-snapshot-local/</url>
+		</repository>
+	</repositories>
+
+	<pluginRepositories>
+        <pluginRepository>
+			<id>jcenter</id>
+			<url>http://jcenter.bintray.com</url>
+		</pluginRepository>
+	</pluginRepositories>	
+
+	<build>
+		<plugins>
+	        <plugin>
+	        	<groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.2</version>
+				<configuration>
+					<!--<encoding>${project.encoding}</encoding> -->
+					<source>${project.source.version}</source>
+					<target>${project.target.version}</target>
+				</configuration>
+
+            </plugin>
+			<plugin>
+				<groupId>org.sonatype.plugins</groupId>
+				<artifactId>nexus-staging-maven-plugin</artifactId>
+				<inherited>false</inherited>
+				<executions>
+        			<execution>
+            			<phase>none</phase>
+        			</execution>
+    			</executions>
+    		</plugin>
+			<plugin>
+	            <groupId>org.jfrog.buildinfo</groupId>
+	            <artifactId>artifactory-maven-plugin</artifactId>
+	            <version>2.4.1</version>
+	            <inherited>false</inherited>
+	            <executions>
+	                <execution>
+	                    <id>build-info</id>
+	                    <goals>
+	                        <goal>publish</goal>
+	                    </goals>
+	                    <configuration>
+	                        <publisher>
+	                            <contextUrl>http://artifactory.openshift.nanonet/artifactory</contextUrl>
+	                            <username>${artifactory.user}</username>
+	                            <password>${artifactory.password}</password>
+	                            <repoKey>libs-release-local</repoKey>
+	                            <snapshotRepoKey>libs-snapshot-local</snapshotRepoKey>
+	                        </publisher>
+	                    </configuration>
+	                </execution>
+	            </executions>
+	        </plugin>
+		</plugins>
+	</build>
+    <dependencyManagement>
+        <dependencies>
+        	<dependency>
+                <groupId>org.apache.nifi</groupId>
+                <artifactId>nifi-api</artifactId>
+                <version>${nifi.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.nifi</groupId>
+                <artifactId>nifi-processor-utils</artifactId>
+                <version>${nifi.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.nifi</groupId>
+                <artifactId>nifi-mock</artifactId>
+                <version>${nifi.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+	            <groupId>org.slf4j</groupId>
+	            <artifactId>slf4j-simple</artifactId>
+	            <scope>test</scope>
+	            <version>1.7.12</version>
+        	</dependency>
+        	<dependency>
+                <groupId>junit</groupId>
+                <artifactId>junit</artifactId>
+                <scope>test</scope>
+                <version>4.12</version>
+            </dependency>
+            <dependency>
+                <groupId>org.mockito</groupId>
+                <artifactId>mockito-core</artifactId>
+                <version>${mockito.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.mockito</groupId>
+                <artifactId>mockito-all</artifactId>
+                <version>${mockito.version}</version>
+                <scope>test</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 	<profiles>
 		<profile>
 			<id>nifi-deploy</id>
