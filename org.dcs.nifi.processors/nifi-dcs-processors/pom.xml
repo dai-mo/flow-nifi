@@ -42,11 +42,6 @@
 			<scope>test</scope>
 		</dependency>
 		<dependency>
-			<groupId>junit</groupId>
-			<artifactId>junit</artifactId>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
 			<groupId>org.dcs</groupId>
 			<artifactId>nifi-dcs-service</artifactId>
 			<version>0.0.1-SNAPSHOT</version>
@@ -56,7 +51,7 @@
 			<groupId>org.dcs</groupId>
 			<artifactId>org.dcs.api</artifactId>
 			<version>1.0.0-SNAPSHOT</version>
-        </dependency>
+		</dependency>
 		<dependency>
 			<groupId>com.jayway.jsonpath</groupId>
 			<artifactId>json-path</artifactId>
@@ -72,6 +67,21 @@
 			<groupId>org.dcs</groupId>
 			<artifactId>org.dcs.remote</artifactId>
 			<version>1.0.0-SNAPSHOT</version>
+		</dependency>
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.mockito</groupId>
+			<artifactId>mockito-core</artifactId>			
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.mockito</groupId>
+			<artifactId>mockito-all</artifactId>			
+			<scope>test</scope>
 		</dependency>
 	</dependencies>
 </project>
