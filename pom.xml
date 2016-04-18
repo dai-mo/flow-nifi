@@ -21,7 +21,7 @@
 	<repositories>
         <repository>
 			<id>artifactory-snapshots</id>
-			<url>http://artifactory.openshift.nanonet/artifactory/libs-snapshot-local/</url>
+			<url>${artifactory.base.url}/artifactory/libs-snapshot-local/</url>
 		</repository>
 	</repositories>
 
@@ -68,7 +68,7 @@
 	                    </goals>
 	                    <configuration>
 	                        <publisher>
-	                            <contextUrl>http://artifactory.openshift.nanonet/artifactory</contextUrl>
+	                            <contextUrl>${artifactory.base.url}/artifactory</contextUrl>
 	                            <username>${artifactory.user}</username>
 	                            <password>${artifactory.password}</password>
 	                            <repoKey>libs-release-local</repoKey>
