@@ -39,55 +39,57 @@ import org.dcs.remote.RemoteService;
 @CapabilityDescription("Provides the ability to discover remote services via zookeeper")
 public class ZookeeperDiscoveryService extends AbstractControllerService implements DiscoveryService {
 
-		public static final String DEFAULT_ZOOKEEPER_SERVER="localhost:2181";
-	
-    public static final PropertyDescriptor SERVERS = new PropertyDescriptor
-            .Builder().name("Zookeeper Servers")
-            .description("The (space separated) list of zookeeper servers in '<domain>:<port>' form")
-            .required(true)
-            .addValidator(StandardValidators.NON_EMPTY_VALIDATOR)
-            .defaultValue(DEFAULT_ZOOKEEPER_SERVER)
-            .build();
+	public static final String DEFAULT_ZOOKEEPER_SERVER="localhost:2181";
 
-    private static final List<PropertyDescriptor> properties;
 
-    static {
-        final List<PropertyDescriptor> props = new ArrayList<>();
-        props.add(SERVERS);
-        properties = Collections.unmodifiableList(props);
-    }
 
-    @Override
-    protected List<PropertyDescriptor> getSupportedPropertyDescriptors() {
-        return properties;
-    }
+	public static final PropertyDescriptor SERVERS = new PropertyDescriptor
+			.Builder().name("Zookeeper Servers")
+			.description("The (space separated) list of zookeeper servers in '<domain>:<port>' form")
+			.required(true)
+			.addValidator(StandardValidators.NON_EMPTY_VALIDATOR)
+			.defaultValue(DEFAULT_ZOOKEEPER_SERVER)
+			.build();
 
-  	@Override
-  	public void init(final ControllerServiceInitializationContext config){
-  		
-  	}
+	private static final List<PropertyDescriptor> properties;
 
-    /**
-     * @param context
-     *            the configuration context
-     * @throws InitializationException
-     *             if unable to create a database connection
-     */
-    @OnEnabled
-    public void onEnabled(final ConfigurationContext context) throws InitializationException {
-    	String servers = context.getProperty(SERVERS).getValue();
-    	RemoteService.initialize(servers);
-    }
+	static {
+		final List<PropertyDescriptor> props = new ArrayList<>();
+		props.add(SERVERS);
+		properties = Collections.unmodifiableList(props);
+	}
 
-    @OnDisabled
-    public void shutdown() {
-    	RemoteService.close();
-    }
+	@Override
+	protected List<PropertyDescriptor> getSupportedPropertyDescriptors() {
+		return properties;
+	}
 
-		@Override
-		public Object getService(Class<?> serviceClass) {
-			return RemoteService.getService(serviceClass);
-		}
+	@Override
+	public void init(final ControllerServiceInitializationContext config){
+
+	}
+
+	/**
+	 * @param context
+	 *            the configuration context
+	 * @throws InitializationException
+	 *             if unable to create a database connection
+	 */
+	@OnEnabled
+	public void onEnabled(final ConfigurationContext context) throws InitializationException {
+		String servers = context.getProperty(SERVERS).getValue();
+
+	}
+
+	@OnDisabled
+	public void shutdown() {
+		RemoteService.close();
+	}
+
+	@Override
+	public Object getService(Class<?> serviceClass) {
+		return RemoteService.service(scala.reflect.ClassTag$.MODULE$.apply(serviceClass));
+	}
 
 
 }

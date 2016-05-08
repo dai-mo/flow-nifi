@@ -8,7 +8,7 @@ import Global._
 object Common {
 	lazy val commonSettings = Seq(
 			organization := "org.dcs",
-			version := "0.0.1-SNAPSHOT",
+			version := dcsNifiVersion,
 			scalaVersion := scVersion,
 			crossPaths := false,
 			checksums in update := Nil,

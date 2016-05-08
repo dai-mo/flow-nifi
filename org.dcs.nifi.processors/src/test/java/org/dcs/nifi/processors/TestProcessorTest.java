@@ -39,7 +39,7 @@ public class TestProcessorTest {
 
     @BeforeClass
     public static void setup() {
-    	RemoteService.initialize("localhost:2181");
+    	
     }
     
     @AfterClass

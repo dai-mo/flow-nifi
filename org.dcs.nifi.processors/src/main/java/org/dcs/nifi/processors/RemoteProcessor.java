@@ -44,8 +44,8 @@ public abstract class RemoteProcessor extends AbstractProcessor {
 	public void init(final ProcessorInitializationContext context){
 		log = this.getLogger();		
 
-		RemoteService.initialize("localhost:2181");
-		moduleFactoryService = (ModuleFactoryService) RemoteService.getService(ModuleFactoryService.class);
+		
+		moduleFactoryService = (ModuleFactoryService) RemoteService.service(scala.reflect.ClassTag$.MODULE$.apply(ModuleFactoryService.class));
 		flowModuleId = moduleFactoryService.createFlowModule(getFlowModuleClassName());
 		
 		log.warn("Created flow module " + getFlowModuleClassName() + " with id " + flowModuleId);
