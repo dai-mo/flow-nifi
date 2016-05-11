@@ -62,9 +62,10 @@ object Dependencies {
 					dcsNifiServApi,
 					dcsApi,
 					dcsRemote,
-					nifiApi,
 					nifiProcUtils,
 					scalaLib,
+
+					nifiApi % "provided",
 
 					slf4jSimple     % "test",
 					dcsCore         % "test",

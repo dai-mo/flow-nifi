@@ -1,12 +1,18 @@
 import Dependencies._
 import Common._
 
-lazy val root = (project in file(".")).
+lazy val rootProjectName = "org.dcs.nifi.parent"
+lazy val rootProjectID   = "root"
+
+lazy val root = (
+  Project(rootProjectID, file(rootProjectName)).
   settings(commonSettings: _*).
   settings(
-    name := "org.dcs.nifi.parent"
-  ).
-  aggregate(processors, servicesapi, services)
+    name := processorsProjectName,
+    moduleName := processorsProjectName
+  )
+).aggregate(processors, servicesapi, services)
+
 
 lazy val processorsProjectName = "org.dcs.nifi.processors"
 lazy val processorsProjectID   = "processors"
