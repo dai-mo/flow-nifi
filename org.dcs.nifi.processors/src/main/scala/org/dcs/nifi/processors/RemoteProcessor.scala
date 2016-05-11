@@ -20,6 +20,7 @@ import org.apache.nifi.flowfile.attributes.CoreAttributes
 import java.util.{Map  => JavaMap}
 import java.util.{Set  => JavaSet}
 import java.util.{List => JavaList}
+import scala.collection.mutable.{ Map => MutableMap }
 import org.slf4j.LoggerFactory
 import org.slf4j.Logger
 
@@ -48,10 +49,10 @@ abstract class RemoteProcessor extends AbstractProcessor {
 
       logger.info("Created flow module " + flowModuleClassName() + " with id " + flowModuleId)
 
-      val propDescMap: Map[String, Map[String, String]] = moduleFactoryService.get.getPropertyDescriptors(flowModuleId)
+      val propDescMap: JavaMap[String, JavaMap[String, String]] = moduleFactoryService.get.getPropertyDescriptors(flowModuleId)
       propertyDescriptors = ProcessorUtils.generatePropertyDescriptors(propDescMap)
 
-      val relationshipsMap: Map[String, Map[String, String]] = moduleFactoryService.get.getRelationships(flowModuleId)
+      val relationshipsMap: JavaMap[String, JavaMap[String, String]] = moduleFactoryService.get.getRelationships(flowModuleId)
       relationships = ProcessorUtils.generateRelationships(relationshipsMap)
 
     } else {

@@ -1,4 +1,4 @@
-package org.dcs.nifi.procesors
+package org.dcs.nifi.processors
 
 import org.scalatest._
 import org.scalatest.mock.MockitoSugar
@@ -30,3 +30,5 @@ abstract class JUnitSpec extends JUnitSuite
   with Inside
   with Inspectors
   with MockitoSugar
+  
+object IT extends Tag("IT")
