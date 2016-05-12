@@ -6,21 +6,9 @@ lazy val root = (project in file(".")).
   settings(commonSettings: _*).
   settings(
     name := "org.dcs.nifi.parent"
-  ).aggregate(processors, servicesapi, services)
+  ).aggregate(servicesapi, services, processors)
 
 
-lazy val processorsProjectName = "org.dcs.nifi.processors"
-lazy val processorsProjectID   = "processors"
-
-lazy val processors = (
-  Project(processorsProjectID, file(processorsProjectName)).
-  settings(commonSettings: _*).
-  settings(
-    name := processorsProjectName,
-    moduleName := processorsProjectName,
-    libraryDependencies ++= processorsDependencies
-  )
-)
 
 lazy val servicesApiProjectName = "org.dcs.nifi.services-api"
 lazy val servicesApiProjectID   = "servicesapi"
@@ -46,5 +34,20 @@ lazy val services = (
     name := servicesProjectName,
     moduleName := servicesProjectName,
     libraryDependencies ++= servicesDependencies
+  )
+)
+
+
+lazy val processorsProjectName = "org.dcs.nifi.processors"
+lazy val processorsProjectID   = "processors"
+
+lazy val processors = (
+  Project(processorsProjectID, file(processorsProjectName)).
+  settings(commonSettings: _*).
+  dependsOn(services).
+  settings(
+    name := processorsProjectName,
+    moduleName := processorsProjectName,
+    libraryDependencies ++= processorsDependencies
   )
 )
