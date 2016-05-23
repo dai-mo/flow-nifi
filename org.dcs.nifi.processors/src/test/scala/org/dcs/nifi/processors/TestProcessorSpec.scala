@@ -22,7 +22,7 @@ object TestProcessorSpec {
 
 class TestProcessorSpec extends ProcessorsBaseUnitSpec with TestProcessorBehaviors {
 
-  "Test Processor Response" must " be valid " in {
+  "Test Processor Response" must " be valid " taggedAs(UNIT) in {
     validResponse(testProcessor)
   }
 }
