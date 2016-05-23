@@ -1,7 +1,6 @@
 import Dependencies._
 import Common._
 
-
 lazy val root = (project in file(".")).
   settings(commonSettings: _*).
   settings(
@@ -14,7 +13,7 @@ lazy val servicesApiProjectName = "org.dcs.nifi.services-api"
 lazy val servicesApiProjectID   = "servicesapi"
 
 lazy val servicesapi = (
-  Project(servicesApiProjectID, file(servicesApiProjectName)).
+  BaseProject(servicesApiProjectID, servicesApiProjectName).
   settings(commonSettings: _*).
   settings(
     name := servicesApiProjectName,
@@ -27,7 +26,7 @@ lazy val servicesProjectName = "org.dcs.nifi.services"
 lazy val servicesProjectID   = "services"
 
 lazy val services = (
-  Project(servicesProjectID, file(servicesProjectName)).
+  BaseProject(servicesProjectID, servicesProjectName).
   settings(commonSettings: _*).
   dependsOn(servicesapi).
   settings(
@@ -42,7 +41,7 @@ lazy val processorsProjectName = "org.dcs.nifi.processors"
 lazy val processorsProjectID   = "processors"
 
 lazy val processors = (
-  Project(processorsProjectID, file(processorsProjectName)).
+  BaseProject(processorsProjectID, processorsProjectName).
   settings(commonSettings: _*).
   dependsOn(services).
   settings(

@@ -4,8 +4,14 @@ import Keys._
 
 import Dependencies._
 import Global._
+import sbt._
+import Keys._
 
 object Common {
+
+	lazy val UNIT = config("unit") extend(Test)
+	lazy val IT = config("it") extend(Test)
+
 	lazy val commonSettings = Seq(
 			organization := "org.dcs",
 			version := dcsNifiVersion,
@@ -18,5 +24,15 @@ object Common {
 			    DefaultMavenRepository,
 					localMavenRepository
 					)
+			)
+
+	def BaseProject(projectID: String, projectName: String) = (
+		    Project(projectID, file(projectName)).
+			  configs(IT).
+			  settings(inConfig(IT)(Defaults.testTasks): _*).
+			  settings(testOptions in IT := Seq(Tests.Argument("-n", "IT"))).
+			  configs(UNIT).
+			  settings(inConfig(UNIT)(Defaults.testTasks): _*).
+			  settings(testOptions in UNIT := Seq(Tests.Argument("-n", "UNIT")))
 			)
 }
