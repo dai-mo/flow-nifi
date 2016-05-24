@@ -12,6 +12,7 @@ import org.dcs.remote.ZkRemoteService
 import org.dcs.remote.RemoteService
 import org.apache.nifi.controller.AbstractControllerService
 import scala.reflect.ClassTag
+import org.dcs.nifi.services.DiscoveryService
 
 @Tags(Array("discovery", "zookeeper"))
 @CapabilityDescription("Provides the ability to discover remote services via zookeeper")

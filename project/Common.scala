@@ -33,6 +33,10 @@ object Common {
 			  settings(testOptions in IT := Seq(Tests.Argument("-n", "IT"))).
 			  configs(UNIT).
 			  settings(inConfig(UNIT)(Defaults.testTasks): _*).
-			  settings(testOptions in UNIT := Seq(Tests.Argument("-n", "UNIT")))
+			  settings(testOptions in UNIT := Seq(
+						Tests.Argument("-l", "IT"),
+						Tests.Argument("-l", "E2E")
+					)
+				)				
 			)
 }
