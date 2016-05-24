@@ -32,4 +32,4 @@ abstract class JUnitSpec extends JUnitSuite
   with MockitoSugar
   
 object IT extends Tag("IT")
-object UNIT extends Tag("UNIT")
+
