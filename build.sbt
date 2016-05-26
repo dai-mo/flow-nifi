@@ -36,6 +36,19 @@ lazy val services = (
   )
 )
 
+lazy val flowProjectName = "org.dcs.flow"
+lazy val flowProjectID   = "flow"
+
+lazy val flow = (
+  BaseProject(flowProjectID, flowProjectName).
+  settings(commonSettings: _*).
+  settings(
+    name := flowProjectName,
+    moduleName := flowProjectName,
+    libraryDependencies ++= flowDependencies
+  )
+)
+
 
 lazy val processorsProjectName = "org.dcs.nifi.processors"
 lazy val processorsProjectID   = "processors"
