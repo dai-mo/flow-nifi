@@ -1,4 +1,4 @@
-package org.dcs.nifi.rest
+package org.dcs.flow
 
 import javax.ws.rs.core.Response
 

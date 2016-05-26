@@ -1,14 +1,9 @@
-package org.dcs.nifi.rest
+package org.dcs.flow.client
 
 import scala.collection.JavaConverters._
 import collection.JavaConversions._
-import org.apache.nifi.web.api.dto.DocumentedTypeDTO
-import org.apache.nifi.web.api.entity.ProcessorTypesEntity
-import javax.ws.rs.client.ClientBuilder
-import javax.ws.rs.core.MediaType
-import javax.ws.rs.core.Response
-import org.dcs.commons.config.ConfigurationFacade
 import org.dcs.api.model.Processor
+import org.dcs.flow.ProcessorApi
 
 
 trait ProcessorClient  {

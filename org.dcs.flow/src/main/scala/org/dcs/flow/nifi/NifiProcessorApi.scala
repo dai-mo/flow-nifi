@@ -1,4 +1,4 @@
-package org.dcs.nifi.rest
+package org.dcs.flow.nifi
 
 import org.dcs.api.model.Processor
 import org.dcs.commons.JsonSerializerImplicits._
@@ -11,6 +11,7 @@ import javax.ws.rs.client.ClientBuilder
 import javax.ws.rs.core.MediaType
 import org.slf4j.LoggerFactory
 import org.slf4j.Logger
+import org.dcs.flow.ProcessorApi
 
 object NifiProcessorApi {
   val BaseUrl = ConfigurationFacade.config.nifiBaseUrl  
