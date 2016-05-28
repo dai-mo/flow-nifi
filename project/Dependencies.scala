@@ -5,6 +5,7 @@ object Dependencies {
 			lazy val dcsNifiVersion   = "0.0.1-SNAPSHOT"
 
 	    // Versions
+			lazy val scVersion     = "2.11.7"
 	    lazy val dcsApiVersion    = "1.0.0-SNAPSHOT"
 	    lazy val dcsRemoteVersion = "1.0.0-SNAPSHOT"
 			lazy val dcsCommonsVersion= "1.0.0-SNAPSHOT"
@@ -14,7 +15,7 @@ object Dependencies {
 			lazy val jsonPathVersion	= "1.2.0"
 			lazy val logbackVersion   = "1.1.3"
 			lazy val rxScalaVersion   = "0.26.1"
-
+			lazy val playVersion			= "2.5.3"
 			lazy val jerseyVersion  = "2.22.1"
 			lazy val mockitoVersion   = "1.10.19"
 			lazy val scalaTestVersion = "2.2.6"
@@ -35,11 +36,13 @@ object Dependencies {
 			val logbackCore     = "ch.qos.logback"                   % "logback-core"                       % logbackVersion
 			val logbackClassic  =	"ch.qos.logback"                   % "logback-classic"                    % logbackVersion
 			val dcsCore         = "org.dcs"                          % "org.dcs.core"                       % dcsCoreVersion
+			val playJson 				= "com.typesafe.play" 							 %% "play-json" 												% playVersion
 			val mockitoCore     = "org.mockito"                      % "mockito-core"                       % mockitoVersion
 			val mockitoAll      = "org.mockito"                      % "mockito-all"                        % mockitoVersion
 			val scalaTest       = "org.scalatest"                    %% "scalatest"                         % scalaTestVersion
 			val junitInterface  = "com.novocode"                     % "junit-interface"                    % juiVersion
 			val jerseyClient    = "org.glassfish.jersey.core"        % "jersey-client"                      % jerseyVersion
+			val jerseyMoxy      = "org.glassfish.jersey.media"       % "jersey-media-moxy"                  % jerseyVersion
 
 			// Collect Processors Dependencies
 			val processorsDependencies = Seq(
@@ -89,9 +92,11 @@ object Dependencies {
 		val flowDependencies = Seq(
 					dcsApi,
 					jerseyClient,
+					jerseyMoxy,
 					dcsCommons,
 					nifiClientDTO	,
 
+					//playJson				% "test",
 					logbackCore     % "test",
 					logbackClassic  % "test",
 					mockitoCore     % "test",

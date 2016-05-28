@@ -13,13 +13,19 @@ import scala.io.Source._
 import org.mockito.Mockito
 import org.scalatest.FlatSpec
 import org.dcs.flow.nifi.NifiProcessorApi
+import org.dcs.flow.nifi.NifiApiConfig
 import org.dcs.flow.ProcessorApi
 import org.dcs.flow.client.ProcessorClient
 import org.dcs.flow.RestBaseUnitSpec
+import org.dcs.flow.BaseRestApi
+
+
 
 
 object ProcessorApiSpec {
-  class NifiProcessorClient extends ProcessorClient with NifiProcessorApi
+  class NifiProcessorClient extends ProcessorClient 
+    with NifiProcessorApi 
+    with NifiApiConfig 
 }
 
 class ProcessorApiSpec extends RestBaseUnitSpec with ProcessorApiBehaviors {
@@ -31,20 +37,13 @@ class ProcessorApiSpec extends RestBaseUnitSpec with ProcessorApiBehaviors {
     try source.mkString finally source.close()
   }
 
-  def mockResponse(jsonFile: File) = {
-    val response = mock[Response]
-    when(response.readEntity(classOf[String])).thenReturn(jsonFromFile(jsonFile))
-    response
-  }
-
   val typesPath: Path = Paths.get(this.getClass().getResource("types.json").toURI())
   val processorApi = Mockito.spy(new NifiProcessorClient())
-  doReturn(mockResponse(typesPath.toFile)).when(processorApi).response(NifiProcessorApi.TypesPath)
-
+  doReturn(jsonFromFile(typesPath.toFile)).when(processorApi).getAsJson(NifiProcessorApi.TypesPath, None)
+  
   "Processor Types" must " be valid " in {
     validateProcessorTypes(processorApi)
   }
-
 }
 
 trait ProcessorApiBehaviors { this: FlatSpec =>

@@ -12,27 +12,22 @@ import javax.ws.rs.core.MediaType
 import org.slf4j.LoggerFactory
 import org.slf4j.Logger
 import org.dcs.flow.ProcessorApi
+import org.dcs.flow.BaseRestApi
 
-object NifiProcessorApi {
-  val BaseUrl = ConfigurationFacade.config.nifiBaseUrl  
+object NifiProcessorApi  {
+  
   val TypesPath = "/controller/processor-types"
 }
 
-trait NifiProcessorApi extends ProcessorApi {
+trait NifiProcessorApi extends ProcessorApi with BaseRestApi {
+  
   val logger: Logger = LoggerFactory.getLogger(classOf[NifiProcessorApi])
   
   import NifiProcessorApi._
   
-  override def response(path: String): Response = {
-    ClientBuilder.newClient.target(BaseUrl)
-      .path(path)            
-      .request(MediaType.APPLICATION_JSON)
-      .get
-  }
     
-  override def types(): List[Processor] = {
-    
-    val processorTypes = response(TypesPath).readEntity(classOf[String]).toObject[ProcessorTypesEntity]
+  override def types(): List[Processor] = {    
+    val processorTypes = getAsJson(TypesPath).toObject[ProcessorTypesEntity]
     processorTypes.getProcessorTypes.asScala.map(dt => {
       val p = new Processor()
       p.setPtype(dt.getType)
