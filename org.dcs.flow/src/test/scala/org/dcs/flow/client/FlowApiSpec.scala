@@ -5,22 +5,19 @@ import javax.ws.rs.core.{Form, MediaType}
 
 import org.dcs.api.service.RESTException
 import org.dcs.flow.RestBaseUnitSpec
-import org.dcs.flow.client.FlowApiSpec.NifiFlowClient
-import org.dcs.flow.nifi.{NifiApiConfig, NifiFlowApi}
-import org.mockito.Mockito._
+import org.dcs.flow.nifi.{NifiApiConfig, NifiFlowClient}
 import org.mockito.Matchers
+import org.mockito.Mockito._
 import org.scalatest.FlatSpec
 import org.slf4j.{Logger, LoggerFactory}
-import org.dcs.commons.JsonSerializerImplicits._
-import org.dcs.commons.JsonUtil
 
 
 /**
   * Created by cmathew on 30/05/16.
   */
 object FlowApiSpec {
-  class NifiFlowClient extends FlowClient
-    with NifiFlowApi
+  class NifiFlowApi extends FlowApi
+    with NifiFlowClient
     with NifiApiConfig
 }
 
@@ -29,7 +26,7 @@ class FlowApiSpec extends RestBaseUnitSpec with FlowApiBehaviors {
 
   val templatePath: Path = Paths.get(this.getClass().getResource("twitter-template.json").toURI())
 
-  val flowClient = spy(new NifiFlowClient())
+  val flowClient = spy(new NifiFlowApi())
 
   val queryParams = Map(
     "templateId" -> templateId,
@@ -39,7 +36,7 @@ class FlowApiSpec extends RestBaseUnitSpec with FlowApiBehaviors {
   doReturn(jsonFromFile(templatePath.toFile)).
     when(flowClient).
     postAsJson(
-      Matchers.eq(NifiFlowApi.TemplateInstancePath),
+      Matchers.eq(NifiFlowClient.TemplateInstancePath),
       Matchers.any[Form],
       Matchers.eq(queryParams),
       Matchers.any[Map[String, String]],

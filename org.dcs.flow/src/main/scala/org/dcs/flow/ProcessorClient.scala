@@ -3,7 +3,7 @@ package org.dcs.flow
 import org.dcs.api.model.Processor
 import org.dcs.flow.model.ProcessorType
 
-trait ProcessorApi {
+trait ProcessorClient {
   
   def types(): List[ProcessorType]
 

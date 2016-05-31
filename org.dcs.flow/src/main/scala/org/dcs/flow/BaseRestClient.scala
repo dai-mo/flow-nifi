@@ -9,7 +9,7 @@ import org.dcs.api.model.ErrorResponse
 import org.dcs.api.service.RESTException
 import org.glassfish.jersey.filter.LoggingFilter
 
-trait BaseRestApi extends ApiConfig {
+trait BaseRestClient extends ApiConfig {
 
   val client = ClientBuilder.newClient()
 

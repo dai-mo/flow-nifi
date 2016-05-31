@@ -3,18 +3,18 @@ package org.dcs.flow.nifi
 
 import org.dcs.flow.RestBaseUnitSpec
 import org.dcs.flow.client.ProcessorApiSpec
-import org.dcs.flow.ProcessorApi
+import org.dcs.flow.ProcessorClient
 import java.nio.file.Paths
 import org.slf4j.LoggerFactory
 import org.scalatest.FlatSpec
 import org.slf4j.Logger
 import org.dcs.flow.IT
-import org.dcs.flow.BaseRestApi
+import org.dcs.flow.BaseRestClient
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializationFeature
 
   object NifiApiISpec {
-    object NifiApi extends BaseRestApi with NifiApiConfig
+    object NifiApi extends BaseRestClient with NifiApiConfig
   }
 
   class NifiApiISpec extends RestBaseUnitSpec with NifiApiBehaviors {

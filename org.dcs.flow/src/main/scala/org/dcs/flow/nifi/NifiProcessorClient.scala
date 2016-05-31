@@ -14,21 +14,21 @@ import javax.ws.rs.core.MediaType
 
 import org.slf4j.LoggerFactory
 import org.slf4j.Logger
-import org.dcs.flow.ProcessorApi
-import org.dcs.flow.BaseRestApi
+import org.dcs.flow.ProcessorClient
+import org.dcs.flow.BaseRestClient
 import org.dcs.flow.model.ProcessorType
 
-object NifiProcessorApi  {
+object NifiProcessorClient  {
   
   val TypesPath = "/controller/processor-types"
 
 }
 
-trait NifiProcessorApi extends ProcessorApi with NifiBaseRestApi {
+trait NifiProcessorClient extends ProcessorClient with NifiBaseRestClient {
   
-  val logger: Logger = LoggerFactory.getLogger(classOf[NifiProcessorApi])
+  val logger: Logger = LoggerFactory.getLogger(classOf[NifiProcessorClient])
   
-  import NifiProcessorApi._
+  import NifiProcessorClient._
 
   override def types(): List[ProcessorType] = {
     val processorTypes = getAsJson(TypesPath).toObject[ProcessorTypesEntity]

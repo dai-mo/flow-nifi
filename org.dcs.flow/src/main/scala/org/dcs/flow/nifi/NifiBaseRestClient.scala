@@ -4,20 +4,20 @@ import java.util.UUID
 import javax.ws.rs.client.Invocation.Builder
 
 import org.apache.nifi.web.api.entity.Entity
-import org.dcs.flow.BaseRestApi
+import org.dcs.flow.BaseRestClient
 
 import org.dcs.commons.JsonSerializerImplicits._
 
 /**
   * Created by cmathew on 30/05/16.
   */
-object NifiBaseRestApi {
+object NifiBaseRestClient {
   val RevisionPath = "/controller/revision"
   val clientId = UUID.randomUUID().toString
 }
 
-trait NifiBaseRestApi extends BaseRestApi {
-  import NifiBaseRestApi._
+trait NifiBaseRestClient extends BaseRestClient {
+  import NifiBaseRestClient._
 
   private var version = 0
 

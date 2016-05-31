@@ -3,12 +3,12 @@ import javax.ws.rs.core.Form
 
 import org.apache.nifi.web.api.entity.{Entity, FlowSnippetEntity, TemplatesEntity}
 import org.dcs.commons.JsonUtil
-import org.dcs.flow.BaseRestApi
+import org.dcs.flow.BaseRestClient
 import org.dcs.flow.nifi.NifiApiConfig
 import org.dcs.commons.JsonSerializerImplicits._
 import org.glassfish.jersey.filter.LoggingFilter
 
-object NifiApi extends BaseRestApi with NifiApiConfig
+object NifiApi extends BaseRestClient with NifiApiConfig
 
 val TemplatesPath = "/controller/templates"
 val RevisionPath = "/controller/revision"
@@ -23,7 +23,7 @@ def clientIdVersion(): (String, String) = {
   (entity.getRevision.getClientId, entity.getRevision.getVersion.toString)
 }
 
-def printRequest(api: BaseRestApi, path:String, queryParams: Map[String, String]): Unit= {
+def printRequest(api: BaseRestClient, path:String, queryParams: Map[String, String]): Unit= {
 
   val sb:StringBuilder = StringBuilder.newBuilder
     sb.append(api.baseUrl())

@@ -4,7 +4,7 @@ import javax.ws.rs.core.{Form, MediaType}
 
 import org.apache.nifi.web.api.entity.FlowSnippetEntity
 import org.dcs.flow.model.Flow
-import org.dcs.flow.FlowApi
+import org.dcs.flow.FlowClient
 import org.dcs.commons.JsonSerializerImplicits._
 
 
@@ -12,11 +12,11 @@ import org.dcs.commons.JsonSerializerImplicits._
   * Created by cmathew on 30/05/16.
   */
 
-object NifiFlowApi {
+object NifiFlowClient {
   val TemplateInstancePath = "/controller/process-groups/root/template-instance"
 }
-trait NifiFlowApi extends FlowApi with NifiBaseRestApi {
-  import NifiFlowApi._
+trait NifiFlowClient extends FlowClient with NifiBaseRestClient {
+  import NifiFlowClient._
 
   def instantiate(flowTemplateId:String ):Flow = {
 
