@@ -6,7 +6,7 @@ import org.apache.nifi.web.api.entity.FlowSnippetEntity
 import org.dcs.flow.model.Flow
 import org.dcs.flow.FlowApi
 import org.dcs.commons.JsonSerializerImplicits._
-import org.dcs.flow.nifi.NifiFlowImplicits._
+
 
 /**
   * Created by cmathew on 30/05/16.
@@ -33,6 +33,6 @@ trait NifiFlowApi extends FlowApi with NifiBaseRestApi {
       MediaType.APPLICATION_FORM_URLENCODED
     ).toObject[FlowSnippetEntity]
 
-    flowSnippet.toFlow
+    Flow(flowSnippet)
   }
 }

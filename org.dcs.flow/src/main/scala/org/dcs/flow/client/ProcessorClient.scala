@@ -1,18 +1,15 @@
 package org.dcs.flow.client
 
-import scala.collection.JavaConverters._
-import collection.JavaConversions._
-import org.dcs.api.model.Processor
+
 import org.dcs.flow.ProcessorApi
+import org.dcs.flow.model.ProcessorType
 
 
 trait ProcessorClient  {
     
   this: ProcessorApi =>
 
-  override def types(): List[Processor]
-
-  def typesSearchTags(str:String): List[Processor] = {
-    types.filter( dtype => dtype.getTags.exists(tag => tag.contains(str))) 
+  def typesSearchTags(str:String): List[ProcessorType] = {
+    types.filter( dtype => dtype.tags.exists(tag => tag.contains(str)))
   }
 }
