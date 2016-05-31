@@ -1,8 +1,7 @@
 import sbt._
-import Global._
 
 object Dependencies {
-
+			lazy val scVersion = "2.11.7"
 			lazy val dcsNifiVersion   = "0.0.1-SNAPSHOT"
 
 	    // Versions
