@@ -19,7 +19,7 @@ object NifiProcessorApi  {
   val TypesPath = "/controller/processor-types"
 }
 
-trait NifiProcessorApi extends ProcessorApi with BaseRestApi {
+trait NifiProcessorApi extends ProcessorApi with NifiBaseRestApi {
   
   val logger: Logger = LoggerFactory.getLogger(classOf[NifiProcessorApi])
   

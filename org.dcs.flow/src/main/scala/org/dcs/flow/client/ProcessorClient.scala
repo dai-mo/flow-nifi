@@ -8,8 +8,10 @@ import org.dcs.flow.ProcessorApi
 
 trait ProcessorClient  {
     
-  this: ProcessorApi => 
-  
+  this: ProcessorApi =>
+
+  override def types(): List[Processor]
+
   def typesSearchTags(str:String): List[Processor] = {
     types.filter( dtype => dtype.getTags.exists(tag => tag.contains(str))) 
   }

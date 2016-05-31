@@ -1,23 +1,14 @@
 package org.dcs.flow.client
 
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
-import org.dcs.commons.JsonSerializerImplicits._
-import scala.collection.JavaConverters._
-import java.nio.file.Paths
-import java.nio.file.Path
 import java.io.File
-import javax.ws.rs.core.Response
-import org.mockito.Mockito._
-import scala.io.Source._
-import org.mockito.Mockito
-import org.scalatest.FlatSpec
-import org.dcs.flow.nifi.NifiProcessorApi
-import org.dcs.flow.nifi.NifiApiConfig
-import org.dcs.flow.ProcessorApi
-import org.dcs.flow.client.ProcessorClient
+import java.nio.file.{Path, Paths}
+
 import org.dcs.flow.RestBaseUnitSpec
-import org.dcs.flow.BaseRestApi
+import org.dcs.flow.nifi.{NifiApiConfig, NifiProcessorApi}
+import org.mockito.Mockito
+import org.mockito.Mockito._
+import org.scalatest.FlatSpec
+import org.slf4j.{Logger, LoggerFactory}
 
 
 
@@ -32,26 +23,25 @@ class ProcessorApiSpec extends RestBaseUnitSpec with ProcessorApiBehaviors {
 
   import ProcessorApiSpec._
 
-  def jsonFromFile(jsonFile: File): String = {
-    val source = scala.io.Source.fromFile(jsonFile)
-    try source.mkString finally source.close()
-  }
 
   val typesPath: Path = Paths.get(this.getClass().getResource("types.json").toURI())
-  val processorApi = Mockito.spy(new NifiProcessorClient())
-  doReturn(jsonFromFile(typesPath.toFile)).when(processorApi).getAsJson(NifiProcessorApi.TypesPath, None)
+  val processorClient = Mockito.spy(new NifiProcessorClient())
+  doReturn(jsonFromFile(typesPath.toFile)).
+    when(processorClient).
+    getAsJson(NifiProcessorApi.TypesPath, Map(), Map())
   
   "Processor Types" must " be valid " in {
-    validateProcessorTypes(processorApi)
+    validateProcessorTypes(processorClient)
   }
 }
 
 trait ProcessorApiBehaviors { this: FlatSpec =>
+  import ProcessorApiSpec._
 
   val logger: Logger = LoggerFactory.getLogger(classOf[ProcessorApiSpec])
 
-  def validateProcessorTypes(processorApi: ProcessorApi) {    
-      val types = processorApi.types
-      assert(types.size == 135)    
+  def validateProcessorTypes(processorClient: NifiProcessorClient) {
+      val types = processorClient.types()
+      assert(types.size == 135)
   }
 }

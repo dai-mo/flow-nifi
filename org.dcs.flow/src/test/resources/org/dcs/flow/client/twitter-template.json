@@ -1,0 +1,489 @@
+{
+  "revision" : {
+    "clientId" : "c10c03a4-a744-479d-b449-1f16198d1e80",
+    "version" : 1
+  },
+  "contents" : {
+    "processGroups" : [ ],
+    "remoteProcessGroups" : [ ],
+    "processors" : [ {
+      "id" : "f7aae795-0a45-4d5e-9b1e-fa9ce34ad682",
+      "uri" : "http://localhost:8888/nifi-api/controller/process-groups/34c0febd-d9c2-48f7-988b-97e6b59cf96e/processors/f7aae795-0a45-4d5e-9b1e-fa9ce34ad682",
+      "position" : {
+        "x" : 17.0,
+        "y" : 100.0
+      },
+      "parentGroupId" : "34c0febd-d9c2-48f7-988b-97e6b59cf96e",
+      "name" : "Grab Garden Hose",
+      "type" : "org.apache.nifi.processors.twitter.GetTwitter",
+      "state" : "STOPPED",
+      "style" : { },
+      "relationships" : [ {
+        "name" : "success",
+        "description" : "All status updates will be routed to this relationship",
+        "autoTerminate" : false
+      } ],
+      "supportsParallelProcessing" : true,
+      "supportsEventDriven" : false,
+      "config" : {
+        "properties" : {
+          "Consumer Key" : "Rbeh7IMVo3RZf0hz2gdN3tYpQ",
+          "Consumer Secret" : null,
+          "Access Token" : "2954844987-3QltSFwayKVP2pqGSp59D7cAAIrF7l9UkQoTCJ4",
+          "Languages" : null,
+          "IDs to Follow" : null,
+          "Twitter Endpoint" : "Sample Endpoint",
+          "Terms to Filter On" : null,
+          "Access Token Secret" : null
+        },
+        "descriptors" : {
+          "Consumer Key" : {
+            "name" : "Consumer Key",
+            "displayName" : "Consumer Key",
+            "description" : "The Consumer Key provided by Twitter",
+            "required" : true,
+            "sensitive" : false,
+            "dynamic" : false,
+            "supportsEl" : false
+          },
+          "Consumer Secret" : {
+            "name" : "Consumer Secret",
+            "displayName" : "Consumer Secret",
+            "description" : "The Consumer Secret provided by Twitter",
+            "required" : true,
+            "sensitive" : true,
+            "dynamic" : false,
+            "supportsEl" : false
+          },
+          "Access Token" : {
+            "name" : "Access Token",
+            "displayName" : "Access Token",
+            "description" : "The Acces Token provided by Twitter",
+            "required" : true,
+            "sensitive" : false,
+            "dynamic" : false,
+            "supportsEl" : false
+          },
+          "Languages" : {
+            "name" : "Languages",
+            "displayName" : "Languages",
+            "description" : "A comma-separated list of languages for which tweets should be fetched",
+            "required" : false,
+            "sensitive" : false,
+            "dynamic" : false,
+            "supportsEl" : false
+          },
+          "IDs to Follow" : {
+            "name" : "IDs to Follow",
+            "displayName" : "IDs to Follow",
+            "description" : "A comma-separated list of Twitter User ID's to follow. Ignored unless Endpoint is set to 'Filter Endpoint'.",
+            "required" : false,
+            "sensitive" : false,
+            "dynamic" : false,
+            "supportsEl" : false
+          },
+          "Twitter Endpoint" : {
+            "name" : "Twitter Endpoint",
+            "displayName" : "Twitter Endpoint",
+            "description" : "Specifies which endpoint data should be pulled from",
+            "defaultValue" : "Sample Endpoint",
+            "allowableValues" : [ {
+              "displayName" : "Sample Endpoint",
+              "value" : "Sample Endpoint",
+              "description" : "The endpoint that provides public data, aka a 'garden hose'"
+            }, {
+              "displayName" : "Firehose Endpoint",
+              "value" : "Firehose Endpoint",
+              "description" : "The endpoint that provides access to all tweets"
+            }, {
+              "displayName" : "Filter Endpoint",
+              "value" : "Filter Endpoint",
+              "description" : "Endpoint that allows the stream to be filtered by specific terms or User IDs"
+            } ],
+            "required" : true,
+            "sensitive" : false,
+            "dynamic" : false,
+            "supportsEl" : false
+          },
+          "Terms to Filter On" : {
+            "name" : "Terms to Filter On",
+            "displayName" : "Terms to Filter On",
+            "description" : "A comma-separated list of terms to filter on. Ignored unless Endpoint is set to 'Filter Endpoint'. The filter works such that if any term matches, the status update will be retrieved; multiple terms separated by a space function as an 'AND'. I.e., 'it was, hello' will retrieve status updates that have either 'hello' or both 'it' AND 'was'",
+            "required" : false,
+            "sensitive" : false,
+            "dynamic" : false,
+            "supportsEl" : false
+          },
+          "Access Token Secret" : {
+            "name" : "Access Token Secret",
+            "displayName" : "Access Token Secret",
+            "description" : "The Access Token Secret provided by Twitter",
+            "required" : true,
+            "sensitive" : true,
+            "dynamic" : false,
+            "supportsEl" : false
+          }
+        },
+        "schedulingPeriod" : "0 sec",
+        "schedulingStrategy" : "TIMER_DRIVEN",
+        "penaltyDuration" : "30 sec",
+        "yieldDuration" : "1 sec",
+        "bulletinLevel" : "WARN",
+        "runDurationMillis" : 0,
+        "concurrentlySchedulableTaskCount" : 1,
+        "comments" : "\n        ",
+        "lossTolerant" : false,
+        "defaultConcurrentTasks" : {
+          "TIMER_DRIVEN" : "1",
+          "EVENT_DRIVEN" : "0",
+          "CRON_DRIVEN" : "1"
+        },
+        "defaultSchedulingPeriod" : {
+          "TIMER_DRIVEN" : "0 sec",
+          "CRON_DRIVEN" : "* * * * * ?"
+        }
+      },
+      "validationErrors" : [ "'Consumer Secret' is invalid because Consumer Secret is required", "'Access Token Secret' is invalid because Access Token Secret is required" ]
+    }, {
+      "id" : "a4568650-69a7-480b-9f8c-404161b698ec",
+      "uri" : "http://localhost:8888/nifi-api/controller/process-groups/34c0febd-d9c2-48f7-988b-97e6b59cf96e/processors/a4568650-69a7-480b-9f8c-404161b698ec",
+      "position" : {
+        "x" : 23.573928833007812,
+        "y" : 283.34592056274414
+      },
+      "parentGroupId" : "34c0febd-d9c2-48f7-988b-97e6b59cf96e",
+      "name" : "Pull Key Attributes",
+      "type" : "org.apache.nifi.processors.standard.EvaluateJsonPath",
+      "state" : "STOPPED",
+      "style" : { },
+      "relationships" : [ {
+        "name" : "failure",
+        "description" : "FlowFiles are routed to this relationship when the JsonPath cannot be evaluated against the content of the FlowFile; for instance, if the FlowFile is not valid JSON",
+        "autoTerminate" : true
+      }, {
+        "name" : "matched",
+        "description" : "FlowFiles are routed to this relationship when the JsonPath is successfully evaluated and the FlowFile is modified as a result",
+        "autoTerminate" : false
+      }, {
+        "name" : "unmatched",
+        "description" : "FlowFiles are routed to this relationship when the JsonPath does not match the content of the FlowFile and the Destination is set to flowfile-content",
+        "autoTerminate" : true
+      } ],
+      "supportsParallelProcessing" : true,
+      "supportsEventDriven" : true,
+      "config" : {
+        "properties" : {
+          "twitter.handle" : "$.user.screen_name",
+          "Destination" : "flowfile-attribute",
+          "twitter.msg" : "$.text",
+          "twitter.user" : "$.user.name",
+          "Return Type" : "auto-detect",
+          "Null Value Representation" : "empty string",
+          "language" : "$.lang",
+          "Path Not Found Behavior" : "ignore"
+        },
+        "descriptors" : {
+          "twitter.handle" : {
+            "name" : "twitter.handle",
+            "displayName" : "twitter.handle",
+            "description" : "\n              ",
+            "required" : false,
+            "sensitive" : false,
+            "dynamic" : true,
+            "supportsEl" : false
+          },
+          "Destination" : {
+            "name" : "Destination",
+            "displayName" : "Destination",
+            "description" : "Indicates whether the results of the JsonPath evaluation are written to the FlowFile content or a FlowFile attribute; if using attribute, must specify the Attribute Name property. If set to flowfile-content, only one JsonPath may be specified, and the property name is ignored.",
+            "defaultValue" : "flowfile-content",
+            "allowableValues" : [ {
+              "displayName" : "flowfile-content",
+              "value" : "flowfile-content"
+            }, {
+              "displayName" : "flowfile-attribute",
+              "value" : "flowfile-attribute"
+            } ],
+            "required" : true,
+            "sensitive" : false,
+            "dynamic" : false,
+            "supportsEl" : false
+          },
+          "twitter.msg" : {
+            "name" : "twitter.msg",
+            "displayName" : "twitter.msg",
+            "description" : "\n              ",
+            "required" : false,
+            "sensitive" : false,
+            "dynamic" : true,
+            "supportsEl" : false
+          },
+          "twitter.user" : {
+            "name" : "twitter.user",
+            "displayName" : "twitter.user",
+            "description" : "\n              ",
+            "required" : false,
+            "sensitive" : false,
+            "dynamic" : true,
+            "supportsEl" : false
+          },
+          "Return Type" : {
+            "name" : "Return Type",
+            "displayName" : "Return Type",
+            "description" : "Indicates the desired return type of the JSON Path expressions.  Selecting 'auto-detect' will set the return type to 'json' for a Destination of 'flowfile-content', and 'string' for a Destination of 'flowfile-attribute'.",
+            "defaultValue" : "auto-detect",
+            "allowableValues" : [ {
+              "displayName" : "auto-detect",
+              "value" : "auto-detect"
+            }, {
+              "displayName" : "json",
+              "value" : "json"
+            }, {
+              "displayName" : "scalar",
+              "value" : "scalar"
+            } ],
+            "required" : true,
+            "sensitive" : false,
+            "dynamic" : false,
+            "supportsEl" : false
+          },
+          "Null Value Representation" : {
+            "name" : "Null Value Representation",
+            "displayName" : "Null Value Representation",
+            "description" : "Indicates the desired representation of JSON Path expressions resulting in a null value.",
+            "defaultValue" : "empty string",
+            "allowableValues" : [ {
+              "displayName" : "the string 'null'",
+              "value" : "the string 'null'"
+            }, {
+              "displayName" : "empty string",
+              "value" : "empty string"
+            } ],
+            "required" : true,
+            "sensitive" : false,
+            "dynamic" : false,
+            "supportsEl" : false
+          },
+          "language" : {
+            "name" : "language",
+            "displayName" : "language",
+            "description" : "\n              ",
+            "required" : false,
+            "sensitive" : false,
+            "dynamic" : true,
+            "supportsEl" : false
+          },
+          "Path Not Found Behavior" : {
+            "name" : "Path Not Found Behavior",
+            "displayName" : "Path Not Found Behavior",
+            "description" : "Indicates how to handle missing JSON path expressions when destination is set to 'flowfile-attribute'. Selecting 'warn' will generate a warning when a JSON path expression is not found.",
+            "defaultValue" : "ignore",
+            "allowableValues" : [ {
+              "displayName" : "warn",
+              "value" : "warn"
+            }, {
+              "displayName" : "ignore",
+              "value" : "ignore"
+            } ],
+            "required" : true,
+            "sensitive" : false,
+            "dynamic" : false,
+            "supportsEl" : false
+          }
+        },
+        "schedulingPeriod" : "0 sec",
+        "schedulingStrategy" : "TIMER_DRIVEN",
+        "penaltyDuration" : "30 sec",
+        "yieldDuration" : "1 sec",
+        "bulletinLevel" : "ERROR",
+        "runDurationMillis" : 25,
+        "concurrentlySchedulableTaskCount" : 4,
+        "comments" : "\n        ",
+        "lossTolerant" : false,
+        "defaultConcurrentTasks" : {
+          "TIMER_DRIVEN" : "1",
+          "EVENT_DRIVEN" : "0",
+          "CRON_DRIVEN" : "1"
+        },
+        "defaultSchedulingPeriod" : {
+          "TIMER_DRIVEN" : "0 sec",
+          "CRON_DRIVEN" : "* * * * * ?"
+        }
+      }
+    }, {
+      "id" : "451da1a7-2755-4e14-bb0b-2725c81d1d1c",
+      "uri" : "http://localhost:8888/nifi-api/controller/process-groups/34c0febd-d9c2-48f7-988b-97e6b59cf96e/processors/451da1a7-2755-4e14-bb0b-2725c81d1d1c",
+      "position" : {
+        "x" : 28.425216674804688,
+        "y" : 469.34592056274414
+      },
+      "parentGroupId" : "34c0febd-d9c2-48f7-988b-97e6b59cf96e",
+      "name" : "Find only Tweets",
+      "type" : "org.apache.nifi.processors.standard.RouteOnAttribute",
+      "state" : "STOPPED",
+      "style" : { },
+      "relationships" : [ {
+        "name" : "tweet",
+        "description" : "\n        ",
+        "autoTerminate" : false
+      }, {
+        "name" : "unmatched",
+        "description" : "FlowFiles that do not match any user-define expression will be routed here",
+        "autoTerminate" : true
+      } ],
+      "supportsParallelProcessing" : true,
+      "supportsEventDriven" : true,
+      "config" : {
+        "properties" : {
+          "Routing Strategy" : "Route to Property name",
+          "tweet" : "${twitter.msg:isEmpty():not()}"
+        },
+        "descriptors" : {
+          "Routing Strategy" : {
+            "name" : "Routing Strategy",
+            "displayName" : "Routing Strategy",
+            "description" : "Specifies how to determine which relationship to use when evaluating the Expression Language",
+            "defaultValue" : "Route to Property name",
+            "allowableValues" : [ {
+              "displayName" : "Route to Property name",
+              "value" : "Route to Property name",
+              "description" : "A copy of the FlowFile will be routed to each relationship whose corresponding expression evaluates to 'true'"
+            }, {
+              "displayName" : "Route to 'matched' if all match",
+              "value" : "Route to 'match' if all match",
+              "description" : "Requires that all user-defined expressions evaluate to 'true' for the FlowFile to be considered a match"
+            }, {
+              "displayName" : "Route to 'matched' if any matches",
+              "value" : "Route to 'match' if any matches",
+              "description" : "Requires that at least one user-defined expression evaluate to 'true' for hte FlowFile to be considered a match"
+            } ],
+            "required" : true,
+            "sensitive" : false,
+            "dynamic" : false,
+            "supportsEl" : false
+          },
+          "tweet" : {
+            "name" : "tweet",
+            "displayName" : "tweet",
+            "description" : "\n              ",
+            "required" : false,
+            "sensitive" : false,
+            "dynamic" : true,
+            "supportsEl" : true
+          }
+        },
+        "schedulingPeriod" : "0 sec",
+        "schedulingStrategy" : "TIMER_DRIVEN",
+        "penaltyDuration" : "30 sec",
+        "yieldDuration" : "1 sec",
+        "bulletinLevel" : "WARN",
+        "runDurationMillis" : 25,
+        "concurrentlySchedulableTaskCount" : 2,
+        "comments" : "\n        ",
+        "lossTolerant" : false,
+        "defaultConcurrentTasks" : {
+          "TIMER_DRIVEN" : "1",
+          "EVENT_DRIVEN" : "0",
+          "CRON_DRIVEN" : "1"
+        },
+        "defaultSchedulingPeriod" : {
+          "TIMER_DRIVEN" : "0 sec",
+          "CRON_DRIVEN" : "* * * * * ?"
+        }
+      }
+    } ],
+    "inputPorts" : [ ],
+    "outputPorts" : [ {
+      "id" : "aaf667ae-97ee-4453-898b-cd44b475e7ad",
+      "uri" : "http://localhost:8888/nifi-api/controller/process-groups/34c0febd-d9c2-48f7-988b-97e6b59cf96e/output-ports/aaf667ae-97ee-4453-898b-cd44b475e7ad",
+      "position" : {
+        "x" : 104.49206184394916,
+        "y" : 654.5398828359516
+      },
+      "parentGroupId" : "34c0febd-d9c2-48f7-988b-97e6b59cf96e",
+      "name" : "Copy of Copy of Copy of Copy of Tweets",
+      "comments" : "\n      ",
+      "state" : "STOPPED",
+      "type" : "OUTPUT_PORT",
+      "concurrentlySchedulableTaskCount" : 1,
+      "validationErrors" : [ "'Port 'Copy of Tweets'' is invalid because Output connection for port 'Copy of Tweets' is not defined." ]
+    } ],
+    "connections" : [ {
+      "id" : "a4409924-7409-49dd-b373-3a7d29a860ff",
+      "uri" : "http://localhost:8888/nifi-api/controller/process-groups/root/connections/a4409924-7409-49dd-b373-3a7d29a860ff",
+      "parentGroupId" : "34c0febd-d9c2-48f7-988b-97e6b59cf96e",
+      "source" : {
+        "id" : "a4568650-69a7-480b-9f8c-404161b698ec",
+        "type" : "PROCESSOR",
+        "groupId" : "34c0febd-d9c2-48f7-988b-97e6b59cf96e",
+        "name" : "Pull Key Attributes"
+      },
+      "destination" : {
+        "id" : "451da1a7-2755-4e14-bb0b-2725c81d1d1c",
+        "type" : "PROCESSOR",
+        "groupId" : "34c0febd-d9c2-48f7-988b-97e6b59cf96e",
+        "name" : "Find only Tweets"
+      },
+      "name" : "\n      ",
+      "labelIndex" : 1,
+      "zIndex" : 0,
+      "selectedRelationships" : [ "matched" ],
+      "backPressureObjectThreshold" : 1000,
+      "backPressureDataSizeThreshold" : "0 MB",
+      "flowFileExpiration" : "0 sec",
+      "prioritizers" : [ "org.apache.nifi.prioritizer.PriorityAttributePrioritizer", "org.apache.nifi.prioritizer.OldestFlowFileFirstPrioritizer" ],
+      "bends" : [ ]
+    }, {
+      "id" : "8775f9ae-a740-4d10-9c81-d8ab22e05b3e",
+      "uri" : "http://localhost:8888/nifi-api/controller/process-groups/root/connections/8775f9ae-a740-4d10-9c81-d8ab22e05b3e",
+      "parentGroupId" : "34c0febd-d9c2-48f7-988b-97e6b59cf96e",
+      "source" : {
+        "id" : "451da1a7-2755-4e14-bb0b-2725c81d1d1c",
+        "type" : "PROCESSOR",
+        "groupId" : "34c0febd-d9c2-48f7-988b-97e6b59cf96e",
+        "name" : "Find only Tweets"
+      },
+      "destination" : {
+        "id" : "aaf667ae-97ee-4453-898b-cd44b475e7ad",
+        "type" : "OUTPUT_PORT",
+        "groupId" : "34c0febd-d9c2-48f7-988b-97e6b59cf96e",
+        "name" : "Copy of Tweets"
+      },
+      "name" : "\n      ",
+      "labelIndex" : 1,
+      "zIndex" : 0,
+      "selectedRelationships" : [ "tweet" ],
+      "backPressureObjectThreshold" : 1000,
+      "backPressureDataSizeThreshold" : "0 MB",
+      "flowFileExpiration" : "0 sec",
+      "bends" : [ ]
+    }, {
+      "id" : "4e750853-eb1d-4066-a44a-bf691ebfc103",
+      "uri" : "http://localhost:8888/nifi-api/controller/process-groups/root/connections/4e750853-eb1d-4066-a44a-bf691ebfc103",
+      "parentGroupId" : "34c0febd-d9c2-48f7-988b-97e6b59cf96e",
+      "source" : {
+        "id" : "f7aae795-0a45-4d5e-9b1e-fa9ce34ad682",
+        "type" : "PROCESSOR",
+        "groupId" : "34c0febd-d9c2-48f7-988b-97e6b59cf96e",
+        "name" : "Grab Garden Hose"
+      },
+      "destination" : {
+        "id" : "a4568650-69a7-480b-9f8c-404161b698ec",
+        "type" : "PROCESSOR",
+        "groupId" : "34c0febd-d9c2-48f7-988b-97e6b59cf96e",
+        "name" : "Pull Key Attributes"
+      },
+      "name" : "\n      ",
+      "labelIndex" : 1,
+      "zIndex" : 0,
+      "selectedRelationships" : [ "success" ],
+      "backPressureObjectThreshold" : 1000,
+      "backPressureDataSizeThreshold" : "0 MB",
+      "flowFileExpiration" : "0 sec",
+      "bends" : [ ]
+    } ],
+    "labels" : [ ],
+    "funnels" : [ ],
+    "controllerServices" : [ ]
+  }
+}
