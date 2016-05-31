@@ -66,7 +66,7 @@ trait BaseRestApi extends ApiConfig {
               headers: Map[String, String] = Map(),
               contentType: String = MediaType.APPLICATION_JSON): Response = {
     val res = response(path, queryParams, headers).post(Entity.entity(obj, contentType))
-    if(res.getStatus != 200) throw new RESTException(error(res))
+    if(res.getStatus >= 400 && res.getStatus < 600) throw new RESTException(error(res))
     res
   }
 

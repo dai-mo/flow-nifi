@@ -25,8 +25,6 @@ trait NifiApiConfig extends ApiConfig {
   }
 
   def errorWithNifiMessage(response: Response, code: String): ErrorResponse = {
-    val er = ErrorConstants.getErrorResponse(code)
-    println(response.readEntity(classOf[String]))
-    er
+    ErrorConstants.getErrorResponse(code)
   }
 }

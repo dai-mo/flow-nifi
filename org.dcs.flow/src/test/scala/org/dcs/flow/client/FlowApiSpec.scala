@@ -67,7 +67,7 @@ trait FlowApiBehaviors { this: FlatSpec =>
 
   def validateFlowInstantiation(flowClient: NifiFlowClient) {
     val flow = flowClient.instantiate(templateId)
-    JsonUtil.prettyPrint(flow.toJson)
+    //JsonUtil.prettyPrint(flow.toJson)
     assert(flow.processors.size == 3)
     assert(flow.connections.size == 3)
   }
@@ -77,6 +77,6 @@ trait FlowApiBehaviors { this: FlatSpec =>
     val thrown = intercept[RESTException] {
       flowClient.instantiate(invalidTemplateId)
     }
-    assert(thrown.getErrorResponse.getHttpStatusCode == 401)
+    assert(thrown.getErrorResponse.getHttpStatusCode == 404)
   }
 }
