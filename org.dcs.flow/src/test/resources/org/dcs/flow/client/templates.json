@@ -1,0 +1,43 @@
+{
+  "revision" : {
+    "clientId" : "665f262d-c8e0-4ef8-a308-2d202d92b98c"
+  },
+  "templates" : [ {
+    "uri" : "http://localhost:8888/nifi-api/controller/templates/9349e014-1b87-4dba-b8e6-1cb527040d5a",
+    "id" : "9349e014-1b87-4dba-b8e6-1cb527040d5a",
+    "name" : "TwitterCopy",
+    "description" : "",
+    "timestamp" : "05/26/2016 16:53:41 CEST"
+  }, {
+    "uri" : "http://localhost:8888/nifi-api/controller/templates/d615fb63-bc39-458c-bfcf-1f197ecdc817",
+    "id" : "d615fb63-bc39-458c-bfcf-1f197ecdc817",
+    "name" : "Pull from Twitter Garden Hose",
+    "description" : "\n  ",
+    "timestamp" : "05/26/2016 15:26:57 CEST"
+  }, {
+    "uri" : "http://localhost:8888/nifi-api/controller/templates/cce5f8d7-43b5-413b-97e8-66c2a9d53c50",
+    "id" : "cce5f8d7-43b5-413b-97e8-66c2a9d53c50",
+    "name" : "test",
+    "description" : "test",
+    "timestamp" : "05/26/2016 14:55:20 CEST"
+  }, {
+    "uri" : "http://localhost:8888/nifi-api/controller/templates/6cf03005-5522-4b5d-a77e-58ed522f2014",
+    "id" : "6cf03005-5522-4b5d-a77e-58ed522f2014",
+    "name" : "CsvToJSON",
+    "description" : "\n  ",
+    "timestamp" : "05/26/2016 15:22:58 CEST"
+  }, {
+    "uri" : "http://localhost:8888/nifi-api/controller/templates/05572253-09a7-406a-ad27-d3939de50f9c",
+    "id" : "05572253-09a7-406a-ad27-d3939de50f9c",
+    "name" : "Working With CSV",
+    "description" : "",
+    "timestamp" : "05/31/2016 23:05:47 CEST"
+  }, {
+    "uri" : "http://localhost:8888/nifi-api/controller/templates/d73b5a44-5968-47d5-9a9a-aea5664c5835",
+    "id" : "d73b5a44-5968-47d5-9a9a-aea5664c5835",
+    "name" : "DateConversion",
+    "description" : "",
+    "timestamp" : "05/31/2016 23:05:51 CEST"
+  } ],
+  "generated" : "00:17:46 CEST"
+}

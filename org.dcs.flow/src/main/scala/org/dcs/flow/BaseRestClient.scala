@@ -1,7 +1,6 @@
 package org.dcs.flow
 
-import javax.ws.rs.core.Response
-import javax.ws.rs.core.MediaType
+import javax.ws.rs.core.{Form, MediaType, Response}
 import javax.ws.rs.client.{ClientBuilder, ClientRequestFilter, Entity}
 import javax.ws.rs.client.Invocation.Builder
 
@@ -33,7 +32,7 @@ trait BaseRestClient extends ApiConfig {
           queryParams: Map[String, String] = Map(),
           headers: Map[String, String] = Map()): Response = {
     val res = response(path, queryParams, headers).get
-    if(res.getStatus != 200) throw new RESTException(error(res))
+    if(res.getStatus >= 400 && res.getStatus < 600) throw new RESTException(error(res))
     res
   }
 
@@ -45,23 +44,25 @@ trait BaseRestClient extends ApiConfig {
   }
 
   def put[T](path: String,
-             obj: T = Entity.json(null),
+             obj: T = new Form,
              queryParams: Map[String, String] = Map(),
-             headers: Map[String, String] = Map()): Response = {
-    val res = response(path, queryParams, headers).put(Entity.entity(obj, MediaType.APPLICATION_JSON))
-    if(res.getStatus != 200) throw new RESTException(error(res))
+             headers: Map[String, String] = Map(),
+             contentType: String = MediaType.APPLICATION_JSON): Response = {
+    val res = response(path, queryParams, headers).put(Entity.entity(obj, contentType))
+    if(res.getStatus >= 400 && res.getStatus < 600) throw new RESTException(error(res))
     res
   }
 
   def putAsJson[T](path: String,
-                   obj: T = Entity.json(null),
+                   obj: T = new Form,
                    queryParams: Map[String, String] = Map(),
-                   headers: Map[String, String] = Map()): String = {
-    put(path, obj, queryParams, headers).readEntity(classOf[String])
+                   headers: Map[String, String] = Map(),
+                   contentType: String = MediaType.APPLICATION_JSON): String = {
+    put(path, obj, queryParams, headers, contentType).readEntity(classOf[String])
   }
 
   def post[T](path: String,
-              obj: T = Entity.json(null),
+              obj: T = new Form,
               queryParams: Map[String, String] = Map(),
               headers: Map[String, String] = Map(),
               contentType: String = MediaType.APPLICATION_JSON): Response = {
@@ -71,7 +72,7 @@ trait BaseRestClient extends ApiConfig {
   }
 
   def postAsJson[T](path: String,
-                    obj: T = Entity.json(null),
+                    obj: T = new Form,
                     queryParams: Map[String, String] = Map(),
                     headers: Map[String, String] = Map(),
                     contentType: String = MediaType.APPLICATION_JSON): String = {
@@ -82,7 +83,7 @@ trait BaseRestClient extends ApiConfig {
              queryParams: Map[String, String] = Map(),
              headers: Map[String, String] = Map()): Response = {
     val res = response(path, queryParams, headers).delete
-    if(res.getStatus != 200) throw new RESTException(error(res))
+    if(res.getStatus >= 400 && res.getStatus < 600) throw new RESTException(error(res))
     res
   }
 

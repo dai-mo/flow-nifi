@@ -24,31 +24,26 @@ object FlowApiSpec {
 class FlowApiSpec extends RestBaseUnitSpec with FlowApiBehaviors {
   import FlowApiSpec._
 
-  val templatePath: Path = Paths.get(this.getClass().getResource("twitter-template.json").toURI())
-
-  val flowClient = spy(new NifiFlowApi())
-
-  val queryParams = Map(
-    "templateId" -> templateId,
-    "originX" -> "17",
-    "originY" -> "100"
-  )
-  doReturn(jsonFromFile(templatePath.toFile)).
-    when(flowClient).
-    postAsJson(
-      Matchers.eq(NifiFlowClient.TemplateInstancePath),
-      Matchers.any[Form],
-      Matchers.eq(queryParams),
-      Matchers.any[Map[String, String]],
-      Matchers.eq(MediaType.APPLICATION_FORM_URLENCODED)
-    )
-
-  doReturn(0.0.toLong).
-    when(flowClient).
-    currentVersion()
-
 
   "Flow Instantiation for existing template id" must " be valid " in {
+
+    val templatePath: Path = Paths.get(this.getClass().getResource("dateconv-template.json").toURI())
+    val flowClient = spy(new NifiFlowApi())
+
+    doReturn(jsonFromFile(templatePath.toFile)).
+      when(flowClient).
+      postAsJson(
+        Matchers.eq(NifiFlowClient.TemplateInstancePath),
+        Matchers.any[Form],
+        Matchers.any[Map[String, String]],
+        Matchers.any[Map[String, String]],
+        Matchers.eq(MediaType.APPLICATION_FORM_URLENCODED)
+      )
+
+    doReturn(0.0.toLong).
+      when(flowClient).
+      currentVersion()
+
     validateFlowInstantiation(flowClient)
   }
 
@@ -62,15 +57,17 @@ trait FlowApiBehaviors { this: FlatSpec =>
 
   val logger: Logger = LoggerFactory.getLogger(classOf[FlowApiSpec])
 
+  def validateTemplates(flowClient: NifiFlowClient): Unit = {
+
+  }
+
   def validateFlowInstantiation(flowClient: NifiFlowClient) {
     val flow = flowClient.instantiate(templateId)
-    //JsonUtil.prettyPrint(flow.toJson)
-    assert(flow.processors.size == 3)
-    assert(flow.connections.size == 3)
+    assert(flow.processors.size == 5)
+    assert(flow.connections.size == 4)
   }
 
   def validateNonExistingFlowInstantiation(flowClient: NifiFlowClient) {
-
     val thrown = intercept[RESTException] {
       flowClient.instantiate(invalidTemplateId)
     }

@@ -11,5 +11,9 @@ class ProcessorApiISpec extends RestBaseUnitSpec with ProcessorApiBehaviors {
   "Int. Processor Types" must " be valid " taggedAs(IT) in {    
     validateProcessorTypes(new NifiProcessorApi())
   }
+
+  "Int. Processor Start" must " be valid " taggedAs(IT) in {
+    //validateProcessorStart(new NifiProcessorApi())
+  }
   
 }

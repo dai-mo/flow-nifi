@@ -16,7 +16,7 @@ import org.slf4j.{Logger, LoggerFactory}
 object ProcessorApiSpec {
   class NifiProcessorApi extends ProcessorApi
     with NifiProcessorClient
-    with NifiApiConfig 
+    with NifiApiConfig
 }
 
 class ProcessorApiSpec extends RestBaseUnitSpec with ProcessorApiBehaviors {
@@ -24,13 +24,12 @@ class ProcessorApiSpec extends RestBaseUnitSpec with ProcessorApiBehaviors {
   import ProcessorApiSpec._
 
 
-  val typesPath: Path = Paths.get(this.getClass().getResource("types.json").toURI())
-  val processorClient = Mockito.spy(new NifiProcessorApi())
-  doReturn(jsonFromFile(typesPath.toFile)).
-    when(processorClient).
-    getAsJson(NifiProcessorClient.TypesPath, Map(), Map())
-  
   "Processor Types" must " be valid " in {
+    val typesPath: Path = Paths.get(this.getClass().getResource("types.json").toURI())
+    val processorClient = Mockito.spy(new NifiProcessorApi())
+    doReturn(jsonFromFile(typesPath.toFile)).
+      when(processorClient).
+      getAsJson(NifiProcessorClient.TypesPath, Map(), Map())
     validateProcessorTypes(processorClient)
   }
 }
@@ -40,8 +39,12 @@ trait ProcessorApiBehaviors { this: FlatSpec =>
 
   val logger: Logger = LoggerFactory.getLogger(classOf[ProcessorApiSpec])
 
-  def validateProcessorTypes(processorClient: NifiProcessorClient) {
-      val types = processorClient.types()
-      assert(types.size == 135)
+  def validateProcessorTypes(processorApi: NifiProcessorApi) {
+    val types = processorApi.types()
+    assert(types.size == 135)
+  }
+
+  def validateProcessorStart(processorApi: NifiProcessorApi, processorId: String): Unit = {
+    processorApi.start(processorId)
   }
 }

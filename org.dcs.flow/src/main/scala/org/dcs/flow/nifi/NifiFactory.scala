@@ -1,8 +1,8 @@
 package org.dcs.flow.nifi
 
-import org.apache.nifi.web.api.dto.{ConnectionDTO, DocumentedTypeDTO, ProcessorDTO}
+import org.apache.nifi.web.api.dto.{ConnectionDTO, DocumentedTypeDTO, ProcessorDTO, TemplateDTO}
 import org.apache.nifi.web.api.entity.FlowSnippetEntity
-import org.dcs.flow.model.{Connection, Flow, ProcessorInstance, ProcessorType}
+import org.dcs.flow.model._
 
 import scala.collection.JavaConversions._
 import scala.collection.JavaConverters._
@@ -11,17 +11,26 @@ import scala.collection.JavaConverters._
   * Created by cmathew on 30/05/16.
   */
 
+object FlowTemplate {
+  def apply(template: TemplateDTO): FlowTemplate = {
+    val flowTemplate = new FlowTemplate
+    flowTemplate.id = template.getId
+    flowTemplate
+  }
+}
 
-object Flow {
-  def apply(flowSnippet: FlowSnippetEntity): Flow = {
-    val f = new Flow
+object FlowInstance {
+  def apply(flowSnippet: FlowSnippetEntity): FlowInstance = {
+    val f = new FlowInstance
     val contents = flowSnippet.getContents
     f.processors = contents.getProcessors.map(p => ProcessorInstance(p)).toList
     f.connections = contents.getConnections.map(c => Connection(c)).toList
     f
   }
 }
+
 object ProcessorInstance {
+
   def apply(processorDTO: ProcessorDTO): ProcessorInstance = {
     val processorInstance = new ProcessorInstance
     processorInstance.id = processorDTO.getId

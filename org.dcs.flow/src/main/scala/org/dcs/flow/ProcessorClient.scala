@@ -1,12 +1,13 @@
 package org.dcs.flow
 
-import org.dcs.api.model.Processor
-import org.dcs.flow.model.ProcessorType
+import org.dcs.flow.model.{ProcessorInstance, ProcessorType}
 
 trait ProcessorClient {
   
   def types(): List[ProcessorType]
 
-  def start(processorId: String): Processor
-  
+  def create(name: String, ptype: String): ProcessorInstance
+
+  def start(processorId: String): ProcessorInstance
+
 }

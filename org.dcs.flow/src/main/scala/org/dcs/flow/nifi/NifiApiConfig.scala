@@ -21,7 +21,12 @@ trait NifiApiConfig extends ApiConfig {
     case 403 => errorWithNifiMessage(response, "DCS303")
     case 404 => errorWithNifiMessage(response, "DCS304")
     case 409 => errorWithNifiMessage(response, "DCS305")
-    case _ => errorWithNifiMessage(response, "DCS001")
+    case _ => {
+      val er = ErrorConstants.getErrorResponse("DCS001")
+      er.setHttpStatusCode(response.getStatus)
+      er.setMessage(response.readEntity(classOf[String]))
+      er
+    }
   }
 
   def errorWithNifiMessage(response: Response, code: String): ErrorResponse = {

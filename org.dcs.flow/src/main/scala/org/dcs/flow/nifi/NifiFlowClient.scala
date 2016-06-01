@@ -2,10 +2,11 @@ package org.dcs.flow.nifi
 
 import javax.ws.rs.core.{Form, MediaType}
 
-import org.apache.nifi.web.api.entity.FlowSnippetEntity
-import org.dcs.flow.model.Flow
+import org.apache.nifi.web.api.entity.{FlowSnippetEntity, TemplatesEntity}
+import org.dcs.flow.model.{FlowInstance, FlowTemplate}
 import org.dcs.flow.FlowClient
 import org.dcs.commons.JsonSerializerImplicits._
+import scala.collection.JavaConverters._
 
 
 /**
@@ -14,11 +15,18 @@ import org.dcs.commons.JsonSerializerImplicits._
 
 object NifiFlowClient {
   val TemplateInstancePath = "/controller/process-groups/root/template-instance"
+  val TemplatesPath = "/controller/templates"
 }
+
 trait NifiFlowClient extends FlowClient with NifiBaseRestClient {
   import NifiFlowClient._
 
-  def instantiate(flowTemplateId:String ):Flow = {
+  def templates():List[FlowTemplate] = {
+    val templates = getAsJson(TemplatesPath).toObject[TemplatesEntity]
+    templates.getTemplates.asScala.map(t => FlowTemplate(t)).toList
+  }
+
+  def instantiate(flowTemplateId:String ):FlowInstance = {
 
     val queryParams = Map(
       "templateId" -> flowTemplateId,
@@ -33,6 +41,6 @@ trait NifiFlowClient extends FlowClient with NifiBaseRestClient {
       MediaType.APPLICATION_FORM_URLENCODED
     ).toObject[FlowSnippetEntity]
 
-    Flow(flowSnippet)
+    FlowInstance(flowSnippet)
   }
 }
