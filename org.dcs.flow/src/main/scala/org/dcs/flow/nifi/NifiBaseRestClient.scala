@@ -2,10 +2,10 @@ package org.dcs.flow.nifi
 
 import java.util.UUID
 import javax.ws.rs.client.Invocation.Builder
+import javax.ws.rs.core.{Form, MediaType, Response}
 
 import org.apache.nifi.web.api.entity.Entity
 import org.dcs.flow.BaseRestClient
-
 import org.dcs.commons.JsonSerializerImplicits._
 
 /**
@@ -13,7 +13,7 @@ import org.dcs.commons.JsonSerializerImplicits._
   */
 object NifiBaseRestClient {
   val RevisionPath = "/controller/revision"
-  val clientId = UUID.randomUUID().toString
+  val ClientIdKey = "clientId"
 }
 
 trait NifiBaseRestClient extends BaseRestClient {
@@ -26,11 +26,12 @@ trait NifiBaseRestClient extends BaseRestClient {
     readEntity(classOf[String]).
     toObject[Entity].getRevision.getVersion
 
-  override def response(path: String,
-                        queryParams: Map[String, String],
-                        headers: Map[String, String]): Builder = {
-    super.response(path,
-      queryParams + ("clientId" -> clientId) + ("version" -> currentVersion.toString),
-      headers)
+  override def response(nifiPath: String,
+                        nifiQueryParams: List[(String, String)] = List(),
+                        nifiHeaders: List[(String, String)] = List()): Builder = {
+    super.response(nifiPath,
+      ("version", currentVersion.toString) :: nifiQueryParams,
+      nifiHeaders)
   }
+
 }

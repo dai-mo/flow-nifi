@@ -13,8 +13,9 @@ trait BaseRestClient extends ApiConfig {
   val client = ClientBuilder.newClient()
 
   def response(path: String,
-               queryParams: Map[String, String] = Map(),
-               headers: Map[String, String] = Map()): Builder = {
+               queryParams: List[(String, String)] = List(),
+               headers: List[(String, String)]= List()
+              ): Builder = {
     var target = client.target(baseUrl)
     if(!queryParams.isEmpty)  queryParams.foreach(x => target = target.queryParam(x._1, x._2))
 
@@ -29,8 +30,8 @@ trait BaseRestClient extends ApiConfig {
   }
 
   def get(path: String,
-          queryParams: Map[String, String] = Map(),
-          headers: Map[String, String] = Map()): Response = {
+          queryParams: List[(String, String)] = List(),
+          headers: List[(String, String)] = List()): Response = {
     val res = response(path, queryParams, headers).get
     if(res.getStatus >= 400 && res.getStatus < 600) throw new RESTException(error(res))
     res
@@ -38,15 +39,15 @@ trait BaseRestClient extends ApiConfig {
 
 
   def getAsJson(path: String,
-                queryParams: Map[String, String] = Map(),
-                headers: Map[String, String] = Map()): String = {
+                queryParams: List[(String, String)] = List(),
+                headers: List[(String, String)] = List()): String = {
     get(path, queryParams, headers).readEntity(classOf[String])
   }
 
   def put[T](path: String,
              obj: T = new Form,
-             queryParams: Map[String, String] = Map(),
-             headers: Map[String, String] = Map(),
+             queryParams: List[(String, String)] = List(),
+             headers: List[(String, String)] = List(),
              contentType: String = MediaType.APPLICATION_JSON): Response = {
     val res = response(path, queryParams, headers).put(Entity.entity(obj, contentType))
     if(res.getStatus >= 400 && res.getStatus < 600) throw new RESTException(error(res))
@@ -55,16 +56,16 @@ trait BaseRestClient extends ApiConfig {
 
   def putAsJson[T](path: String,
                    obj: T = new Form,
-                   queryParams: Map[String, String] = Map(),
-                   headers: Map[String, String] = Map(),
+                   queryParams: List[(String, String)] = List(),
+                   headers: List[(String, String)] = List(),
                    contentType: String = MediaType.APPLICATION_JSON): String = {
     put(path, obj, queryParams, headers, contentType).readEntity(classOf[String])
   }
 
   def post[T](path: String,
               obj: T = new Form,
-              queryParams: Map[String, String] = Map(),
-              headers: Map[String, String] = Map(),
+              queryParams: List[(String, String)] = List(),
+              headers: List[(String, String)] = List(),
               contentType: String = MediaType.APPLICATION_JSON): Response = {
     val res = response(path, queryParams, headers).post(Entity.entity(obj, contentType))
     if(res.getStatus >= 400 && res.getStatus < 600) throw new RESTException(error(res))
@@ -73,23 +74,23 @@ trait BaseRestClient extends ApiConfig {
 
   def postAsJson[T](path: String,
                     obj: T = new Form,
-                    queryParams: Map[String, String] = Map(),
-                    headers: Map[String, String] = Map(),
+                    queryParams: List[(String, String)] = List(),
+                    headers: List[(String, String)] = List(),
                     contentType: String = MediaType.APPLICATION_JSON): String = {
     post(path, obj, queryParams, headers, contentType).readEntity(classOf[String])
   }
 
   def delete(path: String,
-             queryParams: Map[String, String] = Map(),
-             headers: Map[String, String] = Map()): Response = {
+             queryParams: List[(String, String)] = List(),
+             headers: List[(String, String)] = List()): Response = {
     val res = response(path, queryParams, headers).delete
     if(res.getStatus >= 400 && res.getStatus < 600) throw new RESTException(error(res))
     res
   }
 
   def deleteAsJson(path: String,
-                   queryParams: Map[String, String] = Map(),
-                   headers: Map[String, String] = Map()): String = {
+                   queryParams: List[(String, String)] = List(),
+                   headers: List[(String, String)] = List()): String = {
     delete(path, queryParams, headers).readEntity(classOf[String])
   }
 

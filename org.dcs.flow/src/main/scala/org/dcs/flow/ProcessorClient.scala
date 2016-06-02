@@ -4,10 +4,12 @@ import org.dcs.flow.model.{ProcessorInstance, ProcessorType}
 
 trait ProcessorClient {
   
-  def types(): List[ProcessorType]
+  def types(clientToken: String): List[ProcessorType]
 
-  def create(name: String, ptype: String): ProcessorInstance
+  def create(name: String, ptype: String, clientToken: String): ProcessorInstance
 
-  def start(processorId: String): ProcessorInstance
+  def start(processorId: String, clientToken: String): ProcessorInstance
+
+  def remove(processorId: String, clientToken: String): Boolean
 
 }

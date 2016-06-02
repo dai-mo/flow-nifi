@@ -1,3 +1,5 @@
+import java.util.UUID
+
 import org.dcs.commons.JsonSerializerImplicits._
 import org.dcs.commons.JsonUtil
 import org.dcs.flow.client.FlowApi
@@ -8,17 +10,27 @@ object NifiFlowApi extends FlowApi
   with NifiFlowClient
   with NifiApiConfig
 
-
+val clientId = UUID.randomUUID.toString
 NifiFlowApi.requestFilter(new LoggingFilter())
 
-val templates = NifiFlowApi.templates
-JsonUtil.prettyPrint(templates.toJson)
-
+//val templates = NifiFlowApi.templates
+//JsonUtil.prettyPrint(templates.toJson)
+//
 val templateId = "d73b5a44-5968-47d5-9a9a-aea5664c5835"
-val flowInstance = NifiFlowApi.instantiate(templateId)
-JsonUtil.prettyPrint(flowInstance.toJson)
+//val flowInstance = NifiFlowApi.instantiate(templateId, clientId)
+//flowInstance.toJsonP
 
-val processor = flowInstance.processors.head
-val processorInstance = NifiProcessorApi.start(processor.id)
+
+val response = NifiFlowApi.remove("root", clientId)
+
+//val flowInstance = NifiFlowApi.instance("root")
+//JsonUtil.prettyPrint(flowInstance.toJson)
+
+//NifiFlowApi.delete("root")
+
+//val flowInstance = NifiFlowApi.instance("root", clientId)
+//flowInstance.toJsonP
+
+
 
 
