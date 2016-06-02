@@ -5,7 +5,7 @@ lazy val dcsnifi = (project in file(".")).
   settings(commonSettings: _*).
   settings(
     name := "org.dcs.nifi.parent"
-  ).aggregate(servicesapi, services, processors)
+  ).aggregate(servicesapi, services, processors, flow)
 
 
 

@@ -79,7 +79,7 @@ trait NifiFlowClient extends FlowClient with NifiBaseRestClient {
     val flowInstance = instance(flowInstanceId, clientId)
 
     val registeredFlowInstance = register(flowInstance, flowInstanceId, clientId)
-    
+
     val response = deleteAsJson(path = SnippetsPath + "/" + registeredFlowInstance.id,
       queryParams = (ClientIdKey -> clientId) :: Nil)
 
