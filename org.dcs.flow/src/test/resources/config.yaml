@@ -1,0 +1,2 @@
+zookeeperServers: localhost:2181
+nifiBaseUrl: http://localhost:8888/nifi-api

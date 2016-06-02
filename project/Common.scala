@@ -14,7 +14,7 @@ object Common {
 	lazy val commonSettings = Seq(
 			organization := "org.dcs",
 			version := dcsNifiVersion,
-			scalaVersion := scVersion,
+			scalaVersion := "2.11.7",
 			crossPaths := false,
 			checksums in update := Nil,
 			javacOptions ++= Seq("-source", "1.8", "-target", "1.8", "-Xlint:unchecked"),
@@ -32,6 +32,6 @@ object Common {
 						Tests.Argument("-l", "IT"),
 						Tests.Argument("-l", "E2E")
 					)
-				)				
+				)
 			)
 }

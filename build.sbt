@@ -5,7 +5,7 @@ lazy val dcsnifi = (project in file(".")).
   settings(commonSettings: _*).
   settings(
     name := "org.dcs.nifi.parent"
-  ).aggregate(servicesapi, services, processors)
+  ).aggregate(servicesapi, services, processors, flow)
 
 
 
@@ -33,6 +33,19 @@ lazy val services = (
     name := servicesProjectName,
     moduleName := servicesProjectName,
     libraryDependencies ++= servicesDependencies
+  )
+)
+
+lazy val flowProjectName = "org.dcs.flow"
+lazy val flowProjectID   = "flow"
+
+lazy val flow = (
+  BaseProject(flowProjectID, flowProjectName).
+  settings(commonSettings: _*).
+  settings(
+    name := flowProjectName,
+    moduleName := flowProjectName,
+    libraryDependencies ++= flowDependencies
   )
 )
 

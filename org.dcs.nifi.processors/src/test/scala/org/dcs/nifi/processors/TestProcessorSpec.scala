@@ -1,14 +1,12 @@
 package org.dcs.nifi.processors
 
-import org.dcs.nifi.processors.ProcessorsBaseUnitSpec
-import org.apache.nifi.util.TestRunners
-import org.apache.nifi.util.TestRunner
 import org.apache.nifi.util.MockFlowFile
-import org.dcs.remote.ZookeeperServiceTracker
-import org.dcs.remote.RemoteService
+import org.apache.nifi.util.TestRunner
+import org.apache.nifi.util.TestRunners
 import org.dcs.core.module.flow.TestFlowModule
+import org.dcs.nifi.processors.TestProcessorSpec.testProcessor
+import org.dcs.remote.RemoteService
 import org.scalatest.FlatSpec
-import org.dcs.nifi.processors.TestProcessorSpec._
 
 object TestProcessorSpec {
   object MockRemoteService extends RemoteService with MockZookeeperServiceTracker

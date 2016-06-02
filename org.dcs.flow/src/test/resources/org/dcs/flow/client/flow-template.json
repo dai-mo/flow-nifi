@@ -1,0 +1,883 @@
+{
+  "revision" : {
+    "clientId" : "29474d0f-3e21-4136-90fd-ad4e2c613afb",
+    "version" : 31
+  },
+  "contents" : {
+    "processGroups" : [ ],
+    "remoteProcessGroups" : [ ],
+    "processors" : [ {
+      "id" : "aee1eac7-f1b3-45b5-b4c4-4ec5a850e8ea",
+      "uri" : "http://localhost:8888/nifi-api/controller/process-groups/34c0febd-d9c2-48f7-988b-97e6b59cf96e/processors/aee1eac7-f1b3-45b5-b4c4-4ec5a850e8ea",
+      "position" : {
+        "x" : 27.9986572265625,
+        "y" : 817.015266418457
+      },
+      "parentGroupId" : "34c0febd-d9c2-48f7-988b-97e6b59cf96e",
+      "name" : "LogAttribute",
+      "type" : "org.apache.nifi.processors.standard.LogAttribute",
+      "state" : "STOPPED",
+      "style" : { },
+      "relationships" : [ {
+        "name" : "success",
+        "description" : "All FlowFiles are routed to this relationship",
+        "autoTerminate" : true
+      } ],
+      "supportsParallelProcessing" : true,
+      "supportsEventDriven" : true,
+      "config" : {
+        "properties" : {
+          "Log prefix" : null,
+          "Log Level" : null,
+          "Attributes to Ignore" : null,
+          "Attributes to Log" : null,
+          "Log Payload" : "true"
+        },
+        "descriptors" : {
+          "Log prefix" : {
+            "name" : "Log prefix",
+            "displayName" : "Log prefix",
+            "description" : "Log prefix appended to the log lines. It helps to distinguish the output of multiple LogAttribute processors.",
+            "required" : false,
+            "sensitive" : false,
+            "dynamic" : false,
+            "supportsEl" : true
+          },
+          "Log Level" : {
+            "name" : "Log Level",
+            "displayName" : "Log Level",
+            "description" : "The Log Level to use when logging the Attributes",
+            "defaultValue" : "info",
+            "allowableValues" : [ {
+              "displayName" : "trace",
+              "value" : "trace"
+            }, {
+              "displayName" : "debug",
+              "value" : "debug"
+            }, {
+              "displayName" : "info",
+              "value" : "info"
+            }, {
+              "displayName" : "warn",
+              "value" : "warn"
+            }, {
+              "displayName" : "error",
+              "value" : "error"
+            } ],
+            "required" : true,
+            "sensitive" : false,
+            "dynamic" : false,
+            "supportsEl" : false
+          },
+          "Attributes to Ignore" : {
+            "name" : "Attributes to Ignore",
+            "displayName" : "Attributes to Ignore",
+            "description" : "A comma-separated list of Attributes to ignore. If not specified, no attributes will be ignored.",
+            "required" : false,
+            "sensitive" : false,
+            "dynamic" : false,
+            "supportsEl" : false
+          },
+          "Attributes to Log" : {
+            "name" : "Attributes to Log",
+            "displayName" : "Attributes to Log",
+            "description" : "A comma-separated list of Attributes to Log. If not specified, all attributes will be logged.",
+            "required" : false,
+            "sensitive" : false,
+            "dynamic" : false,
+            "supportsEl" : false
+          },
+          "Log Payload" : {
+            "name" : "Log Payload",
+            "displayName" : "Log Payload",
+            "description" : "If true, the FlowFile's payload will be logged, in addition to its attributes; otherwise, just the Attributes will be logged.",
+            "defaultValue" : "false",
+            "allowableValues" : [ {
+              "displayName" : "true",
+              "value" : "true"
+            }, {
+              "displayName" : "false",
+              "value" : "false"
+            } ],
+            "required" : true,
+            "sensitive" : false,
+            "dynamic" : false,
+            "supportsEl" : false
+          }
+        },
+        "schedulingPeriod" : "0 sec",
+        "schedulingStrategy" : "TIMER_DRIVEN",
+        "penaltyDuration" : "30 sec",
+        "yieldDuration" : "1 sec",
+        "bulletinLevel" : "WARN",
+        "runDurationMillis" : 0,
+        "concurrentlySchedulableTaskCount" : 1,
+        "comments" : "",
+        "lossTolerant" : false,
+        "defaultConcurrentTasks" : {
+          "TIMER_DRIVEN" : "1",
+          "EVENT_DRIVEN" : "0",
+          "CRON_DRIVEN" : "1"
+        },
+        "defaultSchedulingPeriod" : {
+          "TIMER_DRIVEN" : "0 sec",
+          "CRON_DRIVEN" : "* * * * * ?"
+        }
+      }
+    }, {
+      "id" : "30627450-069c-4474-abdd-0a9ec7996b2a",
+      "uri" : "http://localhost:8888/nifi-api/controller/process-groups/34c0febd-d9c2-48f7-988b-97e6b59cf96e/processors/30627450-069c-4474-abdd-0a9ec7996b2a",
+      "position" : {
+        "x" : 26.9986572265625,
+        "y" : 645.015266418457
+      },
+      "parentGroupId" : "34c0febd-d9c2-48f7-988b-97e6b59cf96e",
+      "name" : "Replace Content with new Date",
+      "type" : "org.apache.nifi.processors.standard.ReplaceText",
+      "state" : "STOPPED",
+      "style" : { },
+      "relationships" : [ {
+        "name" : "failure",
+        "description" : "FlowFiles that could not be updated are routed to this relationship",
+        "autoTerminate" : true
+      }, {
+        "name" : "success",
+        "description" : "FlowFiles that have been successfully processed are routed to this relationship. This includes both FlowFiles that had text replaced and those that did not.",
+        "autoTerminate" : false
+      } ],
+      "supportsParallelProcessing" : true,
+      "supportsEventDriven" : true,
+      "config" : {
+        "properties" : {
+          "Regular Expression" : "(\\d{2}-\\d{2}-\\d{4} \\d{2}\\.\\d{2}\\.\\d{2})",
+          "Replacement Value" : "${date:toDate(\"dd-MM-yyyy HH.mm.ss\"):format(\"yyyy-MM-dd HH:mm:ss+0000\")}",
+          "Evaluation Mode" : null,
+          "Character Set" : null,
+          "Maximum Buffer Size" : null,
+          "Replacement Strategy" : null
+        },
+        "descriptors" : {
+          "Regular Expression" : {
+            "name" : "Regular Expression",
+            "displayName" : "Search Value",
+            "description" : "The Search Value to search for in the FlowFile content. Only used for 'Literal Replace' and 'Regex Replace' matching strategies",
+            "defaultValue" : "(?s:^.*$)",
+            "required" : true,
+            "sensitive" : false,
+            "dynamic" : false,
+            "supportsEl" : true
+          },
+          "Replacement Value" : {
+            "name" : "Replacement Value",
+            "displayName" : "Replacement Value",
+            "description" : "The value to insert using the 'Replacement Strategy'. Using \"Regex Replace\" back-references to Regular Expression capturing groups are supported, but back-references that reference capturing groups that do not exist in the regular expression will be treated as literal value. Back References may also be referenced using the Expression Language, as '$1', '$2', etc. The single-tick marks MUST be included, as these variables are not \"Standard\" attribute names (attribute names must be quoted unless they contain only numbers, letters, and _).",
+            "defaultValue" : "$1",
+            "required" : true,
+            "sensitive" : false,
+            "dynamic" : false,
+            "supportsEl" : true
+          },
+          "Evaluation Mode" : {
+            "name" : "Evaluation Mode",
+            "displayName" : "Evaluation Mode",
+            "description" : "Run the 'Replacement Strategy' against each line separately (Line-by-Line) or buffer the entire file into memory (Entire Text) and run against that.",
+            "defaultValue" : "Entire text",
+            "allowableValues" : [ {
+              "displayName" : "Line-by-Line",
+              "value" : "Line-by-Line"
+            }, {
+              "displayName" : "Entire text",
+              "value" : "Entire text"
+            } ],
+            "required" : true,
+            "sensitive" : false,
+            "dynamic" : false,
+            "supportsEl" : false
+          },
+          "Character Set" : {
+            "name" : "Character Set",
+            "displayName" : "Character Set",
+            "description" : "The Character Set in which the file is encoded",
+            "defaultValue" : "UTF-8",
+            "required" : true,
+            "sensitive" : false,
+            "dynamic" : false,
+            "supportsEl" : false
+          },
+          "Maximum Buffer Size" : {
+            "name" : "Maximum Buffer Size",
+            "displayName" : "Maximum Buffer Size",
+            "description" : "Specifies the maximum amount of data to buffer (per file or per line, depending on the Evaluation Mode) in order to apply the replacement. If 'Entire Text' (in Evaluation Mode) is selected and the FlowFile is larger than this value, the FlowFile will be routed to 'failure'. In 'Line-by-Line' Mode, if a single line is larger than this value, the FlowFile will be routed to 'failure'. A default value of 1 MB is provided, primarily for 'Entire Text' mode. In 'Line-by-Line' Mode, a value such as 8 KB or 16 KB is suggested. This value is ignored if the <Replacement Strategy> property is set to one of: Append, Prepend, Always Replace",
+            "defaultValue" : "1 MB",
+            "required" : true,
+            "sensitive" : false,
+            "dynamic" : false,
+            "supportsEl" : false
+          },
+          "Replacement Strategy" : {
+            "name" : "Replacement Strategy",
+            "displayName" : "Replacement Strategy",
+            "description" : "The strategy for how and what to replace within the FlowFile's text content.",
+            "defaultValue" : "Regex Replace",
+            "allowableValues" : [ {
+              "displayName" : "Prepend",
+              "value" : "Prepend",
+              "description" : "Insert the Replacement Value at the beginning of the FlowFile or the beginning of each line (depending on the Evaluation Mode). For \"Line-by-Line\" Evaluation Mode, the value will be prepended to each line. For \"Entire Text\" evaluation mode, the value will be prepended to the entire text."
+            }, {
+              "displayName" : "Append",
+              "value" : "Append",
+              "description" : "Insert the Replacement Value at the end of the FlowFile or the end of each line (depending on the Evluation Mode). For \"Line-by-Line\" Evaluation Mode, the value will be appended to each line. For \"Entire Text\" evaluation mode, the value will be appended to the entire text."
+            }, {
+              "displayName" : "Regex Replace",
+              "value" : "Regex Replace",
+              "description" : "Interpret the Search Value as a Regular Expression and replace all matches with the Replacement Value. The Replacement Value may reference Capturing Groups used in the Search Value by using a dollar-sign followed by the Capturing Group number, such as $1 or $2. If the Search Value is set to .* then everything is replaced without even evaluating the Regular Expression."
+            }, {
+              "displayName" : "Literal Replace",
+              "value" : "Literal Replace",
+              "description" : "Search for all instances of the Search Value and replace the matches with the Replacement Value."
+            }, {
+              "displayName" : "Always Replace",
+              "value" : "Always Replace",
+              "description" : "Always replaces the entire line or the entire contents of the FlowFile (depending on the value of the <Evaluation Mode> property) and does not bother searching for any value. When this strategy is chosen, the <Search Value> property is ignored."
+            } ],
+            "required" : true,
+            "sensitive" : false,
+            "dynamic" : false,
+            "supportsEl" : false
+          }
+        },
+        "schedulingPeriod" : "0 sec",
+        "schedulingStrategy" : "TIMER_DRIVEN",
+        "penaltyDuration" : "30 sec",
+        "yieldDuration" : "1 sec",
+        "bulletinLevel" : "WARN",
+        "runDurationMillis" : 0,
+        "concurrentlySchedulableTaskCount" : 1,
+        "comments" : "",
+        "lossTolerant" : false,
+        "defaultConcurrentTasks" : {
+          "TIMER_DRIVEN" : "1",
+          "EVENT_DRIVEN" : "0",
+          "CRON_DRIVEN" : "1"
+        },
+        "defaultSchedulingPeriod" : {
+          "TIMER_DRIVEN" : "0 sec",
+          "CRON_DRIVEN" : "* * * * * ?"
+        }
+      }
+    }, {
+      "id" : "8de57c1c-4bb5-4231-b205-df27cdfab7af",
+      "uri" : "http://localhost:8888/nifi-api/controller/process-groups/34c0febd-d9c2-48f7-988b-97e6b59cf96e/processors/8de57c1c-4bb5-4231-b205-df27cdfab7af",
+      "position" : {
+        "x" : 17.0,
+        "y" : 100.0
+      },
+      "parentGroupId" : "34c0febd-d9c2-48f7-988b-97e6b59cf96e",
+      "name" : "GenerateFlowFile",
+      "type" : "org.apache.nifi.processors.standard.GenerateFlowFile",
+      "state" : "STOPPED",
+      "style" : { },
+      "relationships" : [ {
+        "name" : "success",
+        "description" : "",
+        "autoTerminate" : false
+      } ],
+      "supportsParallelProcessing" : true,
+      "supportsEventDriven" : false,
+      "config" : {
+        "properties" : {
+          "File Size" : "1 kb",
+          "Batch Size" : null,
+          "Unique FlowFiles" : null,
+          "Data Format" : null
+        },
+        "descriptors" : {
+          "File Size" : {
+            "name" : "File Size",
+            "displayName" : "File Size",
+            "description" : "The size of the file that will be used",
+            "required" : true,
+            "sensitive" : false,
+            "dynamic" : false,
+            "supportsEl" : false
+          },
+          "Batch Size" : {
+            "name" : "Batch Size",
+            "displayName" : "Batch Size",
+            "description" : "The number of FlowFiles to be transferred in each invocation",
+            "defaultValue" : "1",
+            "required" : true,
+            "sensitive" : false,
+            "dynamic" : false,
+            "supportsEl" : false
+          },
+          "Unique FlowFiles" : {
+            "name" : "Unique FlowFiles",
+            "displayName" : "Unique FlowFiles",
+            "description" : "If true, each FlowFile that is generated will be unique. If false, a random value will be generated and all FlowFiles will get the same content but this offers much higher throughput",
+            "defaultValue" : "false",
+            "allowableValues" : [ {
+              "displayName" : "true",
+              "value" : "true"
+            }, {
+              "displayName" : "false",
+              "value" : "false"
+            } ],
+            "required" : true,
+            "sensitive" : false,
+            "dynamic" : false,
+            "supportsEl" : false
+          },
+          "Data Format" : {
+            "name" : "Data Format",
+            "displayName" : "Data Format",
+            "description" : "Specifies whether the data should be Text or Binary",
+            "defaultValue" : "Binary",
+            "allowableValues" : [ {
+              "displayName" : "Binary",
+              "value" : "Binary"
+            }, {
+              "displayName" : "Text",
+              "value" : "Text"
+            } ],
+            "required" : true,
+            "sensitive" : false,
+            "dynamic" : false,
+            "supportsEl" : false
+          }
+        },
+        "schedulingPeriod" : "10 sec",
+        "schedulingStrategy" : "TIMER_DRIVEN",
+        "penaltyDuration" : "30 sec",
+        "yieldDuration" : "1 sec",
+        "bulletinLevel" : "WARN",
+        "runDurationMillis" : 0,
+        "concurrentlySchedulableTaskCount" : 1,
+        "comments" : "",
+        "lossTolerant" : false,
+        "defaultConcurrentTasks" : {
+          "TIMER_DRIVEN" : "1",
+          "EVENT_DRIVEN" : "0",
+          "CRON_DRIVEN" : "1"
+        },
+        "defaultSchedulingPeriod" : {
+          "TIMER_DRIVEN" : "0 sec",
+          "CRON_DRIVEN" : "* * * * * ?"
+        }
+      }
+    }, {
+      "id" : "ce991a08-d775-4f8e-b4e6-d687a143fe98",
+      "uri" : "http://localhost:8888/nifi-api/controller/process-groups/34c0febd-d9c2-48f7-988b-97e6b59cf96e/processors/ce991a08-d775-4f8e-b4e6-d687a143fe98",
+      "position" : {
+        "x" : 21.9986572265625,
+        "y" : 469.01526641845703
+      },
+      "parentGroupId" : "34c0febd-d9c2-48f7-988b-97e6b59cf96e",
+      "name" : "Extract Date to Attribute",
+      "type" : "org.apache.nifi.processors.standard.ExtractText",
+      "state" : "STOPPED",
+      "style" : { },
+      "relationships" : [ {
+        "name" : "matched",
+        "description" : "FlowFiles are routed to this relationship when the Regular Expression is successfully evaluated and the FlowFile is modified as a result",
+        "autoTerminate" : false
+      }, {
+        "name" : "unmatched",
+        "description" : "FlowFiles are routed to this relationship when no provided Regular Expression matches the content of the FlowFile",
+        "autoTerminate" : true
+      } ],
+      "supportsParallelProcessing" : true,
+      "supportsEventDriven" : true,
+      "config" : {
+        "properties" : {
+          "Enable Unicode Predefined Character Classes" : null,
+          "date" : "(\\d{2}-\\d{2}-\\d{4} \\d{2}\\.\\d{2}\\.\\d{2})",
+          "Permit Whitespace and Comments in Pattern" : null,
+          "Enable Unicode-aware Case Folding" : null,
+          "Enable DOTALL Mode" : null,
+          "Enable Unix Lines Mode" : null,
+          "Maximum Buffer Size" : null,
+          "Enable Canonical Equivalence" : null,
+          "Enable Case-insensitive Matching" : null,
+          "Enable Multiline Mode" : null,
+          "Maximum Capture Group Length" : null,
+          "Enable Literal Parsing of the Pattern" : null,
+          "Character Set" : null,
+          "Include Capture Group 0" : null
+        },
+        "descriptors" : {
+          "Enable Unicode Predefined Character Classes" : {
+            "name" : "Enable Unicode Predefined Character Classes",
+            "displayName" : "Enable Unicode Predefined Character Classes",
+            "description" : "Specifies conformance with the Unicode Technical Standard #18: Unicode Regular Expression Annex C: Compatibility Properties.  Can also be specified via the embeded flag (?U).",
+            "defaultValue" : "false",
+            "allowableValues" : [ {
+              "displayName" : "true",
+              "value" : "true"
+            }, {
+              "displayName" : "false",
+              "value" : "false"
+            } ],
+            "required" : true,
+            "sensitive" : false,
+            "dynamic" : false,
+            "supportsEl" : false
+          },
+          "date" : {
+            "name" : "date",
+            "displayName" : "date",
+            "description" : "",
+            "required" : false,
+            "sensitive" : false,
+            "dynamic" : true,
+            "supportsEl" : false
+          },
+          "Permit Whitespace and Comments in Pattern" : {
+            "name" : "Permit Whitespace and Comments in Pattern",
+            "displayName" : "Permit Whitespace and Comments in Pattern",
+            "description" : "In this mode, whitespace is ignored, and embedded comments starting with # are ignored until the end of a line.  Can also be specified via the embeded flag (?x).",
+            "defaultValue" : "false",
+            "allowableValues" : [ {
+              "displayName" : "true",
+              "value" : "true"
+            }, {
+              "displayName" : "false",
+              "value" : "false"
+            } ],
+            "required" : true,
+            "sensitive" : false,
+            "dynamic" : false,
+            "supportsEl" : false
+          },
+          "Enable Unicode-aware Case Folding" : {
+            "name" : "Enable Unicode-aware Case Folding",
+            "displayName" : "Enable Unicode-aware Case Folding",
+            "description" : "When used with 'Enable Case-insensitive Matching', matches in a manner consistent with the Unicode Standard.  Can also be specified via the embeded flag (?u).",
+            "defaultValue" : "false",
+            "allowableValues" : [ {
+              "displayName" : "true",
+              "value" : "true"
+            }, {
+              "displayName" : "false",
+              "value" : "false"
+            } ],
+            "required" : true,
+            "sensitive" : false,
+            "dynamic" : false,
+            "supportsEl" : false
+          },
+          "Enable DOTALL Mode" : {
+            "name" : "Enable DOTALL Mode",
+            "displayName" : "Enable DOTALL Mode",
+            "description" : "Indicates that the expression '.' should match any character, including a line terminator.  Can also be specified via the embeded flag (?s).",
+            "defaultValue" : "false",
+            "allowableValues" : [ {
+              "displayName" : "true",
+              "value" : "true"
+            }, {
+              "displayName" : "false",
+              "value" : "false"
+            } ],
+            "required" : true,
+            "sensitive" : false,
+            "dynamic" : false,
+            "supportsEl" : false
+          },
+          "Enable Unix Lines Mode" : {
+            "name" : "Enable Unix Lines Mode",
+            "displayName" : "Enable Unix Lines Mode",
+            "description" : "Indicates that only the '\n' line terminator is recognized in the behavior of '.', '^', and '$'.  Can also be specified via the embeded flag (?d).",
+            "defaultValue" : "false",
+            "allowableValues" : [ {
+              "displayName" : "true",
+              "value" : "true"
+            }, {
+              "displayName" : "false",
+              "value" : "false"
+            } ],
+            "required" : true,
+            "sensitive" : false,
+            "dynamic" : false,
+            "supportsEl" : false
+          },
+          "Maximum Buffer Size" : {
+            "name" : "Maximum Buffer Size",
+            "displayName" : "Maximum Buffer Size",
+            "description" : "Specifies the maximum amount of data to buffer (per file) in order to apply the regular expressions.  Files larger than the specified maximum will not be fully evaluated.",
+            "defaultValue" : "1 MB",
+            "required" : true,
+            "sensitive" : false,
+            "dynamic" : false,
+            "supportsEl" : false
+          },
+          "Enable Canonical Equivalence" : {
+            "name" : "Enable Canonical Equivalence",
+            "displayName" : "Enable Canonical Equivalence",
+            "description" : "Indicates that two characters match only when their full canonical decompositions match.",
+            "defaultValue" : "false",
+            "allowableValues" : [ {
+              "displayName" : "true",
+              "value" : "true"
+            }, {
+              "displayName" : "false",
+              "value" : "false"
+            } ],
+            "required" : true,
+            "sensitive" : false,
+            "dynamic" : false,
+            "supportsEl" : false
+          },
+          "Enable Case-insensitive Matching" : {
+            "name" : "Enable Case-insensitive Matching",
+            "displayName" : "Enable Case-insensitive Matching",
+            "description" : "Indicates that two characters match even if they are in a different case.  Can also be specified via the embeded flag (?i).",
+            "defaultValue" : "false",
+            "allowableValues" : [ {
+              "displayName" : "true",
+              "value" : "true"
+            }, {
+              "displayName" : "false",
+              "value" : "false"
+            } ],
+            "required" : true,
+            "sensitive" : false,
+            "dynamic" : false,
+            "supportsEl" : false
+          },
+          "Enable Multiline Mode" : {
+            "name" : "Enable Multiline Mode",
+            "displayName" : "Enable Multiline Mode",
+            "description" : "Indicates that '^' and '$' should match just after and just before a line terminator or end of sequence, instead of only the begining or end of the entire input.  Can also be specified via the embeded flag (?m).",
+            "defaultValue" : "false",
+            "allowableValues" : [ {
+              "displayName" : "true",
+              "value" : "true"
+            }, {
+              "displayName" : "false",
+              "value" : "false"
+            } ],
+            "required" : true,
+            "sensitive" : false,
+            "dynamic" : false,
+            "supportsEl" : false
+          },
+          "Maximum Capture Group Length" : {
+            "name" : "Maximum Capture Group Length",
+            "displayName" : "Maximum Capture Group Length",
+            "description" : "Specifies the maximum number of characters a given capture group value can have.  Any characters beyond the max will be truncated.",
+            "defaultValue" : "1024",
+            "required" : false,
+            "sensitive" : false,
+            "dynamic" : false,
+            "supportsEl" : false
+          },
+          "Enable Literal Parsing of the Pattern" : {
+            "name" : "Enable Literal Parsing of the Pattern",
+            "displayName" : "Enable Literal Parsing of the Pattern",
+            "description" : "Indicates that Metacharacters and escape characters should be given no special meaning.",
+            "defaultValue" : "false",
+            "allowableValues" : [ {
+              "displayName" : "true",
+              "value" : "true"
+            }, {
+              "displayName" : "false",
+              "value" : "false"
+            } ],
+            "required" : true,
+            "sensitive" : false,
+            "dynamic" : false,
+            "supportsEl" : false
+          },
+          "Character Set" : {
+            "name" : "Character Set",
+            "displayName" : "Character Set",
+            "description" : "The Character Set in which the file is encoded",
+            "defaultValue" : "UTF-8",
+            "required" : true,
+            "sensitive" : false,
+            "dynamic" : false,
+            "supportsEl" : false
+          },
+          "Include Capture Group 0" : {
+            "name" : "Include Capture Group 0",
+            "displayName" : "Include Capture Group 0",
+            "description" : "Indicates that Capture Group 0 should be included as an attribute. Capture Group 0 represents the entirety of the regular expression match, is typically not used, and could have considerable length.",
+            "defaultValue" : "true",
+            "allowableValues" : [ {
+              "displayName" : "true",
+              "value" : "true"
+            }, {
+              "displayName" : "false",
+              "value" : "false"
+            } ],
+            "required" : true,
+            "sensitive" : false,
+            "dynamic" : false,
+            "supportsEl" : false
+          }
+        },
+        "schedulingPeriod" : "0 sec",
+        "schedulingStrategy" : "TIMER_DRIVEN",
+        "penaltyDuration" : "30 sec",
+        "yieldDuration" : "1 sec",
+        "bulletinLevel" : "WARN",
+        "runDurationMillis" : 0,
+        "concurrentlySchedulableTaskCount" : 1,
+        "comments" : "",
+        "lossTolerant" : false,
+        "defaultConcurrentTasks" : {
+          "TIMER_DRIVEN" : "1",
+          "EVENT_DRIVEN" : "0",
+          "CRON_DRIVEN" : "1"
+        },
+        "defaultSchedulingPeriod" : {
+          "TIMER_DRIVEN" : "0 sec",
+          "CRON_DRIVEN" : "* * * * * ?"
+        }
+      }
+    }, {
+      "id" : "9271fe72-86db-4966-b63d-598d82c39ca7",
+      "uri" : "http://localhost:8888/nifi-api/controller/process-groups/34c0febd-d9c2-48f7-988b-97e6b59cf96e/processors/9271fe72-86db-4966-b63d-598d82c39ca7",
+      "position" : {
+        "x" : 17.9986572265625,
+        "y" : 296.01526641845703
+      },
+      "parentGroupId" : "34c0febd-d9c2-48f7-988b-97e6b59cf96e",
+      "name" : "Create Test Data",
+      "type" : "org.apache.nifi.processors.standard.ReplaceText",
+      "state" : "STOPPED",
+      "style" : { },
+      "relationships" : [ {
+        "name" : "failure",
+        "description" : "FlowFiles that could not be updated are routed to this relationship",
+        "autoTerminate" : true
+      }, {
+        "name" : "success",
+        "description" : "FlowFiles that have been successfully processed are routed to this relationship. This includes both FlowFiles that had text replaced and those that did not.",
+        "autoTerminate" : false
+      } ],
+      "supportsParallelProcessing" : true,
+      "supportsEventDriven" : true,
+      "config" : {
+        "properties" : {
+          "Regular Expression" : null,
+          "Replacement Value" : "This is a 26-02-2000 12.37.29 test",
+          "Evaluation Mode" : null,
+          "Character Set" : null,
+          "Maximum Buffer Size" : null,
+          "Replacement Strategy" : null
+        },
+        "descriptors" : {
+          "Regular Expression" : {
+            "name" : "Regular Expression",
+            "displayName" : "Search Value",
+            "description" : "The Search Value to search for in the FlowFile content. Only used for 'Literal Replace' and 'Regex Replace' matching strategies",
+            "defaultValue" : "(?s:^.*$)",
+            "required" : true,
+            "sensitive" : false,
+            "dynamic" : false,
+            "supportsEl" : true
+          },
+          "Replacement Value" : {
+            "name" : "Replacement Value",
+            "displayName" : "Replacement Value",
+            "description" : "The value to insert using the 'Replacement Strategy'. Using \"Regex Replace\" back-references to Regular Expression capturing groups are supported, but back-references that reference capturing groups that do not exist in the regular expression will be treated as literal value. Back References may also be referenced using the Expression Language, as '$1', '$2', etc. The single-tick marks MUST be included, as these variables are not \"Standard\" attribute names (attribute names must be quoted unless they contain only numbers, letters, and _).",
+            "defaultValue" : "$1",
+            "required" : true,
+            "sensitive" : false,
+            "dynamic" : false,
+            "supportsEl" : true
+          },
+          "Evaluation Mode" : {
+            "name" : "Evaluation Mode",
+            "displayName" : "Evaluation Mode",
+            "description" : "Run the 'Replacement Strategy' against each line separately (Line-by-Line) or buffer the entire file into memory (Entire Text) and run against that.",
+            "defaultValue" : "Entire text",
+            "allowableValues" : [ {
+              "displayName" : "Line-by-Line",
+              "value" : "Line-by-Line"
+            }, {
+              "displayName" : "Entire text",
+              "value" : "Entire text"
+            } ],
+            "required" : true,
+            "sensitive" : false,
+            "dynamic" : false,
+            "supportsEl" : false
+          },
+          "Character Set" : {
+            "name" : "Character Set",
+            "displayName" : "Character Set",
+            "description" : "The Character Set in which the file is encoded",
+            "defaultValue" : "UTF-8",
+            "required" : true,
+            "sensitive" : false,
+            "dynamic" : false,
+            "supportsEl" : false
+          },
+          "Maximum Buffer Size" : {
+            "name" : "Maximum Buffer Size",
+            "displayName" : "Maximum Buffer Size",
+            "description" : "Specifies the maximum amount of data to buffer (per file or per line, depending on the Evaluation Mode) in order to apply the replacement. If 'Entire Text' (in Evaluation Mode) is selected and the FlowFile is larger than this value, the FlowFile will be routed to 'failure'. In 'Line-by-Line' Mode, if a single line is larger than this value, the FlowFile will be routed to 'failure'. A default value of 1 MB is provided, primarily for 'Entire Text' mode. In 'Line-by-Line' Mode, a value such as 8 KB or 16 KB is suggested. This value is ignored if the <Replacement Strategy> property is set to one of: Append, Prepend, Always Replace",
+            "defaultValue" : "1 MB",
+            "required" : true,
+            "sensitive" : false,
+            "dynamic" : false,
+            "supportsEl" : false
+          },
+          "Replacement Strategy" : {
+            "name" : "Replacement Strategy",
+            "displayName" : "Replacement Strategy",
+            "description" : "The strategy for how and what to replace within the FlowFile's text content.",
+            "defaultValue" : "Regex Replace",
+            "allowableValues" : [ {
+              "displayName" : "Prepend",
+              "value" : "Prepend",
+              "description" : "Insert the Replacement Value at the beginning of the FlowFile or the beginning of each line (depending on the Evaluation Mode). For \"Line-by-Line\" Evaluation Mode, the value will be prepended to each line. For \"Entire Text\" evaluation mode, the value will be prepended to the entire text."
+            }, {
+              "displayName" : "Append",
+              "value" : "Append",
+              "description" : "Insert the Replacement Value at the end of the FlowFile or the end of each line (depending on the Evluation Mode). For \"Line-by-Line\" Evaluation Mode, the value will be appended to each line. For \"Entire Text\" evaluation mode, the value will be appended to the entire text."
+            }, {
+              "displayName" : "Regex Replace",
+              "value" : "Regex Replace",
+              "description" : "Interpret the Search Value as a Regular Expression and replace all matches with the Replacement Value. The Replacement Value may reference Capturing Groups used in the Search Value by using a dollar-sign followed by the Capturing Group number, such as $1 or $2. If the Search Value is set to .* then everything is replaced without even evaluating the Regular Expression."
+            }, {
+              "displayName" : "Literal Replace",
+              "value" : "Literal Replace",
+              "description" : "Search for all instances of the Search Value and replace the matches with the Replacement Value."
+            }, {
+              "displayName" : "Always Replace",
+              "value" : "Always Replace",
+              "description" : "Always replaces the entire line or the entire contents of the FlowFile (depending on the value of the <Evaluation Mode> property) and does not bother searching for any value. When this strategy is chosen, the <Search Value> property is ignored."
+            } ],
+            "required" : true,
+            "sensitive" : false,
+            "dynamic" : false,
+            "supportsEl" : false
+          }
+        },
+        "schedulingPeriod" : "0 sec",
+        "schedulingStrategy" : "TIMER_DRIVEN",
+        "penaltyDuration" : "30 sec",
+        "yieldDuration" : "1 sec",
+        "bulletinLevel" : "WARN",
+        "runDurationMillis" : 0,
+        "concurrentlySchedulableTaskCount" : 1,
+        "comments" : "",
+        "lossTolerant" : false,
+        "defaultConcurrentTasks" : {
+          "TIMER_DRIVEN" : "1",
+          "EVENT_DRIVEN" : "0",
+          "CRON_DRIVEN" : "1"
+        },
+        "defaultSchedulingPeriod" : {
+          "TIMER_DRIVEN" : "0 sec",
+          "CRON_DRIVEN" : "* * * * * ?"
+        }
+      }
+    } ],
+    "inputPorts" : [ ],
+    "outputPorts" : [ ],
+    "connections" : [ {
+      "id" : "8a63f1d5-bdc3-4190-860f-0dfcb678dd8b",
+      "uri" : "http://localhost:8888/nifi-api/controller/process-groups/root/connections/8a63f1d5-bdc3-4190-860f-0dfcb678dd8b",
+      "parentGroupId" : "34c0febd-d9c2-48f7-988b-97e6b59cf96e",
+      "source" : {
+        "id" : "30627450-069c-4474-abdd-0a9ec7996b2a",
+        "type" : "PROCESSOR",
+        "groupId" : "34c0febd-d9c2-48f7-988b-97e6b59cf96e",
+        "name" : "Replace Content with new Date"
+      },
+      "destination" : {
+        "id" : "aee1eac7-f1b3-45b5-b4c4-4ec5a850e8ea",
+        "type" : "PROCESSOR",
+        "groupId" : "34c0febd-d9c2-48f7-988b-97e6b59cf96e",
+        "name" : "LogAttribute"
+      },
+      "name" : "",
+      "labelIndex" : 1,
+      "zIndex" : 0,
+      "selectedRelationships" : [ "success" ],
+      "backPressureObjectThreshold" : 0,
+      "backPressureDataSizeThreshold" : "0 MB",
+      "flowFileExpiration" : "0 sec",
+      "bends" : [ ]
+    }, {
+      "id" : "598b7292-ee7f-44ac-86ae-60121de3da7c",
+      "uri" : "http://localhost:8888/nifi-api/controller/process-groups/root/connections/598b7292-ee7f-44ac-86ae-60121de3da7c",
+      "parentGroupId" : "34c0febd-d9c2-48f7-988b-97e6b59cf96e",
+      "source" : {
+        "id" : "9271fe72-86db-4966-b63d-598d82c39ca7",
+        "type" : "PROCESSOR",
+        "groupId" : "34c0febd-d9c2-48f7-988b-97e6b59cf96e",
+        "name" : "Create Test Data"
+      },
+      "destination" : {
+        "id" : "ce991a08-d775-4f8e-b4e6-d687a143fe98",
+        "type" : "PROCESSOR",
+        "groupId" : "34c0febd-d9c2-48f7-988b-97e6b59cf96e",
+        "name" : "Extract Date to Attribute"
+      },
+      "name" : "",
+      "labelIndex" : 1,
+      "zIndex" : 0,
+      "selectedRelationships" : [ "success" ],
+      "backPressureObjectThreshold" : 0,
+      "backPressureDataSizeThreshold" : "0 MB",
+      "flowFileExpiration" : "0 sec",
+      "bends" : [ ]
+    }, {
+      "id" : "80458bed-1fe6-4ce0-8733-1e638a827b38",
+      "uri" : "http://localhost:8888/nifi-api/controller/process-groups/root/connections/80458bed-1fe6-4ce0-8733-1e638a827b38",
+      "parentGroupId" : "34c0febd-d9c2-48f7-988b-97e6b59cf96e",
+      "source" : {
+        "id" : "8de57c1c-4bb5-4231-b205-df27cdfab7af",
+        "type" : "PROCESSOR",
+        "groupId" : "34c0febd-d9c2-48f7-988b-97e6b59cf96e",
+        "name" : "GenerateFlowFile"
+      },
+      "destination" : {
+        "id" : "9271fe72-86db-4966-b63d-598d82c39ca7",
+        "type" : "PROCESSOR",
+        "groupId" : "34c0febd-d9c2-48f7-988b-97e6b59cf96e",
+        "name" : "Create Test Data"
+      },
+      "name" : "",
+      "labelIndex" : 1,
+      "zIndex" : 0,
+      "selectedRelationships" : [ "success" ],
+      "backPressureObjectThreshold" : 0,
+      "backPressureDataSizeThreshold" : "0 MB",
+      "flowFileExpiration" : "0 sec",
+      "bends" : [ ]
+    }, {
+      "id" : "ac0ec030-b5d7-4c14-bada-a55c7c141036",
+      "uri" : "http://localhost:8888/nifi-api/controller/process-groups/root/connections/ac0ec030-b5d7-4c14-bada-a55c7c141036",
+      "parentGroupId" : "34c0febd-d9c2-48f7-988b-97e6b59cf96e",
+      "source" : {
+        "id" : "ce991a08-d775-4f8e-b4e6-d687a143fe98",
+        "type" : "PROCESSOR",
+        "groupId" : "34c0febd-d9c2-48f7-988b-97e6b59cf96e",
+        "name" : "Extract Date to Attribute"
+      },
+      "destination" : {
+        "id" : "30627450-069c-4474-abdd-0a9ec7996b2a",
+        "type" : "PROCESSOR",
+        "groupId" : "34c0febd-d9c2-48f7-988b-97e6b59cf96e",
+        "name" : "Replace Content with new Date"
+      },
+      "name" : "",
+      "labelIndex" : 1,
+      "zIndex" : 0,
+      "selectedRelationships" : [ "matched" ],
+      "backPressureObjectThreshold" : 0,
+      "backPressureDataSizeThreshold" : "0 MB",
+      "flowFileExpiration" : "0 sec",
+      "bends" : [ ]
+    } ],
+    "labels" : [ ],
+    "funnels" : [ ],
+    "controllerServices" : [ ]
+  }
+}
