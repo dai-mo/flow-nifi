@@ -27,16 +27,19 @@ object ProcessorApiSpec {
 }
 
 class ProcessorApiSpec extends RestBaseUnitSpec with ProcessorApiBehaviors {
-
   import ProcessorApiSpec._
-
 
   "Processor Types" must " be valid " in {
     val typesPath: Path = Paths.get(this.getClass().getResource("types.json").toURI())
     val processorClient = Mockito.spy(new NifiProcessorApi())
+
     doReturn(jsonFromFile(typesPath.toFile)).
       when(processorClient).
-      getAsJson(NifiProcessorClient.TypesPath, List(), List())
+      getAsJson(
+        Matchers.eq(NifiProcessorClient.TypesPath),
+        Matchers.any[List[(String, String)]],
+        Matchers.any[List[(String, String)]]
+      )
     validateProcessorTypes(processorClient)
   }
 
@@ -79,10 +82,10 @@ trait ProcessorApiBehaviors { this: FlatSpec =>
 
   def validateProcessorLifecycle(processorApi: NifiProcessorApi) {
 
-//    val p = processorApi.create(GFFPName, GFFPType, ClientToken)
-//    assert(p.status == "STOPPED")
-//
-//    assert(processorApi.remove(p.id, ClientToken))
+    //    val p = processorApi.create(GFFPName, GFFPType, ClientToken)
+    //    assert(p.status == "STOPPED")
+    //
+    //    assert(processorApi.remove(p.id, ClientToken))
   }
 
 }
