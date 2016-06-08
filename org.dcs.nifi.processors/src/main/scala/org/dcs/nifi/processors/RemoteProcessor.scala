@@ -31,33 +31,29 @@ abstract class RemoteProcessor extends AbstractProcessor {
   var flowModuleId: String = _
   var propertyDescriptors: JavaList[PropertyDescriptor] = Nil
   var relationships: JavaSet[Relationship] = _
-  var moduleFactoryService: Option[ModuleFactoryService] = None
-  
+  var moduleFactoryService: ModuleFactoryService = _
+
   var remoteService: RemoteService = _
 
   def flowModuleClassName(): String
 
   override def init(context: ProcessorInitializationContext) {
 
-    if(remoteService == null) remoteService = ZkRemoteService 
-    
+    if(remoteService == null) remoteService = ZkRemoteService
+
     moduleFactoryService = remoteService.loadService[ModuleFactoryService]
 
-    if (moduleFactoryService != None) {
 
-      flowModuleId = moduleFactoryService.get.createFlowModule(flowModuleClassName())
+    flowModuleId = moduleFactoryService.createFlowModule(flowModuleClassName())
 
-      logger.info("Created flow module " + flowModuleClassName() + " with id " + flowModuleId)
+    logger.info("Created flow module " + flowModuleClassName() + " with id " + flowModuleId)
 
-      val propDescMap: JavaMap[String, JavaMap[String, String]] = moduleFactoryService.get.getPropertyDescriptors(flowModuleId)
-      propertyDescriptors = ProcessorUtils.generatePropertyDescriptors(propDescMap)
+    val propDescMap: JavaMap[String, JavaMap[String, String]] = moduleFactoryService.getPropertyDescriptors(flowModuleId)
+    propertyDescriptors = ProcessorUtils.generatePropertyDescriptors(propDescMap)
 
-      val relationshipsMap: JavaMap[String, JavaMap[String, String]] = moduleFactoryService.get.getRelationships(flowModuleId)
-      relationships = ProcessorUtils.generateRelationships(relationshipsMap)
+    val relationshipsMap: JavaMap[String, JavaMap[String, String]] = moduleFactoryService.getRelationships(flowModuleId)
+    relationships = ProcessorUtils.generateRelationships(relationshipsMap)
 
-    } else {
-      throw new IllegalStateException("Remote service module of type " + flowModuleClassName + " with module id " + flowModuleId + " not available")
-    }
 
   }
 
@@ -71,7 +67,7 @@ abstract class RemoteProcessor extends AbstractProcessor {
     var flowFile: FlowFile = session.create();
     flowFile = session.write(flowFile, new OutputStreamCallback() {
       override def process(out: OutputStream) {
-        out.write(moduleFactoryService.get.trigger(flowModuleId, valueProperties));
+        out.write(moduleFactoryService.trigger(flowModuleId, valueProperties));
       }
     })
 

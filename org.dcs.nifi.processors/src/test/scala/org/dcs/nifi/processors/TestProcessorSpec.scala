@@ -12,7 +12,7 @@ object TestProcessorSpec {
   object MockRemoteService extends RemoteService with MockZookeeperServiceTracker
   MockZookeeperServiceTracker.addService(
     "org.dcs.api.service.ModuleFactoryService",
-    new MockModuleFactoryService(new TestFlowModule, "Hello Bob! This is DCS"))
+    new MockModuleFactoryService(new TestFlowModule, "{\"response\":\"Hello Bob, This is DCS!\"}"))
 
   val testProcessor: TestProcessor = new TestProcessor()
   testProcessor.remoteService = MockRemoteService
@@ -44,8 +44,8 @@ trait TestProcessorBehaviors { this: FlatSpec =>
     val results: java.util.List[MockFlowFile] = runner.getFlowFilesForRelationship(successRelationship.get)
     assert(results.size == 1)
     val result: MockFlowFile = results.get(0);
-    val resultValue: String = new String(runner.getContentAsByteArray(result));
-    assert(resultValue == "Hello " + user + "! This is DCS")
+    val resultValue: String = new String(runner.getContentAsByteArray(result))
+    assert(resultValue == "{\"response\":\"Hello " + user + ", This is DCS!\"}")
   }
 
 }

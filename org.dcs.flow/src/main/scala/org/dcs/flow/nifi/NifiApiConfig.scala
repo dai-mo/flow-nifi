@@ -2,7 +2,7 @@ package org.dcs.flow.nifi
 
 import javax.ws.rs.core.Response
 
-import org.dcs.api.model.{ErrorConstants, ErrorResponse}
+import org.dcs.api.error.{ErrorConstants, ErrorResponse}
 import org.dcs.commons.config.ConfigurationFacade
 import org.dcs.flow.ApiConfig
 
@@ -16,20 +16,16 @@ trait NifiApiConfig extends ApiConfig {
   override def baseUrl():String = BaseUrl
 
   override def error(response: Response): ErrorResponse = response.getStatus match {
-    case 400 => errorWithNifiMessage(response, "DCS301")
-    case 401 => errorWithNifiMessage(response, "DCS302")
-    case 403 => errorWithNifiMessage(response, "DCS303")
-    case 404 => errorWithNifiMessage(response, "DCS304")
-    case 409 => errorWithNifiMessage(response, "DCS305")
+    case 400 => ErrorConstants.DCS301
+    case 401 => ErrorConstants.DCS302
+    case 403 => ErrorConstants.DCS303
+    case 404 => ErrorConstants. DCS304
+    case 409 => ErrorConstants.DCS305
     case _ => {
-      val er = ErrorConstants.getErrorResponse("DCS001")
-      er.setHttpStatusCode(response.getStatus)
-      er.setMessage(response.readEntity(classOf[String]))
+      val er = ErrorConstants.DCS001
+      er.errorMessage = response.readEntity(classOf[String])
       er
     }
   }
 
-  def errorWithNifiMessage(response: Response, code: String): ErrorResponse = {
-    ErrorConstants.getErrorResponse(code)
-  }
 }

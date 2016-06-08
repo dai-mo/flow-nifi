@@ -11,6 +11,8 @@ import org.apache.nifi.annotation.lifecycle.OnDisabled
 import org.dcs.remote.ZkRemoteService
 import org.dcs.remote.RemoteService
 import org.apache.nifi.controller.AbstractControllerService
+import org.apache.nifi.reporting.InitializationException
+
 import scala.reflect.ClassTag
 import org.dcs.nifi.services.DiscoveryService
 
@@ -49,6 +51,6 @@ class ZookeeperDiscoveryService extends AbstractControllerService with Discovery
 	def shutdown() = remoteService.dispose
 	
 
-	override def service[T](implicit tag: ClassTag[T]): Option[T] = remoteService.loadService[T]
+	override def service[T](implicit tag: ClassTag[T]): T = remoteService.loadService[T]
 	
 }
