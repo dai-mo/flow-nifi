@@ -5,6 +5,7 @@ import java.util.UUID
 import javax.ws.rs.core.{Form, MediaType}
 
 import org.dcs.flow.RestBaseUnitSpec
+import org.dcs.flow.api.ProcessorApi
 import org.dcs.flow.nifi.{NifiApiConfig, NifiFlowClient, NifiProcessorClient}
 import org.mockito.{Matchers, Mockito}
 import org.mockito.Mockito._

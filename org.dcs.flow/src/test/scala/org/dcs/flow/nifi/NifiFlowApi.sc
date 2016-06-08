@@ -2,7 +2,7 @@ import java.util.UUID
 
 import org.dcs.commons.JsonSerializerImplicits._
 import org.dcs.commons.JsonUtil
-import org.dcs.flow.client.FlowApi
+import org.dcs.flow.api.FlowApi
 import org.dcs.flow.nifi.{NifiApiConfig, NifiFlowClient}
 import org.glassfish.jersey.filter.LoggingFilter
 

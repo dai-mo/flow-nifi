@@ -1,16 +1,14 @@
 package org.dcs.flow.nifi
 
-import javax.ws.rs.core.{Form, MediaType}
+import javax.ws.rs.core.MediaType
 
 import org.apache.nifi.web.api.entity.{FlowSnippetEntity, ProcessGroupEntity, SnippetEntity, TemplatesEntity}
-import org.dcs.flow.model.{FlowInstance, FlowTemplate}
-import org.dcs.flow.FlowClient
+import org.dcs.api.service.{FlowApiService, FlowInstance, FlowTemplate}
 import org.dcs.commons.JsonSerializerImplicits._
-import org.dcs.commons.JsonUtil
-import org.dcs.flow.client.ProcessorApi
+import org.dcs.flow.api.ProcessorApi
+import org.dcs.flow.nifi.NifiBaseRestClient._
 
 import scala.collection.JavaConverters._
-import NifiBaseRestClient._
 
 /**
   * Created by cmathew on 30/05/16.
@@ -27,7 +25,7 @@ object NifiFlowClient {
 
 }
 
-trait NifiFlowClient extends FlowClient with NifiBaseRestClient {
+trait NifiFlowClient extends FlowApiService with NifiBaseRestClient {
   import NifiFlowClient._
 
   def templates(clientId: String):List[FlowTemplate] = {

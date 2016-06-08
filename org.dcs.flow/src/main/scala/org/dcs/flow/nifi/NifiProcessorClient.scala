@@ -1,24 +1,21 @@
 package org.dcs.flow.nifi
 
-import javax.ws.rs.core.{Form, MediaType}
+import javax.ws.rs.core.MediaType
 
-import org.apache.nifi.web.api.entity.ProcessorTypesEntity
-import org.apache.nifi.web.api.entity.ProcessorEntity
+import org.apache.nifi.web.api.entity.{ProcessorEntity, ProcessorTypesEntity}
+import org.dcs.api.service.{ProcessorApiService, ProcessorInstance, ProcessorType}
 import org.dcs.commons.JsonSerializerImplicits._
-import org.dcs.commons.JsonUtil
-import org.dcs.flow.ProcessorClient
-import org.dcs.flow.model.{ProcessorInstance, ProcessorType}
+import org.dcs.flow.nifi.NifiBaseRestClient._
 import org.slf4j.{Logger, LoggerFactory}
 
 import scala.collection.JavaConverters._
-import NifiBaseRestClient._
 
 object NifiProcessorClient  {
   val TypesPath = "/controller/processor-types"
   val ProcessorsPath = "/controller/process-groups/root/processors"
 }
 
-trait NifiProcessorClient extends ProcessorClient with NifiBaseRestClient {
+trait NifiProcessorClient extends ProcessorApiService with NifiBaseRestClient {
 
   val logger: Logger = LoggerFactory.getLogger(classOf[NifiProcessorClient])
 
@@ -41,8 +38,8 @@ trait NifiProcessorClient extends ProcessorClient with NifiBaseRestClient {
     ).toObject[ProcessorEntity]
 
     val processorInstance = new ProcessorInstance
-    processorInstance.id = processor.getProcessor.getId
-    processorInstance.status = processor.getProcessor.getState
+    processorInstance.setId(processor.getProcessor.getId)
+    processorInstance.setStatus(processor.getProcessor.getState)
     processorInstance
   }
 
@@ -52,8 +49,8 @@ trait NifiProcessorClient extends ProcessorClient with NifiBaseRestClient {
       queryParams = (ClientIdKey -> clientId) :: Nil).toObject[ProcessorEntity]
 
     val processorInstance = new ProcessorInstance
-    processorInstance.id = processor.getProcessor.getId
-    processorInstance.status = processor.getProcessor.getState
+    processorInstance.setId(processor.getProcessor.getId)
+    processorInstance.setStatus(processor.getProcessor.getState)
     processorInstance
   }
 

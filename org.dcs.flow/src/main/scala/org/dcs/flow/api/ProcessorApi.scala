@@ -1,13 +1,11 @@
-package org.dcs.flow.client
+package org.dcs.flow.api
 
-
-import org.dcs.flow.ProcessorClient
-import org.dcs.flow.model.ProcessorType
+import org.dcs.api.service.{ProcessorApiService, ProcessorType}
 
 
 trait ProcessorApi  {
     
-  this: ProcessorClient =>
+  this: ProcessorApiService =>
 
   def typesSearchTags(str:String, clientToken: String): List[ProcessorType] = {
     types(clientToken).filter( dtype => dtype.tags.exists(tag => tag.contains(str)))
