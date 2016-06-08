@@ -32,32 +32,28 @@ abstract class RemoteProcessor extends AbstractProcessor {
   var propertyDescriptors: JavaList[PropertyDescriptor] = Nil
   var relationships: JavaSet[Relationship] = _
   var moduleFactoryService: ModuleFactoryService = _
-  
+
   var remoteService: RemoteService = _
 
   def flowModuleClassName(): String
 
   override def init(context: ProcessorInitializationContext) {
 
-    if(remoteService == null) remoteService = ZkRemoteService 
-    
+    if(remoteService == null) remoteService = ZkRemoteService
+
     moduleFactoryService = remoteService.loadService[ModuleFactoryService]
 
-    if (moduleFactoryService != None) {
 
-      flowModuleId = moduleFactoryService.createFlowModule(flowModuleClassName())
+    flowModuleId = moduleFactoryService.createFlowModule(flowModuleClassName())
 
-      logger.info("Created flow module " + flowModuleClassName() + " with id " + flowModuleId)
+    logger.info("Created flow module " + flowModuleClassName() + " with id " + flowModuleId)
 
-      val propDescMap: JavaMap[String, JavaMap[String, String]] = moduleFactoryService.getPropertyDescriptors(flowModuleId)
-      propertyDescriptors = ProcessorUtils.generatePropertyDescriptors(propDescMap)
+    val propDescMap: JavaMap[String, JavaMap[String, String]] = moduleFactoryService.getPropertyDescriptors(flowModuleId)
+    propertyDescriptors = ProcessorUtils.generatePropertyDescriptors(propDescMap)
 
-      val relationshipsMap: JavaMap[String, JavaMap[String, String]] = moduleFactoryService.getRelationships(flowModuleId)
-      relationships = ProcessorUtils.generateRelationships(relationshipsMap)
+    val relationshipsMap: JavaMap[String, JavaMap[String, String]] = moduleFactoryService.getRelationships(flowModuleId)
+    relationships = ProcessorUtils.generateRelationships(relationshipsMap)
 
-    } else {
-      throw new IllegalStateException("Remote service module of type " + flowModuleClassName + " with module id " + flowModuleId + " not available")
-    }
 
   }
 

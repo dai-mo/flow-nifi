@@ -1,10 +1,9 @@
 package org.dcs.flow.client
 
 import java.nio.file.{Path, Paths}
-import java.util.UUID
 import javax.ws.rs.core.{Form, MediaType}
 
-import org.dcs.api.service.RESTException
+import org.dcs.api.error.RESTException
 import org.dcs.flow.RestBaseUnitSpec
 import org.dcs.flow.nifi.{NifiApiConfig, NifiFlowClient}
 import org.mockito.Matchers
@@ -134,7 +133,7 @@ trait FlowApiBehaviors { this: FlatSpec =>
     val thrown = intercept[RESTException] {
       flowClient.instantiate(invalidTemplateId, ClientToken)
     }
-    assert(thrown.getErrorResponse.getHttpStatusCode == 404)
+    assert(thrown.errorResponse.httpStatusCode == 404)
   }
 
   def validateFlowRetrieval(flowClient: NifiFlowClient) {
