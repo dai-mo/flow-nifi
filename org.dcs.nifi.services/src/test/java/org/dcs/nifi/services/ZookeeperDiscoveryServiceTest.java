@@ -16,21 +16,8 @@
  */
 package org.dcs.nifi.services;
 
-import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Properties;
-
 import org.apache.nifi.reporting.InitializationException;
-import org.apache.nifi.util.TestRunner;
-import org.apache.nifi.util.TestRunners;
-import org.dcs.api.model.TestResponse;
-import org.dcs.api.service.FlowModule;
-import org.dcs.api.service.ModuleFactoryService;
-import org.dcs.api.service.RESTException;
-import org.dcs.api.service.TestApiService;
-import org.dcs.core.module.flow.TestFlowModule$;
-import org.junit.Assert;
+import org.dcs.api.error.RESTException;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;

@@ -1,12 +1,10 @@
 package org.dcs.flow
 
-import javax.ws.rs.core.{Form, MediaType, Response}
-import javax.ws.rs.client.{ClientBuilder, ClientRequestFilter, Entity}
 import javax.ws.rs.client.Invocation.Builder
+import javax.ws.rs.client.{ClientBuilder, ClientRequestFilter, Entity}
+import javax.ws.rs.core.{Form, MediaType, Response}
 
-import org.dcs.api.model.ErrorResponse
-import org.dcs.api.service.RESTException
-import org.glassfish.jersey.filter.LoggingFilter
+import org.dcs.api.error.RESTException
 
 trait BaseRestClient extends ApiConfig {
 

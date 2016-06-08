@@ -12,6 +12,6 @@ import scala.reflect.ClassTag
 		+ " service brokers like zookeeper")
 trait DiscoveryService extends ControllerService {  
 	
-	def service[T](implicit tag: ClassTag[T]): Option[T]
+	def service[T](implicit tag: ClassTag[T]): T
 
 }

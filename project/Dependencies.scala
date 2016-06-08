@@ -95,10 +95,9 @@ object Dependencies {
 					jerseyMoxy,
 					dcsCommons,
 					nifiClientDTO	,
+          logbackCore     % "provided",
+          logbackClassic  % "provided",
 
-					//playJson				% "test",
-					logbackCore     % "test",
-					logbackClassic  % "test",
 					mockitoCore     % "test",
 					mockitoAll      % "test",
 					scalaTest       % "test",
