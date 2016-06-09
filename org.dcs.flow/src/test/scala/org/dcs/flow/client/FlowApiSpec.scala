@@ -5,7 +5,6 @@ import javax.ws.rs.core.{Form, MediaType}
 
 import org.dcs.api.error.RESTException
 import org.dcs.flow.RestBaseUnitSpec
-import org.dcs.flow.api.FlowApi
 import org.dcs.flow.nifi.{NifiApiConfig, NifiFlowClient}
 import org.mockito.Matchers
 import org.mockito.Mockito._
@@ -18,8 +17,7 @@ import org.slf4j.{Logger, LoggerFactory}
   */
 object FlowApiSpec {
   val ClientToken = "29474d0f-3e21-4136-90fd-ad4e2c613afb"
-  class NifiFlowApi extends FlowApi
-    with NifiFlowClient
+  class NifiFlowApi extends NifiFlowClient
     with NifiApiConfig
 }
 

@@ -1,13 +1,9 @@
 import java.util.UUID
 
-import org.dcs.commons.JsonSerializerImplicits._
-import org.dcs.commons.JsonUtil
-import org.dcs.flow.api.FlowApi
 import org.dcs.flow.nifi.{NifiApiConfig, NifiFlowClient}
 import org.glassfish.jersey.filter.LoggingFilter
 
-object NifiFlowApi extends FlowApi
-  with NifiFlowClient
+object NifiFlowApi extends NifiFlowClient
   with NifiApiConfig
 
 val clientId = UUID.randomUUID.toString

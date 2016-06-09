@@ -27,6 +27,10 @@ trait NifiProcessorClient extends ProcessorApiService with NifiBaseRestClient {
     processorTypes.getProcessorTypes.asScala.map(dt => ProcessorType(dt)).toList
   }
 
+  def typesSearchTags(str:String, clientToken: String): List[ProcessorType] = {
+    types(clientToken).filter( dtype => dtype.tags.exists(tag => tag.contains(str)))
+  }
+
   override def create(name: String, ptype: String, clientId: String): ProcessorInstance = {
 
     val processor = postAsJson(path = ProcessorsPath,

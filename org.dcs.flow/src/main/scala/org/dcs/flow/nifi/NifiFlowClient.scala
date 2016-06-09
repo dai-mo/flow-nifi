@@ -5,7 +5,6 @@ import javax.ws.rs.core.MediaType
 import org.apache.nifi.web.api.entity.{FlowSnippetEntity, ProcessGroupEntity, SnippetEntity, TemplatesEntity}
 import org.dcs.api.service.{FlowApiService, FlowInstance, FlowTemplate}
 import org.dcs.commons.JsonSerializerImplicits._
-import org.dcs.flow.api.ProcessorApi
 import org.dcs.flow.nifi.NifiBaseRestClient._
 
 import scala.collection.JavaConverters._
@@ -13,8 +12,7 @@ import scala.collection.JavaConverters._
 /**
   * Created by cmathew on 30/05/16.
   */
-object NifiProcessorApi extends ProcessorApi
-  with NifiProcessorClient
+object NifiProcessorApi extends NifiProcessorClient
   with NifiApiConfig
 
 object NifiFlowClient {
@@ -28,13 +26,13 @@ object NifiFlowClient {
 trait NifiFlowClient extends FlowApiService with NifiBaseRestClient {
   import NifiFlowClient._
 
-  def templates(clientId: String):List[FlowTemplate] = {
+  override def templates(clientId: String):List[FlowTemplate] = {
     val templates = getAsJson(path = TemplatesPath,
       queryParams = (ClientIdKey -> clientId) :: Nil).toObject[TemplatesEntity]
     templates.getTemplates.asScala.map(t => FlowTemplate(t)).toList
   }
 
-  def instantiate(flowTemplateId:String, clientId: String):FlowInstance = {
+  override def instantiate(flowTemplateId:String, clientId: String):FlowInstance = {
     val qp = List(
       ("templateId", flowTemplateId),
       ("originX", "17"),
