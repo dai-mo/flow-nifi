@@ -5,9 +5,9 @@ import java.util.UUID
 import javax.ws.rs.core.{Form, MediaType}
 
 import org.dcs.flow.RestBaseUnitSpec
-import org.dcs.flow.nifi.{NifiApiConfig, NifiFlowClient, NifiProcessorClient}
-import org.mockito.{Matchers, Mockito}
+import org.dcs.flow.nifi.{NifiApiConfig, NifiProcessorClient}
 import org.mockito.Mockito._
+import org.mockito.{Matchers, Mockito}
 import org.scalatest.FlatSpec
 import org.slf4j.{Logger, LoggerFactory}
 
@@ -21,8 +21,7 @@ object ProcessorApiSpec {
   val GFPId = "932d8069-3a9a-42f3-93ee-53f3ea0cc7bc"
   val ClientToken = UUID.randomUUID.toString
 
-  class NifiProcessorApi extends ProcessorApi
-    with NifiProcessorClient
+  class NifiProcessorApi extends NifiProcessorClient
     with NifiApiConfig
 }
 

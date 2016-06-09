@@ -3,7 +3,7 @@ import java.util.UUID
 import org.dcs.api.service.RESTException
 import org.dcs.commons.JsonUtil
 import org.dcs.commons.JsonSerializerImplicits._
-import org.dcs.flow.client.ProcessorApi
+import org.dcs.flow.api.ProcessorApi
 import org.dcs.flow.nifi.{NifiApiConfig, NifiProcessorClient}
 import org.glassfish.jersey.filter.LoggingFilter
 

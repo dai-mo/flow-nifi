@@ -17,8 +17,7 @@ import org.slf4j.{Logger, LoggerFactory}
   */
 object FlowApiSpec {
   val ClientToken = "29474d0f-3e21-4136-90fd-ad4e2c613afb"
-  class NifiFlowApi extends FlowApi
-    with NifiFlowClient
+  class NifiFlowApi extends NifiFlowClient
     with NifiApiConfig
 }
 

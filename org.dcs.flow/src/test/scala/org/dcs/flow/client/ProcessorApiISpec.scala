@@ -5,7 +5,6 @@ import org.dcs.flow.RestBaseUnitSpec
 import org.dcs.flow.client.ProcessorApiSpec.NifiProcessorApi
 
 
-  
 class ProcessorApiISpec extends RestBaseUnitSpec with ProcessorApiBehaviors {
 
   "Int. Processor Types" must " be valid " taggedAs(IT) in {    

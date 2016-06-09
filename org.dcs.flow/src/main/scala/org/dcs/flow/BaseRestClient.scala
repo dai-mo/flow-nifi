@@ -4,7 +4,9 @@ import javax.ws.rs.client.Invocation.Builder
 import javax.ws.rs.client.{ClientBuilder, ClientRequestFilter, Entity}
 import javax.ws.rs.core.{Form, MediaType, Response}
 
-import org.dcs.api.error.RESTException
+import org.dcs.api.error.{ErrorConstants, RESTException}
+
+import scala.util.control.NonFatal
 
 trait BaseRestClient extends ApiConfig {
 
@@ -30,9 +32,14 @@ trait BaseRestClient extends ApiConfig {
   def get(path: String,
           queryParams: List[(String, String)] = List(),
           headers: List[(String, String)] = List()): Response = {
-    val res = response(path, queryParams, headers).get
-    if(res.getStatus >= 400 && res.getStatus < 600) throw new RESTException(error(res))
-    res
+    try {
+      val res = response(path, queryParams, headers).get
+      if (res.getStatus >= 400 && res.getStatus < 600) throw new RESTException(error(res))
+      res
+    } catch {
+      case NonFatal(t) =>
+        throw new RESTException(ErrorConstants.DCS201.withErrorMessage(t.getMessage))
+    }
   }
 
 
@@ -47,9 +54,14 @@ trait BaseRestClient extends ApiConfig {
              queryParams: List[(String, String)] = List(),
              headers: List[(String, String)] = List(),
              contentType: String = MediaType.APPLICATION_JSON): Response = {
-    val res = response(path, queryParams, headers).put(Entity.entity(obj, contentType))
-    if(res.getStatus >= 400 && res.getStatus < 600) throw new RESTException(error(res))
-    res
+    try {
+      val res = response(path, queryParams, headers).put(Entity.entity(obj, contentType))
+      if(res.getStatus >= 400 && res.getStatus < 600) throw new RESTException(error(res))
+      res
+    } catch {
+      case NonFatal(t) =>
+        throw new RESTException(ErrorConstants.DCS201.withErrorMessage(t.getMessage))
+    }
   }
 
   def putAsJson[T](path: String,
@@ -65,9 +77,14 @@ trait BaseRestClient extends ApiConfig {
               queryParams: List[(String, String)] = List(),
               headers: List[(String, String)] = List(),
               contentType: String = MediaType.APPLICATION_JSON): Response = {
-    val res = response(path, queryParams, headers).post(Entity.entity(obj, contentType))
-    if(res.getStatus >= 400 && res.getStatus < 600) throw new RESTException(error(res))
-    res
+    try {
+      val res = response(path, queryParams, headers).post(Entity.entity(obj, contentType))
+      if(res.getStatus >= 400 && res.getStatus < 600) throw new RESTException(error(res))
+      res
+    } catch {
+      case NonFatal(t) =>
+        throw new RESTException(ErrorConstants.DCS201.withErrorMessage(t.getMessage))
+    }
   }
 
   def postAsJson[T](path: String,
@@ -81,9 +98,14 @@ trait BaseRestClient extends ApiConfig {
   def delete(path: String,
              queryParams: List[(String, String)] = List(),
              headers: List[(String, String)] = List()): Response = {
-    val res = response(path, queryParams, headers).delete
-    if(res.getStatus >= 400 && res.getStatus < 600) throw new RESTException(error(res))
-    res
+    try {
+      val res = response(path, queryParams, headers).delete
+      if(res.getStatus >= 400 && res.getStatus < 600) throw new RESTException(error(res))
+      res
+    } catch {
+      case NonFatal(t) =>
+        throw new RESTException(ErrorConstants.DCS201.withErrorMessage(t.getMessage))
+    }
   }
 
   def deleteAsJson(path: String,
