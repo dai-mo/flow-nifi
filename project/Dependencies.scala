@@ -20,6 +20,7 @@ object Dependencies {
 			lazy val mockitoVersion   = "1.10.19"
 			lazy val scalaTestVersion = "2.2.6"
 			lazy val juiVersion       = "0.11"
+      lazy val jacksonVersion   = "2.7.2"
 
 			val dcsApi          = "org.dcs"                          % "org.dcs.api"                        % dcsApiVersion
 			val dcsRemote    		= "org.dcs"                          % "org.dcs.remote"                     % dcsRemoteVersion
@@ -37,6 +38,9 @@ object Dependencies {
 			val logbackClassic  =	"ch.qos.logback"                   % "logback-classic"                    % logbackVersion
 			val dcsCore         = "org.dcs"                          % "org.dcs.core"                       % dcsCoreVersion
 			val playJson 				= "com.typesafe.play" 							 %% "play-json" 												% playVersion
+      val jksonDatabind   = "com.fasterxml.jackson.core"       % "jackson-databind"                   % jacksonVersion
+      val jksonCore       = "com.fasterxml.jackson.core"       % "jackson-core"                       % jacksonVersion
+      val jksonDataFormat = "com.fasterxml.jackson.dataformat" % "jackson-dataformat-yaml"            % jacksonVersion
 			val mockitoCore     = "org.mockito"                      % "mockito-core"                       % mockitoVersion
 			val mockitoAll      = "org.mockito"                      % "mockito-all"                        % mockitoVersion
 			val scalaTest       = "org.scalatest"                    %% "scalatest"                         % scalaTestVersion
@@ -51,7 +55,10 @@ object Dependencies {
 					nifiApi,
 					nifiProcUtils,
 					jsonPath,
-
+          jksonDatabind,
+          jksonCore,
+          jksonDataFormat,
+        
 					dcsNifiServices % "provided",
 
 
