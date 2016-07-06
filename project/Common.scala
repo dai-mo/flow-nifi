@@ -8,12 +8,11 @@ import Keys._
 
 object Common {
 
-	lazy val UNIT = config("unit") extend(Test)
-	lazy val IT = config("it") extend(Test)
+	lazy val UNIT = config("unit") extend Test
+	lazy val IT = config("it") extend Test
 
 	lazy val commonSettings = Seq(
 			organization := "org.dcs",
-			version := dcsNifiVersion,
 			scalaVersion := "2.11.7",
 			crossPaths := false,
 			checksums in update := Nil,
@@ -21,7 +20,7 @@ object Common {
 			javacOptions in doc := Seq("-source", "1.8")
 			)
 
-	def BaseProject(projectID: String, projectName: String) = (
+	def BaseProject(projectID: String, projectName: String) =
 		    Project(projectID, file(projectName)).
 			  configs(IT).
 			  settings(inConfig(IT)(Defaults.testTasks): _*).
@@ -33,5 +32,4 @@ object Common {
 						Tests.Argument("-l", "E2E")
 					)
 				)
-			)
 }

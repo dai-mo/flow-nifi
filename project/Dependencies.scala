@@ -2,14 +2,13 @@ import sbt._
 
 object Dependencies {
 			lazy val scVersion = "2.11.7"
-			lazy val dcsNifiVersion   = "0.0.1-SNAPSHOT"
 
 	    // Versions
 			
-	    lazy val dcsApiVersion    = "1.0.0-SNAPSHOT"
-	    lazy val dcsRemoteVersion = "1.0.0-SNAPSHOT"
-			lazy val dcsCommonsVersion= "1.0.0-SNAPSHOT"
-			lazy val dcsCoreVersion   = "1.0.0-SNAPSHOT"
+	    lazy val dcsApiVersion    = "0.1.0"
+	    lazy val dcsRemoteVersion = "0.1.0"
+			lazy val dcsCommonsVersion= "0.1.0"
+			lazy val dcsCoreVersion   = "0.1.0"
 			lazy val nifiVersion			= "0.6.1"
 			lazy val slf4jVersion			= "1.7.12"
 			lazy val jsonPathVersion	= "1.2.0"
@@ -22,16 +21,18 @@ object Dependencies {
 			lazy val juiVersion       = "0.11"
       lazy val jacksonVersion   = "2.7.2"
 
+      val dcsNifiServApi  = "org.dcs"                          % "org.dcs.nifi.services-api"
+      val dcsNifiServices = "org.dcs"                  			   % "org.dcs.nifi.services"
+
+
 			val dcsApi          = "org.dcs"                          % "org.dcs.api"                        % dcsApiVersion
 			val dcsRemote    		= "org.dcs"                          % "org.dcs.remote"                     % dcsRemoteVersion
 			val dcsCommons   		= "org.dcs"                          % "org.dcs.commons"                    % dcsCommonsVersion
-			val dcsNifiServApi  = "org.dcs"                          % "org.dcs.nifi.services-api"          % dcsNifiVersion
 			val nifiApi         = "org.apache.nifi"                  % "nifi-api"                    				% nifiVersion
 			val nifiProcUtils   = "org.apache.nifi"                  % "nifi-processor-utils"        				% nifiVersion
 			val nifiClientDTO	  = "org.apache.nifi"									 % "nifi-client-dto"										% nifiVersion
 			val nifiMock        = "org.apache.nifi"                  % "nifi-mock"                  				% nifiVersion
 			val jsonPath        = "com.jayway.jsonpath"      			   % "json-path"                  				% jsonPathVersion
-			val dcsNifiServices = "org.dcs"                  			   % "org.dcs.nifi.services"       				% dcsNifiVersion
 			val scalaLib				= "org.scala-lang"									 % "scala-library"                      % scVersion
 			val slf4jSimple     = "org.slf4j"                  			 % "slf4j-simple"                				% slf4jVersion
 			val logbackCore     = "ch.qos.logback"                   % "logback-core"                       % logbackVersion
@@ -58,8 +59,6 @@ object Dependencies {
           jksonDatabind,
           jksonCore,
           jksonDataFormat,
-        
-					dcsNifiServices % "provided",
 
 
 					slf4jSimple     % "test",
@@ -78,7 +77,6 @@ object Dependencies {
 
 			// Collect Services Dependencies
 			val servicesDependencies = Seq(
-					dcsNifiServApi,
 					dcsApi,
 					dcsRemote,
 					nifiProcUtils,
