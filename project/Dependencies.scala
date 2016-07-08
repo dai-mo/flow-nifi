@@ -5,7 +5,7 @@ object Dependencies {
 
 	    // Versions
 			
-	    lazy val dcsApiVersion    = "0.1.0"
+	    lazy val dcsApiVersion    = "0.2.0-SNAPSHOT"
 	    lazy val dcsRemoteVersion = "0.1.0"
 			lazy val dcsCommonsVersion= "0.1.0"
 			lazy val dcsCoreVersion   = "0.1.0"
@@ -51,7 +51,7 @@ object Dependencies {
 
 			// Collect Processors Dependencies
 			val processorsDependencies = Seq(
-					dcsApi,
+					dcsApi % "provided",
 					dcsRemote,
 					nifiApi,
 					nifiProcUtils,
