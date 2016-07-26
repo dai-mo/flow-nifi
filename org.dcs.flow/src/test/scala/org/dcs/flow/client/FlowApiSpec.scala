@@ -24,6 +24,21 @@ object FlowApiSpec {
 class FlowApiSpec extends RestBaseUnitSpec with FlowApiBehaviors {
   import FlowApiSpec._
 
+  "Templates Retrieval " must " be valid " in {
+
+    val flowTemplatesPath: Path = Paths.get(this.getClass().getResource("templates.json").toURI())
+    val flowClient = spy(new NifiFlowApi())
+
+    doReturn(jsonFromFile(flowTemplatesPath.toFile)).
+      when(flowClient).
+      getAsJson(
+        Matchers.eq(NifiFlowClient.TemplatesPath),
+        Matchers.any[List[(String, String)]],
+        Matchers.any[List[(String, String)]]
+      )
+
+    validateTemplatesRetrieval(flowClient)
+  }
 
   "Flow Instantiation for existing template id" must " be valid " in {
 
@@ -121,6 +136,10 @@ trait FlowApiBehaviors { this: FlatSpec =>
 
   val logger: Logger = LoggerFactory.getLogger(classOf[FlowApiSpec])
 
+  def validateTemplatesRetrieval(flowClient: NifiFlowClient) {
+    val templates = flowClient.templates(ClientToken)
+    assert(templates.size == 6)
+  }
 
   def validateFlowInstantiation(flowClient: NifiFlowClient) {
     val flow = flowClient.instantiate(templateId, ClientToken)

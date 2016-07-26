@@ -15,6 +15,10 @@ object FlowTemplate {
   def apply(template: TemplateDTO): FlowTemplate = {
     val flowTemplate = new FlowTemplate
     flowTemplate.setId(template.getId)
+    flowTemplate.setUri(template.getUri)
+    flowTemplate.setName(template.getName)
+    flowTemplate.setDescription(template.getDescription)
+    flowTemplate.setTimestamp(template.getTimestamp)
     flowTemplate
   }
 }
