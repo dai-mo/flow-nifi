@@ -24,6 +24,21 @@ object FlowApiSpec {
 class FlowApiSpec extends RestBaseUnitSpec with FlowApiBehaviors {
   import FlowApiSpec._
 
+  "Templates Retrieval " must " be valid " in {
+
+    val flowTemplatesPath: Path = Paths.get(this.getClass().getResource("templates.json").toURI())
+    val flowClient = spy(new NifiFlowApi())
+
+    doReturn(jsonFromFile(flowTemplatesPath.toFile)).
+      when(flowClient).
+      getAsJson(
+        Matchers.eq(NifiFlowClient.TemplatesPath),
+        Matchers.any[List[(String, String)]],
+        Matchers.any[List[(String, String)]]
+      )
+
+    validateTemplatesRetrieval(flowClient)
+  }
 
   "Flow Instantiation for existing template id" must " be valid " in {
 
@@ -121,11 +136,32 @@ trait FlowApiBehaviors { this: FlatSpec =>
 
   val logger: Logger = LoggerFactory.getLogger(classOf[FlowApiSpec])
 
+  def validateTemplatesRetrieval(flowClient: NifiFlowClient) {
+    val templates = flowClient.templates(ClientToken)
+    assert(templates.size == 6)
+  }
 
   def validateFlowInstantiation(flowClient: NifiFlowClient) {
     val flow = flowClient.instantiate(templateId, ClientToken)
     assert(flow.processors.size == 5)
     assert(flow.connections.size == 4)
+
+    val actualSourcePortIds = Set("30627450-069c-4474-abdd-0a9ec7996b2a",
+      "9271fe72-86db-4966-b63d-598d82c39ca7",
+      "8de57c1c-4bb5-4231-b205-df27cdfab7af",
+      "ce991a08-d775-4f8e-b4e6-d687a143fe98")
+
+    val actualDestinationPortIds = Set("aee1eac7-f1b3-45b5-b4c4-4ec5a850e8ea",
+      "ce991a08-d775-4f8e-b4e6-d687a143fe98",
+      "9271fe72-86db-4966-b63d-598d82c39ca7",
+      "30627450-069c-4474-abdd-0a9ec7996b2a")
+
+    flow.connections.foreach(c => {
+      assert(actualSourcePortIds.contains(c.source.id))
+      assert(c.source.`type` == "PROCESSOR")
+      assert(actualDestinationPortIds.contains(c.destination.id))
+      assert(c.destination.`type` == "PROCESSOR")
+    })
   }
 
   def validateNonExistingFlowInstantiation(flowClient: NifiFlowClient) {

@@ -15,6 +15,10 @@ object FlowTemplate {
   def apply(template: TemplateDTO): FlowTemplate = {
     val flowTemplate = new FlowTemplate
     flowTemplate.setId(template.getId)
+    flowTemplate.setUri(template.getUri)
+    flowTemplate.setName(template.getName)
+    flowTemplate.setDescription(template.getDescription)
+    flowTemplate.setTimestamp(template.getTimestamp)
     flowTemplate
   }
 }
@@ -85,14 +89,24 @@ object ProcessorType {
 
 object Connection {
   def apply(connection: ConnectionDTO): Connection = {
-    val c = new Connection
-    c.setId(connection.getId)
-    c
+    Connection(connection.getId,
+      sourceId = connection.getSource.getId,
+      sourceType = connection.getSource.getType,
+      destinationId = connection.getDestination.getId,
+      destinationType = connection.getDestination.getType)
   }
 
-  def apply(connectionId: String): Connection = {
+  def apply(connectionId: String,
+            sourceId: String = "",
+            sourceType: String = "",
+            destinationId: String = "",
+            destinationType: String = ""): Connection = {
     val c = new Connection
     c.setId(connectionId)
+    val source = ConnectionPort(sourceId, sourceType)
+    c.setSource(source)
+    val destination = ConnectionPort(destinationId, destinationType)
+    c.setDestination(destination)
     c
   }
 }
