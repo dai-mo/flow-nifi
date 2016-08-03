@@ -19,7 +19,7 @@ trait NifiApiConfig extends ApiConfig {
     case 400 => ErrorConstants.DCS301
     case 401 => ErrorConstants.DCS302
     case 403 => ErrorConstants.DCS303
-    case 404 => ErrorConstants. DCS304
+    case 404 => ErrorConstants.DCS304
     case 409 => ErrorConstants.DCS305
     case _ => {
       val er = ErrorConstants.DCS001

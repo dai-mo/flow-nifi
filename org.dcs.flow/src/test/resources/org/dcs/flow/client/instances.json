@@ -1,0 +1,30 @@
+{
+  "revision": {
+    "clientId": "feab8456-3bc3-488a-8d56-0281083d2660"
+  },
+  "processGroups": [
+    {
+      "id": "3b5e8a9e-400c-4216-b061-e663ef1cdc6a",
+      "uri": "http://localhost:8888/nifi-api/controller/process-groups/34c0febd-d9c2-48f7-988b-97e6b59cf96e/process-group-references/3b5e8a9e-400c-4216-b061-e663ef1cdc6a",
+      "position": {
+        "x": 579.106498046875,
+        "y": 162.09315966796876
+      },
+      "parentGroupId": "34c0febd-d9c2-48f7-988b-97e6b59cf96e",
+      "name": "DateConversion",
+      "comments": "",
+      "parent": {
+        "id": "34c0febd-d9c2-48f7-988b-97e6b59cf96e",
+        "name": "NiFi Flow"
+      },
+      "runningCount": 0,
+      "stoppedCount": 5,
+      "invalidCount": 0,
+      "disabledCount": 0,
+      "activeRemotePortCount": 0,
+      "inactiveRemotePortCount": 0,
+      "inputPortCount": 0,
+      "outputPortCount": 0
+    }
+  ]
+}

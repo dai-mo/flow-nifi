@@ -5,13 +5,13 @@
     "lastModifier" : null
   },
   "processGroup" : {
-    "id" : "34c0febd-d9c2-48f7-988b-97e6b59cf96e",
+    "id" : "d2ddd0e9-4dac-419f-bdf7-d6724a0d5daa",
     "uri" : "http://localhost:8888/nifi-api/controller/process-groups/34c0febd-d9c2-48f7-988b-97e6b59cf96e",
     "position" : {
       "x" : 0.0,
       "y" : 0.0
     },
-    "parentGroupId" : null,
+    "parentGroupId" : "34c0febd-d9c2-48f7-988b-97e6b59cf96e",
     "name" : "NiFi Flow",
     "comments" : "",
     "running" : null,

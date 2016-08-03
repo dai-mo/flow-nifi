@@ -17,6 +17,10 @@ import org.slf4j.{Logger, LoggerFactory}
   */
 object FlowApiSpec {
   val ClientToken = "29474d0f-3e21-4136-90fd-ad4e2c613afb"
+  val UserId = "root"
+
+  val FlowInstanceId = "d2ddd0e9-4dac-419f-bdf7-d6724a0d5daa"
+
   class NifiFlowApi extends NifiFlowClient
     with NifiApiConfig
 }
@@ -42,13 +46,34 @@ class FlowApiSpec extends RestBaseUnitSpec with FlowApiBehaviors {
 
   "Flow Instantiation for existing template id" must " be valid " in {
 
-    val templatePath: Path = Paths.get(this.getClass().getResource("flow-template.json").toURI())
+    val flowTemplatesPath: Path = Paths.get(this.getClass().getResource("templates.json").toURI())
+    val templateInstancePath: Path = Paths.get(this.getClass().getResource("flow-template-instance.json").toURI())
+    val createProcessGroupPath: Path = Paths.get(this.getClass().getResource("create-process-group.json").toURI())
+
     val flowClient = spy(new NifiFlowApi())
 
-    doReturn(jsonFromFile(templatePath.toFile)).
+    doReturn(jsonFromFile(flowTemplatesPath.toFile)).
+      when(flowClient).
+      getAsJson(
+        Matchers.eq(NifiFlowClient.TemplatesPath),
+        Matchers.any[List[(String, String)]],
+        Matchers.any[List[(String, String)]]
+      )
+
+    doReturn(jsonFromFile(createProcessGroupPath.toFile)).
       when(flowClient).
       postAsJson(
-        Matchers.eq(NifiFlowClient.TemplateInstancePath),
+        Matchers.eq(NifiFlowClient.processGroupsPath(UserId)),
+        Matchers.any[Form],
+        Matchers.any[List[(String, String)]],
+        Matchers.any[List[(String, String)]],
+        Matchers.eq(MediaType.APPLICATION_FORM_URLENCODED)
+      )
+
+    doReturn(jsonFromFile(templateInstancePath.toFile)).
+      when(flowClient).
+      postAsJson(
+        Matchers.eq(NifiFlowClient.templateInstancePath(FlowInstanceId)),
         Matchers.any[Form],
         Matchers.any[List[(String, String)]],
         Matchers.any[List[(String, String)]],
@@ -64,6 +89,7 @@ class FlowApiSpec extends RestBaseUnitSpec with FlowApiBehaviors {
 
   "Flow Retrieval " must " be valid " in {
 
+
     val flowInstancePath: Path = Paths.get(this.getClass().getResource("flow-instance.json").toURI())
     val flowClient = spy(new NifiFlowApi())
 
@@ -71,7 +97,7 @@ class FlowApiSpec extends RestBaseUnitSpec with FlowApiBehaviors {
     doReturn(jsonFromFile(flowInstancePath.toFile)).
       when(flowClient).
       getAsJson(
-        Matchers.eq(NifiFlowClient.ProcessGroupsPath + "/root"),
+        Matchers.eq(NifiFlowClient.processGroupsPath(UserId) + "/" + FlowInstanceId),
         Matchers.any[List[(String, String)]],
         Matchers.any[List[(String, String)]]
       )
@@ -82,57 +108,39 @@ class FlowApiSpec extends RestBaseUnitSpec with FlowApiBehaviors {
       when(flowClient).
       currentVersion()
 
-    validateFlowRetrieval(flowClient)
+    validateFlowRetrieval(flowClient, FlowInstanceId)
   }
 
-  "Flow Deletion " must " be valid " in {
+    "Flow Deletion " must " be valid " in {
 
-    val flowInstancePath: Path = Paths.get(this.getClass().getResource("flow-instance.json").toURI())
-    val registerSnippetPath: Path = Paths.get(this.getClass().getResource("flow-snippet.json").toURI())
-    val deleteSnippetPath: Path = Paths.get(this.getClass().getResource("delete-flow.json").toURI())
+      val deleteFlowPath: Path = Paths.get(this.getClass().getResource("delete-flow.json").toURI())
 
-    val flowClient = spy(new NifiFlowApi())
+      val flowClient = spy(new NifiFlowApi())
 
+      doReturn(jsonFromFile(deleteFlowPath.toFile)).
+        when(flowClient).
+        deleteAsJson(
+          Matchers.eq(NifiFlowClient.processGroupsPath(UserId) + "/" + FlowInstanceId),
+          Matchers.any[List[(String, String)]],
+          Matchers.any[List[(String, String)]]
+        )
 
-    doReturn(jsonFromFile(flowInstancePath.toFile)).
-      when(flowClient).
-      getAsJson(
-        Matchers.eq(NifiFlowClient.ProcessGroupsPath + "/root"),
-        Matchers.any[List[(String, String)]],
-        Matchers.any[List[(String, String)]]
-      )
+      doReturn(49.0.toLong).
+        when(flowClient).
+        currentVersion()
 
-    doReturn(jsonFromFile(registerSnippetPath.toFile)).
-      when(flowClient).
-      postAsJson(
-        Matchers.eq(NifiFlowClient.SnippetsPath),
-        Matchers.any[Form],
-        Matchers.any[List[(String, String)]],
-        Matchers.any[List[(String, String)]],
-        Matchers.eq(MediaType.APPLICATION_FORM_URLENCODED)
-      )
-
-    doReturn(jsonFromFile(flowInstancePath.toFile)).
-      when(flowClient).
-      getAsJson(
-        Matchers.eq(NifiFlowClient.SnippetsPath + "/c484a82c-27a0-4ceb-b9a2-916e8b8000f6"),
-        Matchers.any[List[(String, String)]],
-        Matchers.any[List[(String, String)]]
-      )
-
-    doReturn(49.0.toLong).
-      when(flowClient).
-      currentVersion()
-
-    validateFlowRetrieval(flowClient)
-  }
+      validateFlowDeletion(flowClient, FlowInstanceId)
+    }
 }
 
-trait FlowApiBehaviors { this: FlatSpec =>
+trait FlowApiBehaviors {
+  this: FlatSpec =>
+
   import FlowApiSpec._
 
   val templateId = "d73b5a44-5968-47d5-9a9a-aea5664c5835"
   val invalidTemplateId = "d615fb63-bc39-458c-bfcf-1f197ecdc81"
+  val flowInstanceId = "3f948eeb-61d8-4f47-81f4-fff5cac50ed8"
 
   val logger: Logger = LoggerFactory.getLogger(classOf[FlowApiSpec])
 
@@ -142,43 +150,32 @@ trait FlowApiBehaviors { this: FlatSpec =>
   }
 
   def validateFlowInstantiation(flowClient: NifiFlowClient) {
-    val flow = flowClient.instantiate(templateId, ClientToken)
+    val flow = flowClient.instantiate(templateId, UserId , ClientToken)
     assert(flow.processors.size == 5)
     assert(flow.connections.size == 4)
 
-    val actualSourcePortIds = Set("30627450-069c-4474-abdd-0a9ec7996b2a",
-      "9271fe72-86db-4966-b63d-598d82c39ca7",
-      "8de57c1c-4bb5-4231-b205-df27cdfab7af",
-      "ce991a08-d775-4f8e-b4e6-d687a143fe98")
-
-    val actualDestinationPortIds = Set("aee1eac7-f1b3-45b5-b4c4-4ec5a850e8ea",
-      "ce991a08-d775-4f8e-b4e6-d687a143fe98",
-      "9271fe72-86db-4966-b63d-598d82c39ca7",
-      "30627450-069c-4474-abdd-0a9ec7996b2a")
-
     flow.connections.foreach(c => {
-      assert(actualSourcePortIds.contains(c.source.id))
       assert(c.source.`type` == "PROCESSOR")
-      assert(actualDestinationPortIds.contains(c.destination.id))
       assert(c.destination.`type` == "PROCESSOR")
     })
+
+    assert(!flow.getId().isEmpty)
   }
 
   def validateNonExistingFlowInstantiation(flowClient: NifiFlowClient) {
     val thrown = intercept[RESTException] {
-      flowClient.instantiate(invalidTemplateId, ClientToken)
+      flowClient.instantiate(invalidTemplateId, UserId, ClientToken)
     }
-    assert(thrown.errorResponse.httpStatusCode == 404)
+    assert(thrown.errorResponse.httpStatusCode == 400)
   }
 
-  def validateFlowRetrieval(flowClient: NifiFlowClient) {
-    val flowInstance = flowClient.instance("root", ClientToken)
+  def validateFlowRetrieval(flowClient: NifiFlowClient, flowInstanceId: String) {
+    val flowInstance = flowClient.instance(flowInstanceId, UserId, ClientToken)
     assert(flowInstance.processors.size == 5)
     assert(flowInstance.connections.size == 4)
   }
 
-  def validateFlowDeletion(flowClient: NifiFlowClient) {
-    assert(flowClient.remove("root", ClientToken))
-
+  def validateFlowDeletion(flowClient: NifiFlowClient, flowInstanceId: String) {
+    assert(flowClient.remove(flowInstanceId, UserId, ClientToken))
   }
 }

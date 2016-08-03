@@ -1,0 +1,49 @@
+{
+  "processGroup": {
+    "activeRemotePortCount": 0,
+    "comments": "",
+    "contents": {
+      "connections": [
+      ],
+      "controllerServices": [
+      ],
+      "funnels": [
+      ],
+      "inputPorts": [
+      ],
+      "labels": [
+      ],
+      "outputPorts": [
+      ],
+      "processGroups": [
+      ],
+      "processors": [
+      ],
+      "remoteProcessGroups": [
+      ]
+    },
+    "disabledCount": 0,
+    "id": "d2ddd0e9-4dac-419f-bdf7-d6724a0d5daa",
+    "inactiveRemotePortCount": 0,
+    "inputPortCount": 0,
+    "invalidCount": 0,
+    "name": "test",
+    "outputPortCount": 0,
+    "parent": {
+      "id": "34c0febd-d9c2-48f7-988b-97e6b59cf96e",
+      "name": "NiFi Flow"
+    },
+    "parentGroupId": "34c0febd-d9c2-48f7-988b-97e6b59cf96e",
+    "position": {
+      "x": "750.6797023925782",
+      "y": "260.13499072265626"
+    },
+    "runningCount": 0,
+    "stoppedCount": 0,
+    "uri": "http://localhost:8888/nifi-api/controller/process-groups/34c0febd-d9c2-48f7-988b-97e6b59cf96e/process-group-references/3b5e8a9e-400c-4216-b061-e663ef1cdc6a"
+  },
+  "revision": {
+    "clientId": "5f029c21-dec2-4878-af3f-6da1637cb5a6",
+    "version": 1
+  }
+}
