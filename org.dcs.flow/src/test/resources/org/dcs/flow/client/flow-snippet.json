@@ -1,29 +1,31 @@
 {
-  "id" : "c484a82c-27a0-4ceb-b9a2-916e8b8000f6",
-  "version" : "50",
-  "processors" : [ {
-    "id" : "474f312b-3e66-4fdb-8608-c6a299fb1cbd",
-    "status" : null
-  }, {
-    "id" : "21780c84-b592-44c2-a1e7-ece8e50e69f2",
-    "status" : null
-  }, {
-    "id" : "ed4416fc-d56c-43c8-9893-e8f0fc7b6e49",
-    "status" : null
-  }, {
-    "id" : "8a3a2f12-cc28-43fe-85e8-056bbec6cd5a",
-    "status" : null
-  }, {
-    "id" : "e6f6f66a-924c-4fec-affd-f8d53e984d47",
-    "status" : null
-  } ],
-  "connections" : [ {
-    "id" : "1f9d0555-dbc8-4b78-9b08-9773eabc4f5d"
-  }, {
-    "id" : "09d9769f-0d78-4f38-8894-b86741a47a7b"
-  }, {
-    "id" : "8638f6ee-19c8-455d-a5c2-ce9073a40d67"
-  }, {
-    "id" : "d1800582-8173-41c9-b2c4-2a846101e94a"
-  } ]
+  "revision": {
+    "clientId": "f95cfcfe-1247-4673-b8c1-5f2e4a9b0652",
+    "version": 4
+  },
+  "snippet": {
+    "id": "3f948eeb-61d8-4f47-81f4-fff5cac50ed8",
+    "uri": "http://localhost:8888/nifi-api/controller/snippets/3f948eeb-61d8-4f47-81f4-fff5cac50ed8",
+    "parentGroupId": "34c0febd-d9c2-48f7-988b-97e6b59cf96e",
+    "linked": true,
+    "processGroups": [],
+    "remoteProcessGroups": [],
+    "processors": [
+      "c1fee3cc-1fc4-4ab9-8844-77c6474920c6",
+      "14b2e6c3-f736-4176-b79d-3ac0120a0de8",
+      "ccc2c78b-0008-45ad-9022-fc3c450ddb0e",
+      "1a250f36-2bf6-4ad2-8b25-ec35d650cb1f",
+      "70203fa2-0981-44c5-82c9-fca938f25653"
+    ],
+    "inputPorts": [],
+    "outputPorts": [],
+    "connections": [
+      "d4777de1-35af-4a5f-ab94-892971044c5f",
+      "a775d446-3799-44d9-a2bb-572665da6780",
+      "9f78401d-ca3d-4ec4-80e8-957e258a159c",
+      "9ce8b6d7-66d2-4f18-8555-eedf2eedee61"
+    ],
+    "labels": [],
+    "funnels": []
+  }
 }

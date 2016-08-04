@@ -15,19 +15,20 @@ class FlowApiISpec extends RestBaseUnitSpec with FlowApiBehaviors {
 
   "Flow Instantiation for existing template id" must " be valid " taggedAs(IT) in {
     validateFlowInstantiation(flowClient)
+    flowClient.instances(FlowApiSpec.UserId, FlowApiSpec.ClientToken).foreach(fi => {
+      validateFlowRetrieval(flowClient, fi.getId())
+    })
   }
 
   "Flow Instantiation for non-existing template id" must " be invalid " taggedAs(IT) in {
     validateNonExistingFlowInstantiation(flowClient)
   }
 
-  "Flow Retrieval " must " be valid " taggedAs(IT) in {
-    validateFlowRetrieval(flowClient)
-
-  }
 
   "Flow Instance Deletion " must " be valid " taggedAs(IT) in {
-    validateFlowDeletion(flowClient)
+    flowClient.instances(FlowApiSpec.UserId, FlowApiSpec.ClientToken).foreach(fi => {
+      validateFlowDeletion(flowClient, fi.getId())
+    })
   }
 
 }

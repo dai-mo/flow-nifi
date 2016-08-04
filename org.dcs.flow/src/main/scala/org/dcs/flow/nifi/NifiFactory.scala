@@ -3,9 +3,12 @@ package org.dcs.flow.nifi
 import org.apache.nifi.web.api.dto._
 import org.apache.nifi.web.api.entity.{FlowSnippetEntity, ProcessGroupEntity, SnippetEntity}
 import org.dcs.api.service._
+import org.dcs.flow.nifi.internal.ProcessGroup
 
 import scala.collection.JavaConversions._
 import scala.collection.JavaConverters._
+
+
 
 /**
   * Created by cmathew on 30/05/16.
@@ -23,6 +26,24 @@ object FlowTemplate {
   }
 }
 
+object ProcessGroup {
+  def apply(processGroupEntity: ProcessGroupEntity): ProcessGroup = {
+    val pg = new ProcessGroup
+
+    pg.setId(processGroupEntity.getProcessGroup.getId)
+    pg.setName(processGroupEntity.getProcessGroup.getName)
+    pg
+  }
+
+  def apply(processGroupDTO: ProcessGroupDTO): ProcessGroup = {
+    val pg = new ProcessGroup
+
+    pg.setId(processGroupDTO.getId)
+    pg.setName(processGroupDTO.getName)
+    pg
+  }
+}
+
 object FlowInstance {
   def apply(processGroupEntity: ProcessGroupEntity): FlowInstance = {
 
@@ -31,15 +52,17 @@ object FlowInstance {
 
     f.setVersion(processGroupEntity.getRevision.getVersion.toString)
     f.setId(processGroupEntity.getProcessGroup.getParentGroupId)
+    f.setName(processGroupEntity.getProcessGroup.getName)
     f.setProcessors(contents.getProcessors.map(p => ProcessorInstance(p)).toList)
     f.setConnections(contents.getConnections.map(c => Connection(c)).toList)
     f
   }
 
-  def apply(flowSnippetEntity: FlowSnippetEntity): FlowInstance  = {
+  def apply(flowSnippetEntity: FlowSnippetEntity, id: String): FlowInstance  = {
     val f = new FlowInstance
     val contents = flowSnippetEntity.getContents
 
+    f.setId(id)
     f.setVersion(flowSnippetEntity.getRevision.getVersion.toString)
     f.setProcessors(contents.getProcessors.map(p => ProcessorInstance(p)).toList)
     f.setConnections(contents.getConnections.map(c => Connection(c)).toList)
@@ -49,8 +72,19 @@ object FlowInstance {
   def apply(snippetEntity: SnippetEntity): FlowInstance  = {
     val f = new FlowInstance
     val snippet = snippetEntity.getSnippet
-    f.setVersion(snippetEntity.getRevision.getVersion.toString)
+
     f.setId(snippet.getId)
+    f.setVersion(snippetEntity.getRevision.getVersion.toString)
+    f.setProcessors(snippet.getProcessors.map(p => ProcessorInstance(p)).toList)
+    f.setConnections(snippet.getConnections.map(c => Connection(c)).toList)
+    f
+  }
+
+  def apply(processGroupDTO: ProcessGroupDTO): FlowInstance  = {
+    val f = new FlowInstance
+    val snippet = processGroupDTO.getContents
+
+    f.setId(processGroupDTO.getId)
     f.setProcessors(snippet.getProcessors.map(p => ProcessorInstance(p)).toList)
     f.setConnections(snippet.getConnections.map(c => Connection(c)).toList)
     f
