@@ -3,6 +3,7 @@ package org.dcs.flow.nifi
 import javax.ws.rs.core.MediaType
 
 import org.apache.nifi.web.api.entity.{ProcessorEntity, ProcessorTypesEntity}
+import org.dcs.api.error.{ErrorConstants, RESTException}
 import org.dcs.api.service.{ProcessorApiService, ProcessorInstance, ProcessorType}
 import org.dcs.commons.JsonSerializerImplicits._
 import org.dcs.flow.nifi.NifiBaseRestClient._
@@ -10,9 +11,18 @@ import org.slf4j.{Logger, LoggerFactory}
 
 import scala.collection.JavaConverters._
 
+class NifiProcessorApi extends NifiProcessorClient with NifiApiConfig
+
 object NifiProcessorClient  {
   val TypesPath = "/controller/processor-types"
-  val ProcessorsPath = "/controller/process-groups/root/processors"
+
+  val StateRunning = "RUNNING"
+  val StateStopped = "STOPPED"
+
+  val States = Set(StateRunning, StateStopped)
+
+  def processorsPath(processGroupId: String) =
+    "/controller/process-groups/" + processGroupId + "/processors"
 }
 
 trait NifiProcessorClient extends ProcessorApiService with NifiBaseRestClient {
@@ -21,9 +31,9 @@ trait NifiProcessorClient extends ProcessorApiService with NifiBaseRestClient {
 
   import NifiProcessorClient._
 
-  override def types(clientId: String): List[ProcessorType] = {
+  override def types(userID: String): List[ProcessorType] = {
     val processorTypes = getAsJson(path = TypesPath,
-      queryParams = (ClientIdKey -> clientId) :: Nil).toObject[ProcessorTypesEntity]
+      queryParams = (ClientIdKey -> userID) :: Nil).toObject[ProcessorTypesEntity]
     processorTypes.getProcessorTypes.asScala.map(dt => ProcessorType(dt)).toList
   }
 
@@ -31,10 +41,10 @@ trait NifiProcessorClient extends ProcessorApiService with NifiBaseRestClient {
     types(clientToken).filter( dtype => dtype.tags.exists(tag => tag.contains(str)))
   }
 
-  override def create(name: String, ptype: String, clientId: String): ProcessorInstance = {
+  override def create(name: String, ptype: String, userId: String): ProcessorInstance = {
 
-    val processor = postAsJson(path = ProcessorsPath,
-      queryParams = (ClientIdKey -> clientId) :: List(("name", name),
+    val processor = postAsJson(path = processorsPath(userId),
+      queryParams = (ClientIdKey -> userId) :: List(("name", name),
         ("type" -> ptype),
         ("x" -> "17"),
         ("y" -> "100")),
@@ -47,21 +57,39 @@ trait NifiProcessorClient extends ProcessorApiService with NifiBaseRestClient {
     processorInstance
   }
 
-  override def start(processorId: String, clientId: String): ProcessorInstance = {
+  override def start(processorId: String, processGroupId: String): ProcessorInstance = {
+    changeState(processorId, StateRunning, processGroupId)
+  }
 
-    val processor = putAsJson(path = ProcessorsPath + "/" + processorId,
-      queryParams = (ClientIdKey -> clientId) :: Nil).toObject[ProcessorEntity]
+
+  def stop(processorId: String, processGroupId: String): ProcessorInstance = {
+    changeState(processorId, StateStopped, processGroupId)
+  }
+
+
+  override def remove(processorId: String, userId: String): Boolean = {
+    val processor = deleteAsJson(path = processorsPath(userId) + "/" + processorId,
+      queryParams = (ClientIdKey -> userId) :: Nil).toObject[ProcessorEntity]
+
+    processor != null
+  }
+
+  def changeState(processorId: String, state: String, processGroupId: String): ProcessorInstance = {
+    if(!States.contains(state))
+      throw new RESTException(ErrorConstants.DCS305.withErrorMessage("State [" + state + "] not recognised"))
+
+    val qp = List(
+      "state" -> state,
+      ClientIdKey -> processGroupId
+    )
+    val processor = putAsJson(path = processorsPath(processGroupId) + "/" + processorId,
+      queryParams = qp,
+      contentType = MediaType.APPLICATION_FORM_URLENCODED
+    ).toObject[ProcessorEntity]
 
     val processorInstance = new ProcessorInstance
     processorInstance.setId(processor.getProcessor.getId)
     processorInstance.setStatus(processor.getProcessor.getState)
     processorInstance
-  }
-
-  override def remove(processorId: String, clientId: String): Boolean = {
-    val processor = deleteAsJson(path = ProcessorsPath + "/" + processorId,
-      queryParams = (ClientIdKey -> clientId) :: Nil).toObject[ProcessorEntity]
-
-    processor != null
   }
 }

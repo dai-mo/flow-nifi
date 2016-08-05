@@ -2,7 +2,8 @@ package org.dcs.flow.client
 
 import org.dcs.flow.IT
 import org.dcs.flow.RestBaseUnitSpec
-import org.dcs.flow.client.ProcessorApiSpec.NifiProcessorApi
+import org.dcs.flow.nifi.NifiProcessorApi
+
 
 
 class ProcessorApiISpec extends RestBaseUnitSpec with ProcessorApiBehaviors {

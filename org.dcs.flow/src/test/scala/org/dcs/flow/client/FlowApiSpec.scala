@@ -5,7 +5,7 @@ import javax.ws.rs.core.{Form, MediaType}
 
 import org.dcs.api.error.RESTException
 import org.dcs.flow.RestBaseUnitSpec
-import org.dcs.flow.nifi.{NifiApiConfig, NifiFlowClient}
+import org.dcs.flow.nifi.{NifiFlowApi, NifiFlowClient, NifiProcessorClient}
 import org.mockito.Matchers
 import org.mockito.Mockito._
 import org.scalatest.FlatSpec
@@ -19,16 +19,17 @@ object FlowApiSpec {
   val ClientToken = "29474d0f-3e21-4136-90fd-ad4e2c613afb"
   val UserId = "root"
 
+  val TemplateId = "d73b5a44-5968-47d5-9a9a-aea5664c5835"
   val FlowInstanceId = "d2ddd0e9-4dac-419f-bdf7-d6724a0d5daa"
 
-  class NifiFlowApi extends NifiFlowClient
-    with NifiApiConfig
+  val logger: Logger = LoggerFactory.getLogger(classOf[FlowApiSpec])
+
 }
 
 class FlowApiSpec extends RestBaseUnitSpec with FlowApiBehaviors {
   import FlowApiSpec._
 
-  "Templates Retrieval " must " be valid " in {
+  "Templates Retrieval" must "be valid" in {
 
     val flowTemplatesPath: Path = Paths.get(this.getClass().getResource("templates.json").toURI())
     val flowClient = spy(new NifiFlowApi())
@@ -44,7 +45,7 @@ class FlowApiSpec extends RestBaseUnitSpec with FlowApiBehaviors {
     validateTemplatesRetrieval(flowClient)
   }
 
-  "Flow Instantiation for existing template id" must " be valid " in {
+  "Flow Instantiation for existing template id" must "be valid" in {
 
     val flowTemplatesPath: Path = Paths.get(this.getClass().getResource("templates.json").toURI())
     val templateInstancePath: Path = Paths.get(this.getClass().getResource("flow-template-instance.json").toURI())
@@ -87,7 +88,7 @@ class FlowApiSpec extends RestBaseUnitSpec with FlowApiBehaviors {
     validateFlowInstantiation(flowClient)
   }
 
-  "Flow Retrieval " must " be valid " in {
+  "Flow Retrieval" must "be valid" in {
 
 
     val flowInstancePath: Path = Paths.get(this.getClass().getResource("flow-instance.json").toURI())
@@ -111,7 +112,7 @@ class FlowApiSpec extends RestBaseUnitSpec with FlowApiBehaviors {
     validateFlowRetrieval(flowClient, FlowInstanceId)
   }
 
-    "Flow Deletion " must " be valid " in {
+    "Flow Deletion" must "be valid" in {
 
       val deleteFlowPath: Path = Paths.get(this.getClass().getResource("delete-flow.json").toURI())
 
@@ -138,11 +139,11 @@ trait FlowApiBehaviors {
 
   import FlowApiSpec._
 
-  val templateId = "d73b5a44-5968-47d5-9a9a-aea5664c5835"
+
   val invalidTemplateId = "d615fb63-bc39-458c-bfcf-1f197ecdc81"
   val flowInstanceId = "3f948eeb-61d8-4f47-81f4-fff5cac50ed8"
 
-  val logger: Logger = LoggerFactory.getLogger(classOf[FlowApiSpec])
+
 
   def validateTemplatesRetrieval(flowClient: NifiFlowClient) {
     val templates = flowClient.templates(ClientToken)
@@ -150,7 +151,7 @@ trait FlowApiBehaviors {
   }
 
   def validateFlowInstantiation(flowClient: NifiFlowClient) {
-    val flow = flowClient.instantiate(templateId, UserId , ClientToken)
+    val flow = flowClient.instantiate(TemplateId, UserId , ClientToken)
     assert(flow.processors.size == 5)
     assert(flow.connections.size == 4)
 
@@ -177,5 +178,13 @@ trait FlowApiBehaviors {
 
   def validateFlowDeletion(flowClient: NifiFlowClient, flowInstanceId: String) {
     assert(flowClient.remove(flowInstanceId, UserId, ClientToken))
+  }
+
+  def validateStartStop(flowClient: NifiFlowClient, flowInstanceId: String) {
+    var processors = flowClient.start(flowInstanceId, UserId, ClientToken)
+    processors.foreach(p => p.status == NifiProcessorClient.StateRunning)
+
+    processors = flowClient.stop(flowInstanceId, UserId, ClientToken)
+    processors.foreach(p => p.status == NifiProcessorClient.StateStopped)
   }
 }

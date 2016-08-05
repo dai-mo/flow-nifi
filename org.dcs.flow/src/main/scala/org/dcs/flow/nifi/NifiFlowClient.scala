@@ -5,8 +5,9 @@ import javax.ws.rs.core.MediaType
 
 import org.apache.nifi.web.api.entity._
 import org.dcs.api.error.{ErrorConstants, RESTException}
-import org.dcs.api.service.{FlowApiService, FlowInstance, FlowTemplate}
+import org.dcs.api.service.{Connection, FlowApiService, FlowInstance, FlowTemplate, ProcessorInstance}
 import org.dcs.commons.JsonSerializerImplicits._
+import org.dcs.flow.ProcessorApi
 import org.dcs.flow.nifi.NifiBaseRestClient._
 import org.dcs.flow.nifi.internal.ProcessGroup
 
@@ -15,8 +16,10 @@ import scala.collection.JavaConverters._
 /**
   * Created by cmathew on 30/05/16.
   */
-object NifiProcessorApi extends NifiProcessorClient
-  with NifiApiConfig
+
+class NifiFlowApi extends NifiFlowClient with NifiApiConfig
+
+
 
 object NifiFlowClient {
 
@@ -93,6 +96,16 @@ trait NifiFlowClient extends FlowApiService with NifiBaseRestClient {
     processGroupsEntity.getProcessGroups.asScala.map(pge => FlowInstance(pge)).toList
   }
 
+  def start(flowInstanceId: String, userId: String, authToken: String): List[ProcessorInstance] = {
+    val flowInstance = instance(flowInstanceId, userId, authToken)
+    flowInstance.processors.map(p => ProcessorApi.start(p.id, flowInstanceId))
+  }
+
+  def stop(flowInstanceId: String, userId: String, authToken: String): List[ProcessorInstance] = {
+    val flowInstance = instance(flowInstanceId, userId, authToken)
+    flowInstance.processors.map(p => ProcessorApi.stop(p.id, flowInstanceId))
+  }
+
   override def remove(flowInstanceId: String, userId: String, authToken: String): Boolean = {
     val response = deleteAsJson(path = processGroupsPath(userId) + "/" + flowInstanceId,
       queryParams = (ClientIdKey -> userId) :: Nil)
@@ -164,5 +177,7 @@ trait NifiFlowClient extends FlowApiService with NifiBaseRestClient {
 
     response != null
   }
+
+
 
 }
