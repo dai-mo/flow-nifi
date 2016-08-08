@@ -3,7 +3,7 @@ package org.dcs.flow.nifi
 import org.apache.nifi.web.api.dto._
 import org.apache.nifi.web.api.entity.{FlowSnippetEntity, ProcessGroupEntity, SnippetEntity}
 import org.dcs.api.service._
-import org.dcs.flow.nifi.internal.ProcessGroup
+import org.dcs.flow.nifi.internal.{ProcessGroup, ProcessGroupHelper}
 
 import scala.collection.JavaConversions._
 import scala.collection.JavaConverters._
@@ -35,13 +35,6 @@ object ProcessGroup {
     pg
   }
 
-  def apply(processGroupDTO: ProcessGroupDTO): ProcessGroup = {
-    val pg = new ProcessGroup
-
-    pg.setId(processGroupDTO.getId)
-    pg.setName(processGroupDTO.getName)
-    pg
-  }
 }
 
 object FlowInstance {
@@ -50,19 +43,25 @@ object FlowInstance {
     val f = new FlowInstance
     val contents = processGroupEntity.getProcessGroup.getContents
 
+    val nameId = ProcessGroupHelper.extractFromName(processGroupEntity.getProcessGroup.getName)
+
     f.setVersion(processGroupEntity.getRevision.getVersion.toString)
-    f.setId(processGroupEntity.getProcessGroup.getParentGroupId)
-    f.setName(processGroupEntity.getProcessGroup.getName)
+    f.setId(processGroupEntity.getProcessGroup.getId)
+    f.setName(nameId._1)
+    f.setNameId(nameId._2)
     f.setProcessors(contents.getProcessors.map(p => ProcessorInstance(p)).toList)
     f.setConnections(contents.getConnections.map(c => Connection(c)).toList)
     f
   }
 
-  def apply(flowSnippetEntity: FlowSnippetEntity, id: String): FlowInstance  = {
+  def apply(flowSnippetEntity: FlowSnippetEntity, id: String, name: String): FlowInstance  = {
     val f = new FlowInstance
     val contents = flowSnippetEntity.getContents
 
+    val nameId = ProcessGroupHelper.extractFromName(name)
     f.setId(id)
+    f.setName(nameId._1)
+    f.setNameId(nameId._2)
     f.setVersion(flowSnippetEntity.getRevision.getVersion.toString)
     f.setProcessors(contents.getProcessors.map(p => ProcessorInstance(p)).toList)
     f.setConnections(contents.getConnections.map(c => Connection(c)).toList)
@@ -84,7 +83,10 @@ object FlowInstance {
     val f = new FlowInstance
     val snippet = processGroupDTO.getContents
 
+    val nameId = ProcessGroupHelper.extractFromName(processGroupDTO.getName)
     f.setId(processGroupDTO.getId)
+    f.setName(nameId._1)
+    f.setNameId(nameId._2)
     f.setProcessors(snippet.getProcessors.map(p => ProcessorInstance(p)).toList)
     f.setConnections(snippet.getConnections.map(c => Connection(c)).toList)
     f

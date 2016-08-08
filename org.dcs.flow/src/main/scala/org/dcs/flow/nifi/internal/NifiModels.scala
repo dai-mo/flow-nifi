@@ -10,3 +10,13 @@ case class ProcessGroup(@BeanProperty var id: String,
   def this() = this("", "")
 }
 
+object ProcessGroupHelper {
+
+  val NameIdDelimiter = ";"
+
+  def extractFromName(comments: String): (String, String) = {
+    val idName = comments.split(NameIdDelimiter)
+    (idName(0), idName(1))
+  }
+}
+

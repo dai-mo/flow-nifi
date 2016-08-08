@@ -5,18 +5,22 @@ import javax.ws.rs.core.MediaType
 
 import org.apache.nifi.web.api.entity._
 import org.dcs.api.error.{ErrorConstants, RESTException}
-import org.dcs.api.service.{FlowApiService, FlowInstance, FlowTemplate}
+import org.dcs.api.service.{Connection, FlowApiService, FlowInstance, FlowTemplate, ProcessorInstance}
 import org.dcs.commons.JsonSerializerImplicits._
+import org.dcs.flow.ProcessorApi
 import org.dcs.flow.nifi.NifiBaseRestClient._
-import org.dcs.flow.nifi.internal.ProcessGroup
+import org.dcs.flow.nifi.NifiFlowGraph.FlowGraphNode
+import org.dcs.flow.nifi.internal.{ProcessGroup, ProcessGroupHelper}
 
 import scala.collection.JavaConverters._
 
 /**
   * Created by cmathew on 30/05/16.
   */
-object NifiProcessorApi extends NifiProcessorClient
-  with NifiApiConfig
+
+class NifiFlowApi extends NifiFlowClient with NifiApiConfig
+
+
 
 object NifiFlowClient {
 
@@ -53,16 +57,16 @@ trait NifiFlowClient extends FlowApiService with NifiBaseRestClient {
     // The following code is a workaround for the problem with nifi not able
     // to persist individual flow instances. The workaround creates a process group
     // under the user process group which isolates the flow instance
-
-    if (templates(userId).exists(ft => ft.id == flowTemplateId)) {
-      val processGroupId = UUID.randomUUID().toString
-      val processGroup: ProcessGroup = createProcessGroup(processGroupId, userId, authToken)
+    val template = templates(userId).find(ft => ft.id == flowTemplateId)
+    if (template.isDefined) {
+      val processGroupNameId = UUID.randomUUID().toString
+      val processGroup: ProcessGroup = createProcessGroup(template.get.name + ProcessGroupHelper.NameIdDelimiter + processGroupNameId, userId, authToken)
       val flowSnippetEntity = postAsJson(path = templateInstancePath(processGroup.id),
         queryParams = qp,
         contentType = MediaType.APPLICATION_FORM_URLENCODED
       ).toObject[FlowSnippetEntity]
 
-      FlowInstance(flowSnippetEntity, processGroup.id)
+      FlowInstance(flowSnippetEntity, processGroup.id, processGroup.getName)
     } else {
       throw new RESTException(ErrorConstants.DCS301)
     }
@@ -93,6 +97,19 @@ trait NifiFlowClient extends FlowApiService with NifiBaseRestClient {
     processGroupsEntity.getProcessGroups.asScala.map(pge => FlowInstance(pge)).toList
   }
 
+  override def start(flowInstanceId: String, userId: String, authToken: String): List[ProcessorInstance] = {
+    val flowInstance = instance(flowInstanceId, userId, authToken)
+    def startNode(node: FlowGraphNode): ProcessorInstance = ProcessorApi.start(node.processorInstance.id, flowInstanceId)
+    NifiFlowGraph.executeBreadthFirst[ProcessorInstance](flowInstance, startNode)
+
+  }
+
+  override def stop(flowInstanceId: String, userId: String, authToken: String): List[ProcessorInstance] = {
+    val flowInstance = instance(flowInstanceId, userId, authToken)
+    def stopNode(node: FlowGraphNode): ProcessorInstance = ProcessorApi.stop(node.processorInstance.id, flowInstanceId)
+    NifiFlowGraph.executeBreadthFirst[ProcessorInstance](flowInstance, stopNode)
+  }
+
   override def remove(flowInstanceId: String, userId: String, authToken: String): Boolean = {
     val response = deleteAsJson(path = processGroupsPath(userId) + "/" + flowInstanceId,
       queryParams = (ClientIdKey -> userId) :: Nil)
@@ -101,6 +118,7 @@ trait NifiFlowClient extends FlowApiService with NifiBaseRestClient {
   }
 
 
+  // ---- Helper Methods -----
   def createProcessGroup(name: String, userId: String, authToken: String): ProcessGroup = {
     val qp = List(
       "name" -> name,
@@ -164,5 +182,7 @@ trait NifiFlowClient extends FlowApiService with NifiBaseRestClient {
 
     response != null
   }
+
+
 
 }
