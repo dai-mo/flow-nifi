@@ -17,22 +17,22 @@ class FlowApiISpec extends RestBaseUnitSpec with FlowApiBehaviors with Processor
   val processorClient = new NifiProcessorApi()
   processorClient.requestFilter(new LoggingFilter())
 
-//  "Flow Instantiation" must "be valid  for existing template id" taggedAs(IT) in {
-//    validateFlowInstantiation(flowClient)
-//    flowClient.instances(FlowApiSpec.UserId, FlowApiSpec.ClientToken).foreach(fi => {
-//      validateFlowRetrieval(flowClient, fi.getId())
-//    })
-//  }
-//
+  "Flow Instantiation" must "be valid  for existing template id" taggedAs(IT) in {
+    validateFlowInstantiation(flowClient, "DateConversion")
+    flowClient.instances(FlowApiSpec.UserId, FlowApiSpec.ClientToken).foreach(fi => {
+      validateFlowRetrieval(flowClient, fi.getId())
+    })
+  }
+
 //  "Flow Instantiation" must "be invalid for non-existing template id" taggedAs(IT) in {
 //    validateNonExistingFlowInstantiation(flowClient)
 //  }
-
-  "Flow Instance State Change" must "result in valid state" taggedAs(IT) in {
-    val flowInstance = flowClient.instantiate(FlowApiSpec.TemplateId, FlowApiSpec.UserId, FlowApiSpec.ClientToken)
-    validateStartStop(flowClient, flowInstance.id)
-
-  }
+//
+//  "Flow Instance State Change" must "result in valid state" taggedAs(IT) in {
+//    val flowInstance = flowClient.instantiate(FlowApiSpec.TemplateId, FlowApiSpec.UserId, FlowApiSpec.ClientToken)
+//    validateStartStop(flowClient, flowInstance.id)
+//
+//  }
 
 
 //  "Flow Instance Deletion" must "be valid" taggedAs IT in {

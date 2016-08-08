@@ -10,7 +10,7 @@ import org.dcs.commons.JsonSerializerImplicits._
 import org.dcs.flow.ProcessorApi
 import org.dcs.flow.nifi.NifiBaseRestClient._
 import org.dcs.flow.nifi.NifiFlowGraph.FlowGraphNode
-import org.dcs.flow.nifi.internal.ProcessGroup
+import org.dcs.flow.nifi.internal.{ProcessGroup, ProcessGroupHelper}
 
 import scala.collection.JavaConverters._
 
@@ -57,16 +57,16 @@ trait NifiFlowClient extends FlowApiService with NifiBaseRestClient {
     // The following code is a workaround for the problem with nifi not able
     // to persist individual flow instances. The workaround creates a process group
     // under the user process group which isolates the flow instance
-
-    if (templates(userId).exists(ft => ft.id == flowTemplateId)) {
-      val processGroupId = UUID.randomUUID().toString
-      val processGroup: ProcessGroup = createProcessGroup(processGroupId, userId, authToken)
+    val template = templates(userId).find(ft => ft.id == flowTemplateId)
+    if (template.isDefined) {
+      val processGroupNameId = UUID.randomUUID().toString
+      val processGroup: ProcessGroup = createProcessGroup(template.get.name + ProcessGroupHelper.NameIdDelimiter + processGroupNameId, userId, authToken)
       val flowSnippetEntity = postAsJson(path = templateInstancePath(processGroup.id),
         queryParams = qp,
         contentType = MediaType.APPLICATION_FORM_URLENCODED
       ).toObject[FlowSnippetEntity]
 
-      FlowInstance(flowSnippetEntity, processGroup.id)
+      FlowInstance(flowSnippetEntity, processGroup.id, processGroup.getName)
     } else {
       throw new RESTException(ErrorConstants.DCS301)
     }

@@ -85,7 +85,7 @@ class FlowApiSpec extends RestBaseUnitSpec with FlowApiBehaviors {
       when(flowClient).
       currentVersion()
 
-    validateFlowInstantiation(flowClient)
+    validateFlowInstantiation(flowClient, "DateConversion")
   }
 
   "Flow Retrieval" must "be valid" in {
@@ -150,11 +150,11 @@ trait FlowApiBehaviors {
     assert(templates.size == 6)
   }
 
-  def validateFlowInstantiation(flowClient: NifiFlowClient) {
+  def validateFlowInstantiation(flowClient: NifiFlowClient, name: String) {
     val flow = flowClient.instantiate(TemplateId, UserId , ClientToken)
     assert(flow.processors.size == 5)
     assert(flow.connections.size == 4)
-
+    assert(flow.name == name)
     flow.connections.foreach(c => {
       assert(c.source.`type` == "PROCESSOR")
       assert(c.destination.`type` == "PROCESSOR")
