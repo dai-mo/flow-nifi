@@ -9,6 +9,7 @@ import org.dcs.api.service.{Connection, FlowApiService, FlowInstance, FlowTempla
 import org.dcs.commons.JsonSerializerImplicits._
 import org.dcs.flow.ProcessorApi
 import org.dcs.flow.nifi.NifiBaseRestClient._
+import org.dcs.flow.nifi.NifiFlowGraph.FlowGraphNode
 import org.dcs.flow.nifi.internal.ProcessGroup
 
 import scala.collection.JavaConverters._
@@ -96,14 +97,17 @@ trait NifiFlowClient extends FlowApiService with NifiBaseRestClient {
     processGroupsEntity.getProcessGroups.asScala.map(pge => FlowInstance(pge)).toList
   }
 
-  def start(flowInstanceId: String, userId: String, authToken: String): List[ProcessorInstance] = {
+  override def start(flowInstanceId: String, userId: String, authToken: String): List[ProcessorInstance] = {
     val flowInstance = instance(flowInstanceId, userId, authToken)
-    flowInstance.processors.map(p => ProcessorApi.start(p.id, flowInstanceId))
+    def startNode(node: FlowGraphNode): ProcessorInstance = ProcessorApi.start(node.processorInstance.id, flowInstanceId)
+    NifiFlowGraph.executeBreadthFirst[ProcessorInstance](flowInstance, startNode)
+
   }
 
-  def stop(flowInstanceId: String, userId: String, authToken: String): List[ProcessorInstance] = {
+  override def stop(flowInstanceId: String, userId: String, authToken: String): List[ProcessorInstance] = {
     val flowInstance = instance(flowInstanceId, userId, authToken)
-    flowInstance.processors.map(p => ProcessorApi.stop(p.id, flowInstanceId))
+    def stopNode(node: FlowGraphNode): ProcessorInstance = ProcessorApi.stop(node.processorInstance.id, flowInstanceId)
+    NifiFlowGraph.executeBreadthFirst[ProcessorInstance](flowInstance, stopNode)
   }
 
   override def remove(flowInstanceId: String, userId: String, authToken: String): Boolean = {
@@ -114,6 +118,7 @@ trait NifiFlowClient extends FlowApiService with NifiBaseRestClient {
   }
 
 
+  // ---- Helper Methods -----
   def createProcessGroup(name: String, userId: String, authToken: String): ProcessGroup = {
     val qp = List(
       "name" -> name,

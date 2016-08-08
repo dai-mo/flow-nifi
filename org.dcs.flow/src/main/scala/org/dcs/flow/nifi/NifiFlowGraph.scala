@@ -34,7 +34,7 @@ object NifiFlowGraph {
           updatedNodeMap = updatedNodeMap + (node.processorInstance.id -> node)
           node
         } else
-          nodeMap.get(source.get.id).get
+          nodeMap(source.get.id)
 
       val destinationNode: FlowGraphNode =
         if (nodeMap.get(destination.get.id).isEmpty) {
@@ -42,7 +42,7 @@ object NifiFlowGraph {
           updatedNodeMap = updatedNodeMap + (node.processorInstance.id -> node)
           node
         } else
-          nodeMap.get(destination.get.id).get
+          nodeMap(destination.get.id)
 
       sourceNode.children = destinationNode :: sourceNode.children
       destinationNode.parents = sourceNode :: destinationNode.parents
@@ -61,17 +61,17 @@ object NifiFlowGraph {
     build(flowInstance.processors, flowInstance.connections, Map())
   }
 
-  def roots(nodes: Set[FlowGraphNode]): Set[FlowGraphNode] = {
+  def roots(nodes: List[FlowGraphNode]): List[FlowGraphNode] = {
     nodes.filter(node => node.parents.isEmpty)
   }
 
   def executeBreadthFirst[T](flowInstance: FlowInstance, f: FlowGraphNode => T): List[T] = {
     def exec(nodes: List[FlowGraphNode], result: List[T]): List[T] = nodes match {
       case List() => result
-      case _ => exec(nodes.flatMap(node => node.children), nodes.map(node => f(node)) ++ result)
+      case _ => exec(nodes.flatMap(node => node.children), result ++ nodes.map(node => f(node)))
     }
 
-    exec(roots(buildFlowGraph(flowInstance)).toList, Nil)
+    exec(roots(buildFlowGraph(flowInstance).toList), Nil)
   }
 
 }

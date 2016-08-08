@@ -62,7 +62,7 @@ trait NifiProcessorClient extends ProcessorApiService with NifiBaseRestClient {
   }
 
 
-  def stop(processorId: String, processGroupId: String): ProcessorInstance = {
+  override def stop(processorId: String, processGroupId: String): ProcessorInstance = {
     changeState(processorId, StateStopped, processGroupId)
   }
 
