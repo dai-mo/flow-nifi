@@ -12,7 +12,7 @@
       "y" : 0.0
     },
     "parentGroupId" : "34c0febd-d9c2-48f7-988b-97e6b59cf96e",
-    "name" : "NiFi Flow",
+    "name": "DateConversion;7b754da7-17dd-4aef-ab8e-e38b1ec94ab8",
     "comments" : "",
     "running" : null,
     "parent" : null,

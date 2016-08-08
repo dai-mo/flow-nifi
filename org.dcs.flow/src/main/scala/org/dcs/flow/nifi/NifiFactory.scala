@@ -30,10 +30,8 @@ object ProcessGroup {
   def apply(processGroupEntity: ProcessGroupEntity): ProcessGroup = {
     val pg = new ProcessGroup
 
-    val nameId = ProcessGroupHelper.extractFromName(processGroupEntity.getProcessGroup.getName)
     pg.setId(processGroupEntity.getProcessGroup.getId)
-    pg.setName(nameId._1)
-    pg.setNameId(nameId._2)
+    pg.setName(processGroupEntity.getProcessGroup.getName)
     pg
   }
 
@@ -45,9 +43,12 @@ object FlowInstance {
     val f = new FlowInstance
     val contents = processGroupEntity.getProcessGroup.getContents
 
+    val nameId = ProcessGroupHelper.extractFromName(processGroupEntity.getProcessGroup.getName)
+
     f.setVersion(processGroupEntity.getRevision.getVersion.toString)
     f.setId(processGroupEntity.getProcessGroup.getId)
-    f.setName(processGroupEntity.getProcessGroup.getName)
+    f.setName(nameId._1)
+    f.setNameId(nameId._2)
     f.setProcessors(contents.getProcessors.map(p => ProcessorInstance(p)).toList)
     f.setConnections(contents.getConnections.map(c => Connection(c)).toList)
     f
@@ -57,8 +58,10 @@ object FlowInstance {
     val f = new FlowInstance
     val contents = flowSnippetEntity.getContents
 
+    val nameId = ProcessGroupHelper.extractFromName(name)
     f.setId(id)
-    f.setName(name)
+    f.setName(nameId._1)
+    f.setNameId(nameId._2)
     f.setVersion(flowSnippetEntity.getRevision.getVersion.toString)
     f.setProcessors(contents.getProcessors.map(p => ProcessorInstance(p)).toList)
     f.setConnections(contents.getConnections.map(c => Connection(c)).toList)
@@ -80,8 +83,10 @@ object FlowInstance {
     val f = new FlowInstance
     val snippet = processGroupDTO.getContents
 
+    val nameId = ProcessGroupHelper.extractFromName(processGroupDTO.getName)
     f.setId(processGroupDTO.getId)
-    f.setName(processGroupDTO.getName)
+    f.setName(nameId._1)
+    f.setNameId(nameId._2)
     f.setProcessors(snippet.getProcessors.map(p => ProcessorInstance(p)).toList)
     f.setConnections(snippet.getConnections.map(c => Connection(c)).toList)
     f
