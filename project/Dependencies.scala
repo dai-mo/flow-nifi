@@ -15,7 +15,7 @@ object Dependencies {
 			lazy val logbackVersion   = "1.1.3"
 			lazy val rxScalaVersion   = "0.26.1"
 			lazy val playVersion			= "2.5.3"
-			lazy val jerseyVersion  = "2.22.1"
+			lazy val jerseyVersion  	= "2.22.1"
 			lazy val mockitoVersion   = "1.10.19"
 			lazy val scalaTestVersion = "2.2.6"
 			lazy val juiVersion       = "0.11"

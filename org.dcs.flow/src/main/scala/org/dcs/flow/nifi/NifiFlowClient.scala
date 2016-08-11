@@ -107,9 +107,9 @@ trait NifiFlowClient extends FlowApiService with NifiBaseRestClient {
   }
 
   override def remove(flowInstanceId: String, userId: String, authToken: String): Boolean = {
-    val flowInstance = instance(flowInstanceId, userId, authToken)
+
     val qp = Map(
-      "version" -> flowInstance.getVersion.toString,
+      "version" -> processGroupVersion(flowInstanceId),
       ClientIdKey -> userId
     )
     val response = deleteAsJson(path = processGroupsPath(flowInstanceId),
@@ -128,8 +128,13 @@ trait NifiFlowClient extends FlowApiService with NifiBaseRestClient {
     ProcessGroup(processGroupEntity)
   }
 
+  def processGroupVersion(flowInstanceId: String): String = {
 
+    getAsJson(path = processGroupsPath(flowInstanceId)).
+      toObject[ProcessGroupEntity].
+      getRevision.
+      getVersion.
+      toString
 
-
-
+  }
 }
