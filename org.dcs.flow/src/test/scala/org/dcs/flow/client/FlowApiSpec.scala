@@ -19,8 +19,8 @@ object FlowApiSpec {
   val ClientToken = "29474d0f-3e21-4136-90fd-ad4e2c613afb"
   val UserId = "root"
 
-  val TemplateId = "d73b5a44-5968-47d5-9a9a-aea5664c5835"
-  val FlowInstanceId = "d2ddd0e9-4dac-419f-bdf7-d6724a0d5daa"
+  val TemplateId = "bef4e1e9-efe3-45b0-8676-4d1833821be1"
+  val FlowInstanceId = "7a59e6f0-0156-1000-71b3-df1267a0cfd2"
 
   val logger: Logger = LoggerFactory.getLogger(classOf[FlowApiSpec])
 
@@ -31,14 +31,14 @@ class FlowApiSpec extends RestBaseUnitSpec with FlowApiBehaviors {
 
   "Templates Retrieval" must "be valid" in {
 
-    val flowTemplatesPath: Path = Paths.get(this.getClass().getResource("templates.json").toURI())
+    val flowTemplatesPath: Path = Paths.get(this.getClass.getResource("templates.json").toURI)
     val flowClient = spy(new NifiFlowApi())
 
     doReturn(jsonFromFile(flowTemplatesPath.toFile)).
       when(flowClient).
       getAsJson(
         Matchers.eq(NifiFlowClient.TemplatesPath),
-        Matchers.any[List[(String, String)]],
+        Matchers.any[Map[String, String]],
         Matchers.any[List[(String, String)]]
       )
 
@@ -47,9 +47,9 @@ class FlowApiSpec extends RestBaseUnitSpec with FlowApiBehaviors {
 
   "Flow Instantiation for existing template id" must "be valid" in {
 
-    val flowTemplatesPath: Path = Paths.get(this.getClass().getResource("templates.json").toURI())
-    val templateInstancePath: Path = Paths.get(this.getClass().getResource("flow-template-instance.json").toURI())
-    val createProcessGroupPath: Path = Paths.get(this.getClass().getResource("create-process-group.json").toURI())
+    val flowTemplatesPath: Path = Paths.get(this.getClass.getResource("templates.json").toURI)
+    val templateInstancePath: Path = Paths.get(this.getClass.getResource("flow-template-instance.json").toURI())
+    val createProcessGroupPath: Path = Paths.get(this.getClass.getResource("create-process-group.json").toURI())
 
     val flowClient = spy(new NifiFlowApi())
 
@@ -57,18 +57,18 @@ class FlowApiSpec extends RestBaseUnitSpec with FlowApiBehaviors {
       when(flowClient).
       getAsJson(
         Matchers.eq(NifiFlowClient.TemplatesPath),
-        Matchers.any[List[(String, String)]],
+        Matchers.any[Map[String, String]],
         Matchers.any[List[(String, String)]]
       )
 
     doReturn(jsonFromFile(createProcessGroupPath.toFile)).
       when(flowClient).
       postAsJson(
-        Matchers.eq(NifiFlowClient.processGroupsPath(UserId)),
+        Matchers.eq(NifiFlowClient.processGroupsPath(UserId) + "/process-groups"),
         Matchers.any[Form],
+        Matchers.any[Map[String, String]],
         Matchers.any[List[(String, String)]],
-        Matchers.any[List[(String, String)]],
-        Matchers.eq(MediaType.APPLICATION_FORM_URLENCODED)
+        Matchers.eq(MediaType.APPLICATION_JSON)
       )
 
     doReturn(jsonFromFile(templateInstancePath.toFile)).
@@ -76,59 +76,56 @@ class FlowApiSpec extends RestBaseUnitSpec with FlowApiBehaviors {
       postAsJson(
         Matchers.eq(NifiFlowClient.templateInstancePath(FlowInstanceId)),
         Matchers.any[Form],
+        Matchers.any[Map[String, String]],
         Matchers.any[List[(String, String)]],
-        Matchers.any[List[(String, String)]],
-        Matchers.eq(MediaType.APPLICATION_FORM_URLENCODED)
+        Matchers.eq(MediaType.APPLICATION_JSON)
       )
 
-    doReturn(0.0.toLong).
-      when(flowClient).
-      currentVersion()
-
-    validateFlowInstantiation(flowClient, "DateConversion")
+    validateFlowInstantiation(flowClient, "DateConversion", TemplateId)
   }
 
   "Flow Retrieval" must "be valid" in {
 
 
-    val flowInstancePath: Path = Paths.get(this.getClass().getResource("flow-instance.json").toURI())
+    val flowInstancePath: Path = Paths.get(this.getClass.getResource("flow-instance.json").toURI)
     val flowClient = spy(new NifiFlowApi())
 
 
     doReturn(jsonFromFile(flowInstancePath.toFile)).
       when(flowClient).
       getAsJson(
-        Matchers.eq(NifiFlowClient.processGroupsPath(UserId) + "/" + FlowInstanceId),
-        Matchers.any[List[(String, String)]],
+        Matchers.eq(NifiFlowClient.flowProcessGroupsPath(FlowInstanceId)),
+        Matchers.any[Map[String, String]],
         Matchers.any[List[(String, String)]]
       )
 
-
-
-    doReturn(49.0.toLong).
-      when(flowClient).
-      currentVersion()
 
     validateFlowRetrieval(flowClient, FlowInstanceId)
   }
 
     "Flow Deletion" must "be valid" in {
 
-      val deleteFlowPath: Path = Paths.get(this.getClass().getResource("delete-flow.json").toURI())
+      val flowInstancePath: Path = Paths.get(this.getClass.getResource("flow-instance.json").toURI)
+      val deleteFlowPath: Path = Paths.get(this.getClass.getResource("delete-flow.json").toURI)
 
       val flowClient = spy(new NifiFlowApi())
+
+      doReturn(jsonFromFile(flowInstancePath.toFile)).
+        when(flowClient).
+        getAsJson(
+          Matchers.eq(NifiFlowClient.flowProcessGroupsPath(FlowInstanceId)),
+          Matchers.any[Map[String, String]],
+          Matchers.any[List[(String, String)]]
+        )
+
 
       doReturn(jsonFromFile(deleteFlowPath.toFile)).
         when(flowClient).
         deleteAsJson(
-          Matchers.eq(NifiFlowClient.processGroupsPath(UserId) + "/" + FlowInstanceId),
-          Matchers.any[List[(String, String)]],
+          Matchers.eq(NifiFlowClient.processGroupsPath(FlowInstanceId)),
+          Matchers.any[Map[String, String]],
           Matchers.any[List[(String, String)]]
         )
-
-      doReturn(49.0.toLong).
-        when(flowClient).
-        currentVersion()
 
       validateFlowDeletion(flowClient, FlowInstanceId)
     }
@@ -147,11 +144,11 @@ trait FlowApiBehaviors {
 
   def validateTemplatesRetrieval(flowClient: NifiFlowClient) {
     val templates = flowClient.templates(ClientToken)
-    assert(templates.size == 6)
+    assert(templates.size == 2)
   }
 
-  def validateFlowInstantiation(flowClient: NifiFlowClient, name: String) {
-    val flow = flowClient.instantiate(TemplateId, UserId , ClientToken)
+  def validateFlowInstantiation(flowClient: NifiFlowClient, name: String, templateId: String) {
+    val flow = flowClient.instantiate(templateId, UserId , ClientToken)
     assert(flow.processors.size == 5)
     assert(flow.connections.size == 4)
     assert(flow.name == name)
@@ -160,7 +157,7 @@ trait FlowApiBehaviors {
       assert(c.destination.`type` == "PROCESSOR")
     })
 
-    assert(!flow.getId().isEmpty)
+    assert(!flow.getId.isEmpty)
   }
 
   def validateNonExistingFlowInstantiation(flowClient: NifiFlowClient) {

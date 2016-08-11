@@ -27,13 +27,13 @@ class NifiFlowGraphSpec extends RestBaseUnitSpec with NifiFlowGraphBehaviors {
       when(flowClient).
       getAsJson(
         Matchers.eq(NifiFlowClient.processGroupsPath(UserId) + "/" + FlowInstanceId),
-        Matchers.any[List[(String, String)]],
+        Matchers.any[Map[String, String]],
         Matchers.any[List[(String, String)]]
       )
 
-    doReturn(49.0.toLong).
-      when(flowClient).
-      currentVersion()
+//    doReturn(49.0.toLong).
+//      when(flowClient).
+//      currentVersion()
 
     validateFlowGraphConstruction(flowClient, FlowInstanceId)
   }

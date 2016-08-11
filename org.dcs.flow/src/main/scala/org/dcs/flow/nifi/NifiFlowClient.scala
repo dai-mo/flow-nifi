@@ -24,15 +24,18 @@ class NifiFlowApi extends NifiFlowClient with NifiApiConfig
 
 object NifiFlowClient {
 
-  val TemplatesPath = "/controller/templates"
+  val TemplatesPath = "/flow/templates"
 
   val SnippetsPath = "/controller/snippets"
 
   def templateInstancePath(processGroupId: String) =
-    "/controller/process-groups/" + processGroupId + "/template-instance"
+    "/process-groups/" + processGroupId + "/template-instance"
 
   def processGroupsPath(processGroupId: String) =
-    "/controller/process-groups/" + processGroupId + "/process-group-references"
+    "/process-groups/" + processGroupId
+
+  def flowProcessGroupsPath(processGroupId: String) =
+    "/flow/process-groups/" + processGroupId
 
 }
 
@@ -40,17 +43,13 @@ trait NifiFlowClient extends FlowApiService with NifiBaseRestClient {
   import NifiFlowClient._
 
   override def templates(userId: String):List[FlowTemplate] = {
-    val templates = getAsJson(path = TemplatesPath,
-      queryParams = (ClientIdKey -> userId) :: Nil).toObject[TemplatesEntity]
-    templates.getTemplates.asScala.map(t => FlowTemplate(t)).toList
+    val templates = getAsJson(path = TemplatesPath).toObject[TemplatesEntity]
+    templates.getTemplates.asScala.map(t => FlowTemplate(t.getTemplate)).toList
   }
 
   override def instantiate(flowTemplateId: String, userId: String, authToken: String):FlowInstance = {
-    val qp = List(
-      "templateId" -> flowTemplateId,
-      "originX" -> "17",
-      "originY" -> "100",
-      ClientIdKey -> userId
+    val qp = Map(
+      "templateId" -> flowTemplateId
     )
 
     // FIXME: Persist flow instances
@@ -60,59 +59,61 @@ trait NifiFlowClient extends FlowApiService with NifiBaseRestClient {
     val template = templates(userId).find(ft => ft.id == flowTemplateId)
     if (template.isDefined) {
       val processGroupNameId = UUID.randomUUID().toString
-      val processGroup: ProcessGroup = createProcessGroup(template.get.name + ProcessGroupHelper.NameIdDelimiter + processGroupNameId, userId, authToken)
-      val flowSnippetEntity = postAsJson(path = templateInstancePath(processGroup.id),
-        queryParams = qp,
-        contentType = MediaType.APPLICATION_FORM_URLENCODED
-      ).toObject[FlowSnippetEntity]
+      val processGroup: ProcessGroup =
+        createProcessGroup(template.get.name + ProcessGroupHelper.NameIdDelimiter + processGroupNameId,
+          userId,
+          authToken)
+      val flowEntity = postAsJson(path = templateInstancePath(processGroup.id),
+        obj = FlowInstanceRequest(flowTemplateId).toJson
+      ).toObject[FlowEntity]
 
-      FlowInstance(flowSnippetEntity, processGroup.id, processGroup.getName)
+      FlowInstance(flowEntity, processGroup.id, processGroup.getName)
     } else {
       throw new RESTException(ErrorConstants.DCS301)
     }
   }
 
   override def instance(flowInstanceId: String, userId: String, authToken: String): FlowInstance = {
-    val qp = List(
-      "verbose" -> "true",
-      ClientIdKey -> userId
-    )
-    val processGroupEntity = getAsJson(path = processGroupsPath(userId) + "/" + flowInstanceId,
-      queryParams = qp
-    ).toObject[ProcessGroupEntity]
 
-    FlowInstance(processGroupEntity)
+    val processGroupFlowEntity = getAsJson(path = flowProcessGroupsPath(flowInstanceId)
+    ).toObject[ProcessGroupFlowEntity]
+
+    FlowInstance(processGroupFlowEntity)
   }
 
   override def instances(userId: String, authToken: String): List[FlowInstance] = {
-    val qp = List(
-      "verbose" -> "true",
-      "process-group-id" -> userId,
-      ClientIdKey -> userId
-    )
-    val processGroupsEntity = getAsJson(path = processGroupsPath(userId),
-      queryParams = qp
-    ).toObject[ProcessGroupsEntity]
 
-    processGroupsEntity.getProcessGroups.asScala.map(pge => FlowInstance(pge)).toList
+    val processGroupFlowEntity = getAsJson(path = flowProcessGroupsPath(userId)).
+      toObject[ProcessGroupFlowEntity]
+
+    processGroupFlowEntity.getProcessGroupFlow.getFlow.getProcessGroups.asScala.map(pge => FlowInstance(pge)).toList
   }
 
   override def start(flowInstanceId: String, userId: String, authToken: String): List[ProcessorInstance] = {
     val flowInstance = instance(flowInstanceId, userId, authToken)
-    def startNode(node: FlowGraphNode): ProcessorInstance = ProcessorApi.start(node.processorInstance.id, flowInstanceId)
+    def startNode(node: FlowGraphNode): ProcessorInstance = ProcessorApi.start(node.processorInstance.id,
+      node.processorInstance.version,
+      flowInstanceId)
     NifiFlowGraph.executeBreadthFirst[ProcessorInstance](flowInstance, startNode)
 
   }
 
   override def stop(flowInstanceId: String, userId: String, authToken: String): List[ProcessorInstance] = {
     val flowInstance = instance(flowInstanceId, userId, authToken)
-    def stopNode(node: FlowGraphNode): ProcessorInstance = ProcessorApi.stop(node.processorInstance.id, flowInstanceId)
+    def stopNode(node: FlowGraphNode): ProcessorInstance = ProcessorApi.stop(node.processorInstance.id,
+      node.processorInstance.version,
+      flowInstanceId)
     NifiFlowGraph.executeBreadthFirst[ProcessorInstance](flowInstance, stopNode)
   }
 
   override def remove(flowInstanceId: String, userId: String, authToken: String): Boolean = {
-    val response = deleteAsJson(path = processGroupsPath(userId) + "/" + flowInstanceId,
-      queryParams = (ClientIdKey -> userId) :: Nil)
+    val flowInstance = instance(flowInstanceId, userId, authToken)
+    val qp = Map(
+      "version" -> flowInstance.getVersion.toString,
+      ClientIdKey -> userId
+    )
+    val response = deleteAsJson(path = processGroupsPath(flowInstanceId),
+      queryParams = qp)
 
     response != null
   }
@@ -120,68 +121,14 @@ trait NifiFlowClient extends FlowApiService with NifiBaseRestClient {
 
   // ---- Helper Methods -----
   def createProcessGroup(name: String, userId: String, authToken: String): ProcessGroup = {
-    val qp = List(
-      "name" -> name,
-      "x" -> "17",
-      "y" -> "100",
-      "process-group-id" -> userId,
-      ClientIdKey -> userId
-    )
-
-    val processGroupEntity = postAsJson(path = processGroupsPath(userId),
-      queryParams = qp,
-      contentType = MediaType.APPLICATION_FORM_URLENCODED
+    val processGroupEntity = postAsJson(path = processGroupsPath(userId)  + "/process-groups",
+      obj = FlowInstanceContainerRequest(name, userId).toJson
     ).toObject[ProcessGroupEntity]
 
     ProcessGroup(processGroupEntity)
   }
 
-  def register(flowSnippetEntity: FlowSnippetEntity, userId: String, authToken: String): SnippetEntity = {
-    val qp = List(
-      "linked" -> "true",
-      "parentGroupId" -> userId,
-      ClientIdKey -> userId
-    )
 
-    val cMap = flowSnippetEntity.getContents.getConnections.asScala.map(c => "connectionIds[]" -> c.getId)
-    val pMap = flowSnippetEntity.getContents.getProcessors.asScala.map(p => "processorIds[]" -> p.getId)
-
-    val snippetEntity = postAsJson(path = SnippetsPath,
-      queryParams = qp  ++ cMap ++ pMap,
-      contentType = MediaType.APPLICATION_FORM_URLENCODED
-    ).toObject[SnippetEntity]
-
-    snippetEntity
-  }
-
-  def register(flowInstance: FlowInstance, userId: String, authToken: String):FlowInstance = {
-    val qp = List(
-      "linked" -> "true",
-      "parentGroupId" -> userId,
-      ClientIdKey -> userId
-    )
-
-    val cMap = flowInstance.connections.map(c => "connectionIds[]" -> c.id)
-    val pMap = flowInstance.processors.map(p => "processorIds[]" -> p.id)
-
-    val flowSnippet = postAsJson(path = SnippetsPath,
-      queryParams = qp  ++ cMap ++ pMap,
-      contentType = MediaType.APPLICATION_FORM_URLENCODED
-    ).toObject[SnippetEntity]
-
-    FlowInstance(flowSnippet)
-  }
-
-  def removeSnippet(flowInstanceId: String, userId: String, authToken: String): Boolean = {
-    val flowInstance = instance(flowInstanceId, userId, authToken)
-
-    val registeredFlowInstance = register(flowInstance, userId, authToken)
-
-    val response = deleteAsJson(path = SnippetsPath + "/" + registeredFlowInstance.id,
-      queryParams = (ClientIdKey -> userId) :: Nil)
-
-    response != null
-  }
 
 
 

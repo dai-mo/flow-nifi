@@ -9,7 +9,7 @@ object Dependencies {
 	    lazy val dcsRemoteVersion = "0.1.0"
 			lazy val dcsCommonsVersion= "0.1.0"
 			lazy val dcsCoreVersion   = "0.1.0"
-			lazy val nifiVersion			= "0.6.1"
+			lazy val nifiVersion			= "1.0.0-BETA"
 			lazy val slf4jVersion			= "1.7.12"
 			lazy val jsonPathVersion	= "1.2.0"
 			lazy val logbackVersion   = "1.1.3"

@@ -13,14 +13,14 @@ trait BaseRestClient extends ApiConfig {
   val client = ClientBuilder.newClient()
 
   def response(path: String,
-               queryParams: List[(String, String)] = List(),
+               queryParams: Map[String, String] = Map(),
                headers: List[(String, String)]= List()
               ): Builder = {
     var target = client.target(baseUrl)
-    if(!queryParams.isEmpty)  queryParams.foreach(x => target = target.queryParam(x._1, x._2))
+    if(queryParams.nonEmpty)  queryParams.foreach(x => target = target.queryParam(x._1, x._2))
 
     var builder = target.path(path).request
-    if(!headers.isEmpty)  headers.foreach(x => builder = builder.header(x._1, x._2))
+    if(headers.nonEmpty)  headers.foreach(x => builder = builder.header(x._1, x._2))
 
     builder
   }
@@ -30,7 +30,7 @@ trait BaseRestClient extends ApiConfig {
   }
 
   def get(path: String,
-          queryParams: List[(String, String)] = List(),
+          queryParams: Map[String, String] = Map(),
           headers: List[(String, String)] = List()): Response = {
     var res: Response = null
     try {
@@ -45,14 +45,14 @@ trait BaseRestClient extends ApiConfig {
 
 
   def getAsJson(path: String,
-                queryParams: List[(String, String)] = List(),
+                queryParams: Map[String, String] = Map(),
                 headers: List[(String, String)] = List()): String = {
     get(path, queryParams, headers).readEntity(classOf[String])
   }
 
   def put[T](path: String,
              obj: T = new Form,
-             queryParams: List[(String, String)] = List(),
+             queryParams: Map[String, String] = Map(),
              headers: List[(String, String)] = List(),
              contentType: String = MediaType.APPLICATION_JSON): Response = {
     var res: Response = null
@@ -68,7 +68,7 @@ trait BaseRestClient extends ApiConfig {
 
   def putAsJson[T](path: String,
                    obj: T = new Form,
-                   queryParams: List[(String, String)] = List(),
+                   queryParams: Map[String, String] = Map(),
                    headers: List[(String, String)] = List(),
                    contentType: String = MediaType.APPLICATION_JSON): String = {
     put(path, obj, queryParams, headers, contentType).readEntity(classOf[String])
@@ -76,7 +76,7 @@ trait BaseRestClient extends ApiConfig {
 
   def post[T](path: String,
               obj: T = new Form,
-              queryParams: List[(String, String)] = List(),
+              queryParams: Map[String, String] = Map(),
               headers: List[(String, String)] = List(),
               contentType: String = MediaType.APPLICATION_JSON): Response = {
     var res: Response = null
@@ -92,14 +92,14 @@ trait BaseRestClient extends ApiConfig {
 
   def postAsJson[T](path: String,
                     obj: T = new Form,
-                    queryParams: List[(String, String)] = List(),
+                    queryParams: Map[String, String] = Map(),
                     headers: List[(String, String)] = List(),
                     contentType: String = MediaType.APPLICATION_JSON): String = {
     post(path, obj, queryParams, headers, contentType).readEntity(classOf[String])
   }
 
   def delete(path: String,
-             queryParams: List[(String, String)] = List(),
+             queryParams: Map[String, String] = Map(),
              headers: List[(String, String)] = List()): Response = {
     var res: Response = null
     try {
@@ -113,7 +113,7 @@ trait BaseRestClient extends ApiConfig {
   }
 
   def deleteAsJson(path: String,
-                   queryParams: List[(String, String)] = List(),
+                   queryParams: Map[String, String] = Map(),
                    headers: List[(String, String)] = List()): String = {
     delete(path, queryParams, headers).readEntity(classOf[String])
   }
