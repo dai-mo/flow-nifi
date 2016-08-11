@@ -1,0 +1,79 @@
+{
+
+  "revision": {
+    "clientId": "7b753c77-0156-1000-8aaa-4b0e45054052",
+    "version": 1
+  },
+  "id": "7b8b79c3-0156-1000-41d9-a4c6baa2fbf3",
+  "uri": "http://localhost:8888/nifi-api/process-groups/7b8b79c3-0156-1000-41d9-a4c6baa2fbf3",
+  "position": {
+    "x": 426.5,
+    "y": 122.5
+  },
+  "permissions": {
+    "canRead": true,
+    "canWrite": true
+  },
+  "bulletins": [ ],
+  "component": {
+    "id": "7b8b79c3-0156-1000-41d9-a4c6baa2fbf3",
+    "parentGroupId": "786d9950-0156-1000-dc9b-e000dd5de772",
+    "position": {
+      "x": 426.5,
+      "y": 122.5
+    },
+    "name": "DateConversion;2d2f31e8-5fdd-11e6-8b77-86f30ca893d3",
+    "comments": "",
+    "runningCount": 0,
+    "stoppedCount": 5,
+    "invalidCount": 0,
+    "disabledCount": 0,
+    "activeRemotePortCount": 0,
+    "inactiveRemotePortCount": 0,
+    "inputPortCount": 0,
+    "outputPortCount": 0
+  },
+  "status": {
+    "id": "7b8b79c3-0156-1000-41d9-a4c6baa2fbf3",
+    "name": "DateConversion;2d2f31e8-5fdd-11e6-8b77-86f30ca893d3",
+    "statsLastRefreshed": "23:40:01 CEST",
+    "aggregateSnapshot": {
+      "id": "7b8b79c3-0156-1000-41d9-a4c6baa2fbf3",
+      "name": "DateConversion;2d2f31e8-5fdd-11e6-8b77-86f30ca893d3",
+      "flowFilesIn": 0,
+      "bytesIn": 0,
+      "input": "0 (0 bytes)",
+      "flowFilesQueued": 0,
+      "bytesQueued": 0,
+      "queued": "0 (0 bytes)",
+      "queuedCount": "0",
+      "queuedSize": "0 bytes",
+      "bytesRead": 0,
+      "read": "0 bytes",
+      "bytesWritten": 0,
+      "written": "0 bytes",
+      "flowFilesOut": 0,
+      "bytesOut": 0,
+      "output": "0 (0 bytes)",
+      "flowFilesTransferred": 0,
+      "bytesTransferred": 0,
+      "transferred": "0 (0 bytes)",
+      "bytesReceived": 0,
+      "flowFilesReceived": 0,
+      "received": "0 (0 bytes)",
+      "bytesSent": 0,
+      "flowFilesSent": 0,
+      "sent": "0 (0 bytes)",
+      "activeThreadCount": 0
+    }
+  },
+  "runningCount": 0,
+  "stoppedCount": 5,
+  "invalidCount": 0,
+  "disabledCount": 0,
+  "activeRemotePortCount": 0,
+  "inactiveRemotePortCount": 0,
+  "inputPortCount": 0,
+  "outputPortCount": 0
+
+}

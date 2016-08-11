@@ -105,15 +105,15 @@ class FlowApiSpec extends RestBaseUnitSpec with FlowApiBehaviors {
 
     "Flow Deletion" must "be valid" in {
 
-      val flowInstancePath: Path = Paths.get(this.getClass.getResource("flow-instance.json").toURI)
+      val processGroupPath: Path = Paths.get(this.getClass.getResource("process-group.json").toURI)
       val deleteFlowPath: Path = Paths.get(this.getClass.getResource("delete-flow.json").toURI)
 
       val flowClient = spy(new NifiFlowApi())
 
-      doReturn(jsonFromFile(flowInstancePath.toFile)).
+      doReturn(jsonFromFile(processGroupPath.toFile)).
         when(flowClient).
         getAsJson(
-          Matchers.eq(NifiFlowClient.flowProcessGroupsPath(FlowInstanceId)),
+          Matchers.eq(NifiFlowClient.processGroupsPath(FlowInstanceId)),
           Matchers.any[Map[String, String]],
           Matchers.any[List[(String, String)]]
         )
