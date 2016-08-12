@@ -37,7 +37,7 @@ class ProcessorApiSpec extends RestBaseUnitSpec with ProcessorApiBehaviors {
       when(processorClient).
       getAsJson(
         Matchers.eq(NifiProcessorClient.TypesPath),
-        Matchers.any[List[(String, String)]],
+        Matchers.any[Map[String, String]],
         Matchers.any[List[(String, String)]]
       )
     validateProcessorTypes(processorClient)
@@ -50,33 +50,33 @@ class ProcessorApiSpec extends RestBaseUnitSpec with ProcessorApiBehaviors {
     val processorStopPath: Path = Paths.get(this.getClass().getResource("stop-processor.json").toURI())
     var processorApi = Mockito.spy(new NifiProcessorApi())
 
-    validateInvalidProcessorStateChange(processorApi, UserId)
+    validateInvalidProcessorStateChange(processorApi, UserId, 0.0.toLong)
 
     doReturn(jsonFromFile(processorStartPath.toFile)).
       when(processorApi).
       putAsJson(
-        Matchers.eq(NifiProcessorClient.processorsPath(UserId) + "/" + ProcessorInstanceId),
+        Matchers.eq(NifiProcessorClient.processorsPath(ProcessorInstanceId)),
         Matchers.any[Form],
+        Matchers.any[Map[String, String]],
         Matchers.any[List[(String, String)]],
-        Matchers.any[List[(String, String)]],
-        Matchers.eq(MediaType.APPLICATION_FORM_URLENCODED)
+        Matchers.eq(MediaType.APPLICATION_JSON)
       )
 
-    validateProcessorStart(processorApi, ProcessorInstanceId)
+    validateProcessorStart(processorApi, ProcessorInstanceId, 0.0.toLong)
 
     processorApi = Mockito.spy(new NifiProcessorApi())
 
     doReturn(jsonFromFile(processorStopPath.toFile)).
       when(processorApi).
       putAsJson(
-        Matchers.eq(NifiProcessorClient.processorsPath(UserId) + "/" + ProcessorInstanceId),
+        Matchers.eq(NifiProcessorClient.processorsPath(ProcessorInstanceId)),
         Matchers.any[Form],
+        Matchers.any[Map[String, String]],
         Matchers.any[List[(String, String)]],
-        Matchers.any[List[(String, String)]],
-        Matchers.eq(MediaType.APPLICATION_FORM_URLENCODED)
+        Matchers.eq(MediaType.APPLICATION_JSON)
       )
 
-    validateProcessorStop(processorApi, ProcessorInstanceId)
+    validateProcessorStop(processorApi, ProcessorInstanceId, 0.0.toLong)
   }
 
 
@@ -91,7 +91,11 @@ class ProcessorApiSpec extends RestBaseUnitSpec with ProcessorApiBehaviors {
       postAsJson(
         Matchers.eq(NifiProcessorClient.processorsPath(UserId)),
         Matchers.any[Form],
-        Matchers.eq(List(("name",GFFPName), ("type", GFFPType), ("x", "17"), ("y","100"))),
+        Matchers.eq(Map(
+          "name" -> GFFPName,
+          "type" -> GFFPType,
+          "x" -> "17",
+          "y" -> "100")),
         Matchers.any[List[(String, String)]],
         Matchers.eq(MediaType.APPLICATION_FORM_URLENCODED)
       )
@@ -101,7 +105,7 @@ class ProcessorApiSpec extends RestBaseUnitSpec with ProcessorApiBehaviors {
       when(processorApi).
       deleteAsJson(
         Matchers.eq(NifiProcessorClient.processorsPath(UserId) + "/" + GFPId),
-        Matchers.any[List[(String, String)]],
+        Matchers.any[Map[String, String]],
         Matchers.any[List[(String, String)]]
       )
     validateProcessorLifecycle(processorApi)
@@ -125,19 +129,19 @@ trait ProcessorApiBehaviors { this: FlatSpec =>
     //    assert(processorApi.remove(p.id, ClientToken))
   }
 
-  def validateProcessorStart(processorApi: NifiProcessorApi, processorInstanceId: String) {
-    val processor = processorApi.start(processorInstanceId, UserId)
+  def validateProcessorStart(processorApi: NifiProcessorApi, processorInstanceId: String, currentVersion: Long) {
+    val processor = processorApi.start(processorInstanceId, currentVersion, UserId)
     assert(processor.getStatus() == NifiProcessorClient.StateRunning)
   }
 
-  def validateProcessorStop(processorApi: NifiProcessorApi, processorInstanceId: String) {
-    val processor = processorApi.start(processorInstanceId, UserId)
+  def validateProcessorStop(processorApi: NifiProcessorApi, processorInstanceId: String, currentVersion: Long) {
+    val processor = processorApi.start(processorInstanceId, currentVersion, UserId)
     assert(processor.getStatus() == NifiProcessorClient.StateStopped)
   }
 
-  def validateInvalidProcessorStateChange(processorApi: NifiProcessorApi, processorInstanceId: String) {
+  def validateInvalidProcessorStateChange(processorApi: NifiProcessorApi, processorInstanceId: String, currentVersion: Long) {
     val thrown = intercept[RESTException] {
-      processorApi.changeState(processorInstanceId, "THIS_IS_INVALID", UserId)
+      processorApi.changeState(processorInstanceId, currentVersion, "THIS_IS_INVALID",  UserId)
     }
     assert(thrown.errorResponse.httpStatusCode == 409)
   }

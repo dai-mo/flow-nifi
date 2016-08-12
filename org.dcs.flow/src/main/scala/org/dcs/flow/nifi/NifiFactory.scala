@@ -1,7 +1,7 @@
 package org.dcs.flow.nifi
 
 import org.apache.nifi.web.api.dto._
-import org.apache.nifi.web.api.entity.{FlowSnippetEntity, ProcessGroupEntity, SnippetEntity}
+import org.apache.nifi.web.api.entity._
 import org.dcs.api.service._
 import org.dcs.flow.nifi.internal.{ProcessGroup, ProcessGroupHelper}
 
@@ -30,8 +30,8 @@ object ProcessGroup {
   def apply(processGroupEntity: ProcessGroupEntity): ProcessGroup = {
     val pg = new ProcessGroup
 
-    pg.setId(processGroupEntity.getProcessGroup.getId)
-    pg.setName(processGroupEntity.getProcessGroup.getName)
+    pg.setId(processGroupEntity.getComponent.getId)
+    pg.setName(processGroupEntity.getComponent.getName)
     pg
   }
 
@@ -41,16 +41,35 @@ object FlowInstance {
   def apply(processGroupEntity: ProcessGroupEntity): FlowInstance = {
 
     val f = new FlowInstance
-    val contents = processGroupEntity.getProcessGroup.getContents
+    val contents = processGroupEntity.getComponent.getContents
 
-    val nameId = ProcessGroupHelper.extractFromName(processGroupEntity.getProcessGroup.getName)
+    val nameId = ProcessGroupHelper.extractFromName(processGroupEntity.getComponent.getName)
 
-    f.setVersion(processGroupEntity.getRevision.getVersion.toString)
-    f.setId(processGroupEntity.getProcessGroup.getId)
+    f.setVersion(processGroupEntity.getRevision.getVersion)
+    f.setId(processGroupEntity.getComponent.getId)
     f.setName(nameId._1)
     f.setNameId(nameId._2)
-    f.setProcessors(contents.getProcessors.map(p => ProcessorInstance(p)).toList)
-    f.setConnections(contents.getConnections.map(c => Connection(c)).toList)
+    if(contents != null) {
+      f.setProcessors(contents.getProcessors.map(p => ProcessorInstance(p)).toList)
+      f.setConnections(contents.getConnections.map(c => Connection(c)).toList)
+    }
+    f
+  }
+
+
+  def apply(processGroupFlowEntity: ProcessGroupFlowEntity): FlowInstance  = {
+    val f = new FlowInstance
+    val flow = processGroupFlowEntity.getProcessGroupFlow.getFlow
+    val bc = processGroupFlowEntity.getProcessGroupFlow.getBreadcrumb.getBreadcrumb
+
+
+    val nameId = ProcessGroupHelper.extractFromName(bc.getName)
+    f.setId(processGroupFlowEntity.getProcessGroupFlow.getId)
+    f.setName(nameId._1)
+    f.setNameId(nameId._2)
+
+    f.setProcessors(flow.getProcessors.map(p => ProcessorInstance(p)).toList)
+    f.setConnections(flow.getConnections.map(c => Connection(c.getComponent)).toList)
     f
   }
 
@@ -62,28 +81,37 @@ object FlowInstance {
     f.setId(id)
     f.setName(nameId._1)
     f.setNameId(nameId._2)
-    f.setVersion(flowSnippetEntity.getRevision.getVersion.toString)
+
+
     f.setProcessors(contents.getProcessors.map(p => ProcessorInstance(p)).toList)
     f.setConnections(contents.getConnections.map(c => Connection(c)).toList)
+
     f
   }
 
-  def apply(snippetEntity: SnippetEntity): FlowInstance  = {
+  def apply(flowEntity: FlowEntity, id: String, name: String): FlowInstance  = {
     val f = new FlowInstance
-    val snippet = snippetEntity.getSnippet
+    val flow = flowEntity.getFlow
 
-    f.setId(snippet.getId)
-    f.setVersion(snippetEntity.getRevision.getVersion.toString)
-    f.setProcessors(snippet.getProcessors.map(p => ProcessorInstance(p)).toList)
-    f.setConnections(snippet.getConnections.map(c => Connection(c)).toList)
+
+    val nameId = ProcessGroupHelper.extractFromName(name)
+    f.setId(id)
+    f.setName(nameId._1)
+    f.setNameId(nameId._2)
+
+    f.setProcessors(flow.getProcessors.map(p => ProcessorInstance(p)).toList)
+    f.setConnections(flow.getConnections.map(c => Connection(c.getComponent)).toList)
     f
   }
+
+
 
   def apply(processGroupDTO: ProcessGroupDTO): FlowInstance  = {
     val f = new FlowInstance
     val snippet = processGroupDTO.getContents
 
     val nameId = ProcessGroupHelper.extractFromName(processGroupDTO.getName)
+
     f.setId(processGroupDTO.getId)
     f.setName(nameId._1)
     f.setNameId(nameId._2)
@@ -97,11 +125,19 @@ object ProcessorInstance {
 
   def apply(processorDTO: ProcessorDTO): ProcessorInstance = {
     val processorInstance = new ProcessorInstance
+
     processorInstance.setId(processorDTO.getId)
     processorInstance.setStatus({
       val state = processorDTO.getState
       if(state == null) "STANDBY" else state
     })
+
+    processorInstance
+  }
+
+  def apply(processorEntity: ProcessorEntity): ProcessorInstance = {
+    val processorInstance = apply(processorEntity.getComponent)
+    processorInstance.setVersion(processorEntity.getRevision.getVersion)
     processorInstance
   }
 

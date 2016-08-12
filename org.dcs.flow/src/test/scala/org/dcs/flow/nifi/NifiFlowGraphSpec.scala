@@ -26,14 +26,10 @@ class NifiFlowGraphSpec extends RestBaseUnitSpec with NifiFlowGraphBehaviors {
     doReturn(jsonFromFile(flowInstancePath.toFile)).
       when(flowClient).
       getAsJson(
-        Matchers.eq(NifiFlowClient.processGroupsPath(UserId) + "/" + FlowInstanceId),
-        Matchers.any[List[(String, String)]],
+        Matchers.eq(NifiFlowClient.flowProcessGroupsPath(FlowInstanceId)),
+        Matchers.any[Map[String, String]],
         Matchers.any[List[(String, String)]]
       )
-
-    doReturn(49.0.toLong).
-      when(flowClient).
-      currentVersion()
 
     validateFlowGraphConstruction(flowClient, FlowInstanceId)
   }
@@ -55,17 +51,17 @@ trait NifiFlowGraphBehaviors {
 
     val roots = NifiFlowGraph.roots(graphNodes.toList)
     assert(roots.size == 1)
-    assert(roots.head.processorInstance.id == "66ec429b-0975-4953-9881-7a57103e1b79")
+    assert(roots.head.processorInstance.id == "3fde726d-5cc1-4bb6-6428-3e26c236b45d")
     val breadthFirstNodes = NifiFlowGraph.executeBreadthFirst(flowInstance, identity)
     var node = breadthFirstNodes.head
     assert(node.processorInstance.id == roots.head.processorInstance.id)
     node = node.children.head
-    assert(node.processorInstance.id == "d9bd6c32-5f3d-4a85-a43f-09218492b95a")
+    assert(node.processorInstance.id == "daf07177-3fe2-42a8-2570-ee13e230d491")
     node = node.children.head
-    assert(node.processorInstance.id == "84579c8a-f861-4325-9e6d-b108b88e3aa6")
+    assert(node.processorInstance.id == "13613f8e-d402-4018-9e4d-c508c7948cfa")
     node = node.children.head
-    assert(node.processorInstance.id == "3052edb4-7f2f-4a4f-ae31-4f6f8bc13e52")
+    assert(node.processorInstance.id == "55c734e3-9e8c-4d8e-ba40-3f2d1959fe33")
     node = node.children.head
-    assert(node.processorInstance.id == "6460e6a3-0921-4517-b99a-9c34fdc864ff")
+    assert(node.processorInstance.id == "c8d56491-4d2e-4751-be71-672fa3b35516")
   }
 }

@@ -1,0 +1,26 @@
+{
+  "provenance": {
+    "id": "7bb925a6-0156-1000-7c10-5dacea5eeb4b",
+    "uri": "http://localhost:8888/nifi-api/provenance/7bb925a6-0156-1000-7c10-5dacea5eeb4b",
+    "submissionTime": "08/12/2016 00:29:06.598 CEST",
+    "expiration": "08/12/2016 00:59:06.598 CEST",
+    "percentCompleted": 0,
+    "finished": false,
+    "request": {
+      "searchTerms": {
+        "Component ID": "3fde726d-5cc1-4bb6-1e64-241766adaf86"
+      },
+      "startDate": "08/12/2016 00:00:00 CEST",
+      "endDate": "08/12/2016 23:59:59 CEST",
+      "maxResults": 1000
+    },
+    "results": {
+      "provenanceEvents": [],
+      "total": "0",
+      "totalCount": 0,
+      "generated": "00:29:06 CEST",
+      "oldestEvent": "08/11/2016 15:27:03 CEST",
+      "timeOffset": 7200000
+    }
+  }
+}

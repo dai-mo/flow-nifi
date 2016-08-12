@@ -1,6 +1,15 @@
 {
-  "revision" : {
-    "clientId" : "67e39de6-9d7c-4667-b43a-d57a65386202",
-    "version" : 51
-  }
+  "id": "7a59e6f0-0156-1000-71b3-df1267a0cfd2",
+  "position": {
+    "x": 551,
+    "y": 175
+  },
+  "runningCount": 0,
+  "stoppedCount": 5,
+  "invalidCount": 0,
+  "disabledCount": 0,
+  "activeRemotePortCount": 0,
+  "inactiveRemotePortCount": 0,
+  "inputPortCount": 0,
+  "outputPortCount": 0
 }

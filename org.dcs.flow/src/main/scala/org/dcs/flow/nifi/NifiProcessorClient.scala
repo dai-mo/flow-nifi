@@ -21,8 +21,8 @@ object NifiProcessorClient  {
 
   val States = Set(StateRunning, StateStopped)
 
-  def processorsPath(processGroupId: String) =
-    "/controller/process-groups/" + processGroupId + "/processors"
+  def processorsPath(processorId: String) =
+    "/processors/" + processorId
 }
 
 trait NifiProcessorClient extends ProcessorApiService with NifiBaseRestClient {
@@ -31,9 +31,12 @@ trait NifiProcessorClient extends ProcessorApiService with NifiBaseRestClient {
 
   import NifiProcessorClient._
 
-  override def types(userID: String): List[ProcessorType] = {
+  override def types(userId: String): List[ProcessorType] = {
+    val qp = Map(
+      ClientIdKey -> userId
+    )
     val processorTypes = getAsJson(path = TypesPath,
-      queryParams = (ClientIdKey -> userID) :: Nil).toObject[ProcessorTypesEntity]
+      queryParams = qp).toObject[ProcessorTypesEntity]
     processorTypes.getProcessorTypes.asScala.map(dt => ProcessorType(dt)).toList
   }
 
@@ -42,54 +45,62 @@ trait NifiProcessorClient extends ProcessorApiService with NifiBaseRestClient {
   }
 
   override def create(name: String, ptype: String, userId: String): ProcessorInstance = {
+    val qp = Map(
+        ClientIdKey -> userId,
+        "name" -> name,
+        "type" -> ptype,
+        "x" -> "17",
+        "y" -> "100")
 
-    val processor = postAsJson(path = processorsPath(userId),
-      queryParams = (ClientIdKey -> userId) :: List(("name", name),
-        ("type" -> ptype),
-        ("x" -> "17"),
-        ("y" -> "100")),
-      contentType = MediaType.APPLICATION_FORM_URLENCODED
-    ).toObject[ProcessorEntity]
-
-    val processorInstance = new ProcessorInstance
-    processorInstance.setId(processor.getProcessor.getId)
-    processorInstance.setStatus(processor.getProcessor.getState)
-    processorInstance
-  }
-
-  override def start(processorId: String, processGroupId: String): ProcessorInstance = {
-    changeState(processorId, StateRunning, processGroupId)
-  }
-
-
-  override def stop(processorId: String, processGroupId: String): ProcessorInstance = {
-    changeState(processorId, StateStopped, processGroupId)
-  }
-
-
-  override def remove(processorId: String, userId: String): Boolean = {
-    val processor = deleteAsJson(path = processorsPath(userId) + "/" + processorId,
-      queryParams = (ClientIdKey -> userId) :: Nil).toObject[ProcessorEntity]
-
-    processor != null
-  }
-
-  def changeState(processorId: String, state: String, processGroupId: String): ProcessorInstance = {
-    if(!States.contains(state))
-      throw new RESTException(ErrorConstants.DCS305.withErrorMessage("State [" + state + "] not recognised"))
-
-    val qp = List(
-      "state" -> state,
-      ClientIdKey -> processGroupId
-    )
-    val processor = putAsJson(path = processorsPath(processGroupId) + "/" + processorId,
+    val processorEntity = postAsJson(path = processorsPath(userId),
       queryParams = qp,
       contentType = MediaType.APPLICATION_FORM_URLENCODED
     ).toObject[ProcessorEntity]
 
-    val processorInstance = new ProcessorInstance
-    processorInstance.setId(processor.getProcessor.getId)
-    processorInstance.setStatus(processor.getProcessor.getState)
-    processorInstance
+    ProcessorInstance(processorEntity)
+  }
+
+  override def instance(processorId: String, userId: String): ProcessorInstance = {
+    val processorEntity = getAsJson(processorsPath(processorId)).
+      toObject[ProcessorEntity]
+    ProcessorInstance(processorEntity)
+  }
+
+  override def start(processorId: String, userId: String): ProcessorInstance = {
+    start(processorId, instance(processorId, userId).version, userId)
+  }
+
+  def start(processorId: String, currentVersion: Long, userId: String): ProcessorInstance = {
+    changeState(processorId, currentVersion, StateRunning, userId)
+  }
+
+  override def stop(processorId: String, userId: String): ProcessorInstance = {
+    stop(processorId, instance(processorId, userId).version, userId)
+  }
+
+  def stop(processorId: String, currentVersion: Long, userId: String): ProcessorInstance = {
+    changeState(processorId, currentVersion, StateStopped, userId)
+  }
+
+
+  override def remove(processorId: String, userId: String): Boolean = {
+    val qp = Map(
+      ClientIdKey -> userId
+    )
+    val processor = deleteAsJson(path = processorsPath(userId) + "/" + processorId,
+      queryParams = qp).toObject[ProcessorEntity]
+
+    processor != null
+  }
+
+  def changeState(processorId: String, currentVersion: Long, state: String, userId: String): ProcessorInstance = {
+    if(!States.contains(state))
+      throw new RESTException(ErrorConstants.DCS305.withErrorMessage("State [" + state + "] not recognised"))
+
+    val processorEntity = putAsJson(path = processorsPath(processorId) ,
+      obj = ProcessorStateUpdateRequest(processorId, state, currentVersion, userId).toJson
+    ).toObject[ProcessorEntity]
+
+    ProcessorInstance(processorEntity)
   }
 }
