@@ -26,16 +26,16 @@ class FlowApiISpec extends RestBaseUnitSpec
   provenanceClient.requestFilter(new LoggingFilter())
 
 
-//  "Flow Instantiation" must "be valid  for existing template id" taggedAs IT in {
-//    validateFlowInstantiation(flowClient, "DateConversion", FlowApiSpec.TemplateId)
-//    flowClient.instances(FlowApiSpec.UserId, FlowApiSpec.ClientToken).foreach(fi => {
-//      validateFlowRetrieval(flowClient, fi.getId)
-//    })
-//  }
-//
-//  "Flow Instantiation" must "be invalid for non-existing template id" taggedAs IT in {
-//    validateNonExistingFlowInstantiation(flowClient)
-//  }
+  "Flow Instantiation" must "be valid  for existing template id" taggedAs IT in {
+    validateFlowInstantiation(flowClient, "DateConversion", FlowApiSpec.TemplateId)
+    flowClient.instances(FlowApiSpec.UserId, FlowApiSpec.ClientToken).foreach(fi => {
+      validateFlowRetrieval(flowClient, fi.getId)
+    })
+  }
+
+  "Flow Instantiation" must "be invalid for non-existing template id" taggedAs IT in {
+    validateNonExistingFlowInstantiation(flowClient)
+  }
 
   "Flow Instance State Change" must "result in valid state" taggedAs IT in {
     // Instantiate a flow instance from an existing flow template
@@ -61,11 +61,11 @@ class FlowApiISpec extends RestBaseUnitSpec
   }
 
 
-//
-//  "Flow Instance Deletion" must "be valid" taggedAs IT in {
-//    flowClient.instances(FlowApiSpec.UserId, FlowApiSpec.ClientToken).foreach(fi => {
-//      validateFlowDeletion(flowClient, fi.getId)
-//    })
-//  }
+
+  "Flow Instance Deletion" must "be valid" taggedAs IT in {
+    flowClient.instances(FlowApiSpec.UserId, FlowApiSpec.ClientToken).foreach(fi => {
+      validateFlowDeletion(flowClient, fi.getId)
+    })
+  }
 
 }

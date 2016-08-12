@@ -86,21 +86,22 @@ trait NifiFlowClient extends FlowApiService with NifiBaseRestClient {
     processGroupFlowEntity.getProcessGroupFlow.getFlow.getProcessGroups.asScala.map(pge => FlowInstance(pge)).toList
   }
 
-  override def start(flowInstanceId: String, userId: String, authToken: String): List[ProcessorInstance] = {
-    val flowInstance = instance(flowInstanceId, userId, authToken)
-    def startNode(node: FlowGraphNode): ProcessorInstance = ProcessorApi.start(node.processorInstance.id,
-      node.processorInstance.version,
-      flowInstanceId)
-    NifiFlowGraph.executeBreadthFirst[ProcessorInstance](flowInstance, startNode)
+  override def start(flowInstanceId: String, userId: String, authToken: String): Boolean = {
 
+  val response = putAsJson(path = flowProcessGroupsPath(flowInstanceId),
+    obj = FlowInstanceStartRequest(flowInstanceId, NifiProcessorClient.StateRunning).toJson).
+    toObject[FlowInstanceStartRequest]
+
+   response.state ==  NifiProcessorClient.StateRunning
   }
 
-  override def stop(flowInstanceId: String, userId: String, authToken: String): List[ProcessorInstance] = {
-    val flowInstance = instance(flowInstanceId, userId, authToken)
-    def stopNode(node: FlowGraphNode): ProcessorInstance = ProcessorApi.stop(node.processorInstance.id,
-      node.processorInstance.version,
-      flowInstanceId)
-    NifiFlowGraph.executeBreadthFirst[ProcessorInstance](flowInstance, stopNode)
+  override def stop(flowInstanceId: String, userId: String, authToken: String): Boolean = {
+
+    val response = putAsJson(path = flowProcessGroupsPath(flowInstanceId),
+      obj = FlowInstanceStartRequest(flowInstanceId, NifiProcessorClient.StateStopped).toJson).
+      toObject[FlowInstanceStartRequest]
+
+    response.state ==  NifiProcessorClient.StateStopped
   }
 
   override def remove(flowInstanceId: String, userId: String, authToken: String): Boolean = {

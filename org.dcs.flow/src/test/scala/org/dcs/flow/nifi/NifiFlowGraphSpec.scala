@@ -31,10 +31,6 @@ class NifiFlowGraphSpec extends RestBaseUnitSpec with NifiFlowGraphBehaviors {
         Matchers.any[List[(String, String)]]
       )
 
-//    doReturn(49.0.toLong).
-//      when(flowClient).
-//      currentVersion()
-
     validateFlowGraphConstruction(flowClient, FlowInstanceId)
   }
 }

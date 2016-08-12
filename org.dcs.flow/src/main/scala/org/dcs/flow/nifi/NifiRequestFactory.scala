@@ -6,6 +6,7 @@ import org.apache.nifi.web.api.dto.provenance.{ProvenanceDTO, ProvenanceRequestD
 import org.apache.nifi.web.api.dto.{PositionDTO, ProcessGroupDTO, ProcessorDTO, RevisionDTO}
 import org.apache.nifi.web.api.entity.{InstantiateTemplateRequestEntity, ProcessGroupEntity, ProcessorEntity, ProvenanceEntity}
 
+import scala.beans.BeanProperty
 import scala.collection.JavaConverters._
 /**
   * Created by cmathew on 11/08/16.
@@ -57,6 +58,12 @@ object FlowInstanceRequest {
   }
 }
 
+// FIXME: There should be a Nifi counterpart for this but did not find it yet
+case class FlowInstanceStartRequest(@BeanProperty var id: String,
+                                    @BeanProperty var state: String) {
+  def this() = this("", "")
+}
+
 object ProcessorStateUpdateRequest {
   def apply(processorId: String, state: String, currentVersion: Long, clientId: String): ProcessorEntity = {
     val processor = new ProcessorDTO
@@ -70,6 +77,7 @@ object ProcessorStateUpdateRequest {
     pe
   }
 }
+
 
 object ProcessorProvenanceSearchRequest {
   def apply(processorId: String, maxResults: Int, startDate: Date, endDate: Date): ProvenanceEntity = {
@@ -87,3 +95,4 @@ object ProcessorProvenanceSearchRequest {
     provenanceEntity
   }
 }
+

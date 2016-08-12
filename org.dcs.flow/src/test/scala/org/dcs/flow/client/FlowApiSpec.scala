@@ -179,13 +179,15 @@ trait FlowApiBehaviors {
   }
 
   def validateStart(flowClient: NifiFlowClient, flowInstanceId: String): List[ProcessorInstance] = {
-    val processors = flowClient.start(flowInstanceId, UserId, ClientToken)
+    assert(flowClient.start(flowInstanceId, UserId, ClientToken))
+    val processors = flowClient.instance(flowInstanceId, UserId, ClientToken).processors
     processors.foreach(p => p.status == NifiProcessorClient.StateRunning)
     processors
   }
 
   def validateStop(flowClient: NifiFlowClient, flowInstanceId: String): List[ProcessorInstance] = {
-    val processors = flowClient.stop(flowInstanceId, UserId, ClientToken)
+    assert(flowClient.stop(flowInstanceId, UserId, ClientToken))
+    val processors = flowClient.instance(flowInstanceId, UserId, ClientToken).processors
     processors.foreach(p => p.status == NifiProcessorClient.StateStopped)
     processors
   }
