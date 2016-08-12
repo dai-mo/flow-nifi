@@ -55,11 +55,11 @@ class ProcessorApiSpec extends RestBaseUnitSpec with ProcessorApiBehaviors {
     doReturn(jsonFromFile(processorStartPath.toFile)).
       when(processorApi).
       putAsJson(
-        Matchers.eq(NifiProcessorClient.processorsPath(UserId) + "/" + ProcessorInstanceId),
+        Matchers.eq(NifiProcessorClient.processorsPath(ProcessorInstanceId)),
         Matchers.any[Form],
         Matchers.any[Map[String, String]],
         Matchers.any[List[(String, String)]],
-        Matchers.eq(MediaType.APPLICATION_FORM_URLENCODED)
+        Matchers.eq(MediaType.APPLICATION_JSON)
       )
 
     validateProcessorStart(processorApi, ProcessorInstanceId, 0.0.toLong)
@@ -69,11 +69,11 @@ class ProcessorApiSpec extends RestBaseUnitSpec with ProcessorApiBehaviors {
     doReturn(jsonFromFile(processorStopPath.toFile)).
       when(processorApi).
       putAsJson(
-        Matchers.eq(NifiProcessorClient.processorsPath(UserId) + "/" + ProcessorInstanceId),
+        Matchers.eq(NifiProcessorClient.processorsPath(ProcessorInstanceId)),
         Matchers.any[Form],
         Matchers.any[Map[String, String]],
         Matchers.any[List[(String, String)]],
-        Matchers.eq(MediaType.APPLICATION_FORM_URLENCODED)
+        Matchers.eq(MediaType.APPLICATION_JSON)
       )
 
     validateProcessorStop(processorApi, ProcessorInstanceId, 0.0.toLong)

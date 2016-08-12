@@ -4,6 +4,7 @@ import java.nio.file.{Path, Paths}
 import javax.ws.rs.core.{Form, MediaType}
 
 import org.dcs.api.error.RESTException
+import org.dcs.api.service.ProcessorInstance
 import org.dcs.flow.RestBaseUnitSpec
 import org.dcs.flow.nifi.{NifiFlowApi, NifiFlowClient, NifiProcessorClient}
 import org.mockito.Matchers
@@ -177,11 +178,15 @@ trait FlowApiBehaviors {
     assert(flowClient.remove(flowInstanceId, UserId, ClientToken))
   }
 
-  def validateStartStop(flowClient: NifiFlowClient, flowInstanceId: String) {
-    var processors = flowClient.start(flowInstanceId, UserId, ClientToken)
+  def validateStart(flowClient: NifiFlowClient, flowInstanceId: String): List[ProcessorInstance] = {
+    val processors = flowClient.start(flowInstanceId, UserId, ClientToken)
     processors.foreach(p => p.status == NifiProcessorClient.StateRunning)
+    processors
+  }
 
-    processors = flowClient.stop(flowInstanceId, UserId, ClientToken)
+  def validateStop(flowClient: NifiFlowClient, flowInstanceId: String): List[ProcessorInstance] = {
+    val processors = flowClient.stop(flowInstanceId, UserId, ClientToken)
     processors.foreach(p => p.status == NifiProcessorClient.StateStopped)
+    processors
   }
 }

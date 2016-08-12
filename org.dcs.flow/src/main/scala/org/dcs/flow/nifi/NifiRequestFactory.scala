@@ -1,8 +1,12 @@
 package org.dcs.flow.nifi
 
-import org.apache.nifi.web.api.dto.{PositionDTO, ProcessGroupDTO, ProcessorDTO, RevisionDTO}
-import org.apache.nifi.web.api.entity.{InstantiateTemplateRequestEntity, ProcessGroupEntity, ProcessorEntity}
+import java.util.Date
 
+import org.apache.nifi.web.api.dto.provenance.{ProvenanceDTO, ProvenanceRequestDTO}
+import org.apache.nifi.web.api.dto.{PositionDTO, ProcessGroupDTO, ProcessorDTO, RevisionDTO}
+import org.apache.nifi.web.api.entity.{InstantiateTemplateRequestEntity, ProcessGroupEntity, ProcessorEntity, ProvenanceEntity}
+
+import scala.collection.JavaConverters._
 /**
   * Created by cmathew on 11/08/16.
   */
@@ -64,5 +68,22 @@ object ProcessorStateUpdateRequest {
     pe.setRevision(Revision(currentVersion, clientId))
 
     pe
+  }
+}
+
+object ProcessorProvenanceSearchRequest {
+  def apply(processorId: String, maxResults: Int, startDate: Date, endDate: Date): ProvenanceEntity = {
+    val request = new ProvenanceRequestDTO
+    request.setMaxResults(maxResults)
+    request.setStartDate(startDate)
+    request.setEndDate(endDate)
+    request.setSearchTerms(Map("ProcessorID" -> processorId).asJava)
+
+    val provenance = new ProvenanceDTO
+    provenance.setRequest(request)
+
+    val provenanceEntity = new ProvenanceEntity
+    provenanceEntity.setProvenance(provenance)
+    provenanceEntity
   }
 }

@@ -1,11 +1,10 @@
 package org.dcs.flow.nifi
 
 import java.util.UUID
-import javax.ws.rs.core.MediaType
 
 import org.apache.nifi.web.api.entity._
 import org.dcs.api.error.{ErrorConstants, RESTException}
-import org.dcs.api.service.{Connection, FlowApiService, FlowInstance, FlowTemplate, ProcessorInstance}
+import org.dcs.api.service.{FlowApiService, FlowInstance, FlowTemplate, ProcessorInstance}
 import org.dcs.commons.JsonSerializerImplicits._
 import org.dcs.flow.ProcessorApi
 import org.dcs.flow.nifi.NifiBaseRestClient._
@@ -19,8 +18,6 @@ import scala.collection.JavaConverters._
   */
 
 class NifiFlowApi extends NifiFlowClient with NifiApiConfig
-
-
 
 object NifiFlowClient {
 

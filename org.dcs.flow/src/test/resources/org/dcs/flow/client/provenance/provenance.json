@@ -1,0 +1,150 @@
+{
+  "provenance": {
+    "id": "7bb925a6-0156-1000-7c10-5dacea5eeb4b",
+    "uri": "http://localhost:8888/nifi-api/provenance/7bb925a6-0156-1000-7c10-5dacea5eeb4b",
+    "submissionTime": "08/12/2016 00:29:06.598 CEST",
+    "expiration": "08/12/2016 00:59:06.602 CEST",
+    "percentCompleted": 100,
+    "finished": true,
+    "request": {
+      "searchTerms": {
+        "Component ID": "3fde726d-5cc1-4bb6-1e64-241766adaf86"
+      },
+      "startDate": "08/12/2016 00:00:00 CEST",
+      "endDate": "08/12/2016 23:59:59 CEST",
+      "maxResults": 1000
+    },
+    "results": {
+      "provenanceEvents": [
+        {
+          "id": "197",
+          "eventId": 197,
+          "eventTime": "08/12/2016 00:25:38.793 CEST",
+          "lineageDuration": 0,
+          "eventType": "CREATE",
+          "flowFileUuid": "b45449ae-849c-449e-8857-e1e81b3cf387",
+          "fileSize": "1,024 bytes",
+          "fileSizeBytes": 1024,
+          "groupId": "7b8b79c3-0156-1000-41d9-a4c6baa2fbf3",
+          "componentId": "3fde726d-5cc1-4bb6-1e64-241766adaf86",
+          "componentType": "GenerateFlowFile",
+          "componentName": "GenerateFlowFile",
+          "attributes": [
+            {
+              "name": "filename",
+              "value": "53057906158277"
+            },
+            {
+              "name": "path",
+              "value": "./"
+            },
+            {
+              "name": "uuid",
+              "value": "b45449ae-849c-449e-8857-e1e81b3cf387"
+            }
+          ],
+          "parentUuids": [],
+          "childUuids": [],
+          "contentEqual": false,
+          "inputContentAvailable": false,
+          "outputContentAvailable": true,
+          "outputContentClaimSection": "1",
+          "outputContentClaimContainer": "default",
+          "outputContentClaimIdentifier": "1470922023251-1",
+          "outputContentClaimOffset": 18182,
+          "outputContentClaimFileSize": "1,024 bytes",
+          "outputContentClaimFileSizeBytes": 1024,
+          "replayAvailable": false,
+          "replayExplanation": "Cannot replay data from Provenance Event because the event does not contain the required Content Claim"
+        },
+        {
+          "id": "192",
+          "eventId": 192,
+          "eventTime": "08/12/2016 00:25:28.793 CEST",
+          "lineageDuration": 1,
+          "eventType": "CREATE",
+          "flowFileUuid": "5d22955b-c2bc-4948-ac98-6eea7b7c3db4",
+          "fileSize": "1,024 bytes",
+          "fileSizeBytes": 1024,
+          "groupId": "7b8b79c3-0156-1000-41d9-a4c6baa2fbf3",
+          "componentId": "3fde726d-5cc1-4bb6-1e64-241766adaf86",
+          "componentType": "GenerateFlowFile",
+          "componentName": "GenerateFlowFile",
+          "attributes": [
+            {
+              "name": "filename",
+              "value": "53047905273511"
+            },
+            {
+              "name": "path",
+              "value": "./"
+            },
+            {
+              "name": "uuid",
+              "value": "5d22955b-c2bc-4948-ac98-6eea7b7c3db4"
+            }
+          ],
+          "parentUuids": [],
+          "childUuids": [],
+          "contentEqual": false,
+          "inputContentAvailable": false,
+          "outputContentAvailable": true,
+          "outputContentClaimSection": "2",
+          "outputContentClaimContainer": "default",
+          "outputContentClaimIdentifier": "1470924644118-2",
+          "outputContentClaimOffset": 15651,
+          "outputContentClaimFileSize": "1,024 bytes",
+          "outputContentClaimFileSizeBytes": 1024,
+          "replayAvailable": false,
+          "replayExplanation": "Cannot replay data from Provenance Event because the event does not contain the required Content Claim"
+        },
+        {
+          "id": "187",
+          "eventId": 187,
+          "eventTime": "08/12/2016 00:25:18.789 CEST",
+          "lineageDuration": 0,
+          "eventType": "CREATE",
+          "flowFileUuid": "976cc2f5-6d67-4584-95e8-525893728c7f",
+          "fileSize": "1,024 bytes",
+          "fileSizeBytes": 1024,
+          "groupId": "7b8b79c3-0156-1000-41d9-a4c6baa2fbf3",
+          "componentId": "3fde726d-5cc1-4bb6-1e64-241766adaf86",
+          "componentType": "GenerateFlowFile",
+          "componentName": "GenerateFlowFile",
+          "attributes": [
+            {
+              "name": "filename",
+              "value": "53037901674244"
+            },
+            {
+              "name": "path",
+              "value": "./"
+            },
+            {
+              "name": "uuid",
+              "value": "976cc2f5-6d67-4584-95e8-525893728c7f"
+            }
+          ],
+          "parentUuids": [],
+          "childUuids": [],
+          "contentEqual": false,
+          "inputContentAvailable": false,
+          "outputContentAvailable": true,
+          "outputContentClaimSection": "1",
+          "outputContentClaimContainer": "default",
+          "outputContentClaimIdentifier": "1470922023251-1",
+          "outputContentClaimOffset": 17085,
+          "outputContentClaimFileSize": "1,024 bytes",
+          "outputContentClaimFileSizeBytes": 1024,
+          "replayAvailable": false,
+          "replayExplanation": "Cannot replay data from Provenance Event because the event does not contain the required Content Claim"
+        }
+      ],
+      "total": "3",
+      "totalCount": 3,
+      "generated": "00:29:07 CEST",
+      "oldestEvent": "08/11/2016 15:27:03 CEST",
+      "timeOffset": 7200000
+    }
+  }
+}

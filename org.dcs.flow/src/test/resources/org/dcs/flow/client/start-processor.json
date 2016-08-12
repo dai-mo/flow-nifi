@@ -1,16 +1,27 @@
 {
   "revision": {
-    "clientId": "dcad0972-cc28-4b7a-88c2-51ba24370c92",
-    "version": 3
+    "clientId": "7eb85780-0156-1000-6960-363dcd9f17d0",
+    "version": 3,
+    "lastModifier": "anonymous"
   },
-  "processor": {
-    "id": "57477ce5-f9a1-4b96-b2e0-8e7aa9c68c62",
-    "uri": "http://localhost:8888/nifi-api/controller/process-groups/605cfccd-2660-4f02-adcc-ee3926ee8b50/processors/57477ce5-f9a1-4b96-b2e0-8e7aa9c68c62",
+  "id": "3fde726d-5cc1-4bb6-4cde-91a81f0ef428",
+  "uri": "http://localhost:8888/nifi-api/processors/3fde726d-5cc1-4bb6-4cde-91a81f0ef428",
+  "position": {
+    "x": 228.99049377441406,
+    "y": 17.4052734375
+  },
+  "permissions": {
+    "canRead": true,
+    "canWrite": true
+  },
+  "bulletins": [],
+  "component": {
+    "id": "3fde726d-5cc1-4bb6-4cde-91a81f0ef428",
+    "parentGroupId": "786d9950-0156-1000-dc9b-e000dd5de772",
     "position": {
-      "x": 617.8280548095703,
-      "y": 183.89119720458984
+      "x": 228.99049377441406,
+      "y": 17.4052734375
     },
-    "parentGroupId": "605cfccd-2660-4f02-adcc-ee3926ee8b50",
     "name": "GenerateFlowFile",
     "type": "org.apache.nifi.processors.standard.GenerateFlowFile",
     "state": "RUNNING",
@@ -29,10 +40,10 @@
     "inputRequirement": "INPUT_FORBIDDEN",
     "config": {
       "properties": {
-        "File Size": "1 b",
-        "Batch Size": "1",
-        "Data Format": "Binary",
-        "Unique FlowFiles": "false"
+        "File Size": "1 kb",
+        "Batch Size": null,
+        "Data Format": null,
+        "Unique FlowFiles": null
       },
       "descriptors": {
         "File Size": {
@@ -113,6 +124,35 @@
         "TIMER_DRIVEN": "0 sec",
         "CRON_DRIVEN": "* * * * * ?"
       }
+    }
+  },
+  "inputRequirement": "INPUT_FORBIDDEN",
+  "status": {
+    "groupId": "786d9950-0156-1000-dc9b-e000dd5de772",
+    "id": "3fde726d-5cc1-4bb6-4cde-91a81f0ef428",
+    "name": "GenerateFlowFile",
+    "statsLastRefreshed": "16:25:46 CEST",
+    "aggregateSnapshot": {
+      "id": "3fde726d-5cc1-4bb6-4cde-91a81f0ef428",
+      "groupId": "786d9950-0156-1000-dc9b-e000dd5de772",
+      "name": "GenerateFlowFile",
+      "type": "GenerateFlowFile",
+      "runStatus": "Running",
+      "bytesRead": 0,
+      "bytesWritten": 5120,
+      "read": "0 bytes",
+      "written": "5 KB",
+      "flowFilesIn": 0,
+      "bytesIn": 0,
+      "input": "0 (0 bytes)",
+      "flowFilesOut": 5,
+      "bytesOut": 5120,
+      "output": "5 (5 KB)",
+      "taskCount": 5,
+      "tasksDurationNanos": 7548736,
+      "tasks": "5",
+      "tasksDuration": "00:00:00.007",
+      "activeThreadCount": 0
     }
   }
 }
