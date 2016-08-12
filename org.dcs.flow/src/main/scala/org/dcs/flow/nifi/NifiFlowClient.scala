@@ -83,7 +83,9 @@ trait NifiFlowClient extends FlowApiService with NifiBaseRestClient {
     val processGroupFlowEntity = getAsJson(path = flowProcessGroupsPath(userId)).
       toObject[ProcessGroupFlowEntity]
 
-    processGroupFlowEntity.getProcessGroupFlow.getFlow.getProcessGroups.asScala.map(pge => FlowInstance(pge)).toList
+    processGroupFlowEntity.getProcessGroupFlow.getFlow.getProcessGroups.asScala.map(
+      pge => instance(pge.getComponent.getId, userId: String, authToken: String)
+    ).toList
   }
 
   override def start(flowInstanceId: String, userId: String, authToken: String): Boolean = {
