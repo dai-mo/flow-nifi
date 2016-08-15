@@ -5,6 +5,7 @@ import java.util.Date
 
 import org.apache.nifi.web.api.entity.ProvenanceEntity
 import org.dcs.api.error.{ErrorConstants, RESTException}
+import org.dcs.api.service.{Provenance, ProvenanceApiService}
 
 import scala.beans.BeanProperty
 import scala.collection.JavaConverters._
@@ -14,15 +15,7 @@ import org.slf4j.{Logger, LoggerFactory}
 /**
   * Created by cmathew on 12/08/16.
   */
-case class Provenance(@BeanProperty var id: String,
-                      @BeanProperty var queryId: String,
-                      @BeanProperty var content: String) {
-  def this() = this("", "", "")
-}
 
-trait ProvenanceApi {
-
-}
 
 class NifiProvenanceApi extends NifiProvenanceClient with NifiApiConfig
 
@@ -43,10 +36,10 @@ object NifiProvenanceClient {
   val logger: Logger = LoggerFactory.getLogger(classOf[NifiProvenanceClient])
 }
 
-trait NifiProvenanceClient extends ProvenanceApi with NifiBaseRestClient {
+trait NifiProvenanceClient extends ProvenanceApiService with NifiBaseRestClient {
   import NifiProvenanceClient._
 
-  def provenance(processorId: String, maxResults: Int, startDate: Date = defaultStart, endDate: Date = defaultEnd): List[Provenance] = {
+  override def provenance(processorId: String, maxResults: Int, startDate: Date = defaultStart, endDate: Date = defaultEnd): List[Provenance] = {
     // FIXME: This entire method needs to be moved to Future / Promise pattern
 
     val provenanceEntity = provenanceQueryRepeat(
