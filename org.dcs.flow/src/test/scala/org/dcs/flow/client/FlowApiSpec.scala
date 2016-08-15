@@ -4,7 +4,7 @@ import java.nio.file.{Path, Paths}
 import javax.ws.rs.core.{Form, MediaType}
 
 import org.dcs.api.error.RESTException
-import org.dcs.api.service.ProcessorInstance
+import org.dcs.api.service.{FlowInstance, ProcessorInstance}
 import org.dcs.flow.RestBaseUnitSpec
 import org.dcs.flow.nifi.{NifiFlowApi, NifiFlowClient, NifiProcessorClient}
 import org.mockito.Matchers
@@ -170,6 +170,11 @@ trait FlowApiBehaviors {
 
   def validateFlowRetrieval(flowClient: NifiFlowClient, flowInstanceId: String) {
     val flowInstance = flowClient.instance(flowInstanceId, UserId, ClientToken)
+    assert(flowInstance.processors.size == 5)
+    assert(flowInstance.connections.size == 4)
+  }
+
+  def validateFlowInstance(flowInstance: FlowInstance) {
     assert(flowInstance.processors.size == 5)
     assert(flowInstance.connections.size == 4)
   }
