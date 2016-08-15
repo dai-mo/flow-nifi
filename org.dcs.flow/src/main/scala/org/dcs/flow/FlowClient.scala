@@ -1,6 +1,6 @@
 package org.dcs.flow
 
-import org.dcs.flow.nifi.{NifiFlowApi, NifiProcessorApi}
+import org.dcs.flow.nifi.{NifiFlowApi, NifiProcessorApi, NifiProvenanceApi}
 
 /**
   * Created by cmathew on 05/08/16.
@@ -8,3 +8,5 @@ import org.dcs.flow.nifi.{NifiFlowApi, NifiProcessorApi}
 object ProcessorApi extends NifiProcessorApi
 
 object FlowApi extends NifiFlowApi
+
+object ProvenanceApi extends NifiProvenanceApi
