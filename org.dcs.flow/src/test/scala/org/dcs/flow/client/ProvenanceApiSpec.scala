@@ -1,14 +1,11 @@
 package org.dcs.flow.client
 
 import java.nio.file.{Path, Paths}
-import java.text.SimpleDateFormat
-import java.time.LocalDate
-import java.time.format.DateTimeFormatter
-import java.util.Date
 import javax.ws.rs.core.{Form, MediaType}
 
+import org.dcs.api.service.Provenance
 import org.dcs.flow.RestBaseUnitSpec
-import org.dcs.flow.nifi.{NifiProvenanceApi, NifiProvenanceClient, Provenance}
+import org.dcs.flow.nifi.{NifiProvenanceApi, NifiProvenanceClient}
 import org.mockito.Matchers
 import org.mockito.Mockito._
 import org.scalatest.FlatSpec
@@ -83,7 +80,7 @@ trait ProvenanceApiBehaviours {
     val provenanceResults = provenanceClient.provenance(processorId, 10)
 
     assert(provenanceResults.size > 0)
-
+    provenanceResults.foreach(r => assert(!r.getContent.isEmpty))
     provenanceResults
   }
 }
