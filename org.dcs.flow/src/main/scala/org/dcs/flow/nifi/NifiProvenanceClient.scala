@@ -27,8 +27,8 @@ object NifiProvenanceClient {
     "/provenance-events/" + provenanceEventId + "/content/output"
   }
 
-  def now: LocalDateTime  = LocalDateTime.now(); // current date and time
-  def midnight: LocalDateTime = now.toLocalDate.atStartOfDay();
+  def now: LocalDateTime  = LocalDateTime.now() // current date and time
+  def midnight: LocalDateTime = now.toLocalDate.atStartOfDay()
 
   def defaultStart: Date = Date.from(midnight.atZone(ZoneId.systemDefault()).toInstant)
   def defaultEnd: Date  = Date.from(now.atZone(ZoneId.systemDefault()).toInstant)
@@ -54,7 +54,9 @@ trait NifiProvenanceClient extends ProvenanceApiService with NifiBaseRestClient 
       provenanceEntity.getProvenance.getResults.getProvenanceEvents.asScala.map(
         pe => Provenance(pe.getId,
           provenanceEntity.getProvenance.getId,
-          getAsJson(path = provenanceOutput(pe.getId)))
+          pe.getClusterNodeId,
+          getAsJson(path = provenanceOutput(pe.getEventId.toString),
+            queryParams = params(pe.getClusterNodeId)))
       ).toList
 
     } finally {
@@ -80,12 +82,20 @@ trait NifiProvenanceClient extends ProvenanceApiService with NifiBaseRestClient 
     case _ => provenanceEntity.getProvenance.isFinished match {
       case java.lang.Boolean.TRUE => provenanceEntity
       case java.lang.Boolean.FALSE => provenanceQueryRepeat(
-        provenanceQuery(provenanceEntity.getProvenance.getId),
+        provenanceQuery(provenanceEntity.getProvenance.getId, provenanceEntity.getProvenance.getRequest.getClusterNodeId),
         triesLeft - 1
       )
     }
   }
 
-  def provenanceQuery(provenanceEntityId: String): ProvenanceEntity =
-    getAsJson(path = ProvenancePath + "/" + provenanceEntityId).toObject[ProvenanceEntity]
+  def provenanceQuery(provenanceEntityId: String, clusterNodeId: String): ProvenanceEntity =
+    getAsJson(path = ProvenancePath + "/" + provenanceEntityId,
+      queryParams = params(clusterNodeId)).toObject[ProvenanceEntity]
+
+  def params(clusterNodeId: String): Map[String, String] = {
+    if(clusterNodeId == null)
+      Map()
+    else
+      Map("clusterNodeId" -> clusterNodeId)
+  }
 }

@@ -16,6 +16,7 @@ class NifiProcessorApi extends NifiProcessorClient with NifiApiConfig
 object NifiProcessorClient  {
   val TypesPath = "/controller/processor-types"
 
+  val StateNotStarted = "NOT_STARTED"
   val StateRunning = "RUNNING"
   val StateStopped = "STOPPED"
 

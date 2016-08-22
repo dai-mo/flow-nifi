@@ -4,7 +4,7 @@ import java.nio.file.{Path, Paths}
 import javax.ws.rs.core.{Form, MediaType}
 
 import org.dcs.api.error.RESTException
-import org.dcs.api.service.{FlowInstance, ProcessorInstance}
+import org.dcs.api.service.{FlowInstance, FlowTemplate, ProcessorInstance}
 import org.dcs.flow.RestBaseUnitSpec
 import org.dcs.flow.nifi.{NifiFlowApi, NifiFlowClient, NifiProcessorClient}
 import org.mockito.Matchers
@@ -138,17 +138,18 @@ trait FlowApiBehaviors {
   import FlowApiSpec._
 
 
-  val invalidTemplateId = "d615fb63-bc39-458c-bfcf-1f197ecdc81"
+  val invalidTemplateId = "invalid-template-id"
   val flowInstanceId = "3f948eeb-61d8-4f47-81f4-fff5cac50ed8"
 
 
 
-  def validateTemplatesRetrieval(flowClient: NifiFlowClient) {
+  def validateTemplatesRetrieval(flowClient: NifiFlowClient): List[FlowTemplate] = {
     val templates = flowClient.templates(ClientToken)
     assert(templates.size == 2)
+    templates
   }
 
-  def validateFlowInstantiation(flowClient: NifiFlowClient, name: String, templateId: String) {
+  def validateFlowInstantiation(flowClient: NifiFlowClient, name: String, templateId: String): FlowInstance = {
     val flow = flowClient.instantiate(templateId, UserId , ClientToken)
     assert(flow.processors.size == 5)
     assert(flow.connections.size == 4)
@@ -159,6 +160,7 @@ trait FlowApiBehaviors {
     })
 
     assert(!flow.getId.isEmpty)
+    flow
   }
 
   def validateNonExistingFlowInstantiation(flowClient: NifiFlowClient) {
