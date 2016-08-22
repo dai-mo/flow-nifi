@@ -49,6 +49,7 @@ object FlowInstance {
     f.setId(processGroupEntity.getComponent.getId)
     f.setName(nameId._1)
     f.setNameId(nameId._2)
+    f.setState(NifiProcessorClient.StateNotStarted)
     if(contents != null) {
       f.setProcessors(contents.getProcessors.map(p => ProcessorInstance(p)).toList)
       f.setConnections(contents.getConnections.map(c => Connection(c)).toList)
@@ -68,6 +69,11 @@ object FlowInstance {
     f.setName(nameId._1)
     f.setNameId(nameId._2)
 
+    if(flow.getProcessors.exists(p => p.getComponent.getState != NifiProcessorClient.StateRunning))
+      f.setState(NifiProcessorClient.StateStopped)
+    else
+      f.setState(NifiProcessorClient.StateRunning)
+
     f.setProcessors(flow.getProcessors.map(p => ProcessorInstance(p)).toList)
     f.setConnections(flow.getConnections.map(c => Connection(c.getComponent)).toList)
     f
@@ -81,8 +87,7 @@ object FlowInstance {
     f.setId(id)
     f.setName(nameId._1)
     f.setNameId(nameId._2)
-
-
+    f.setState(NifiProcessorClient.StateNotStarted)
     f.setProcessors(contents.getProcessors.map(p => ProcessorInstance(p)).toList)
     f.setConnections(contents.getConnections.map(c => Connection(c)).toList)
 
@@ -98,7 +103,7 @@ object FlowInstance {
     f.setId(id)
     f.setName(nameId._1)
     f.setNameId(nameId._2)
-
+    f.setState(NifiProcessorClient.StateNotStarted)
     f.setProcessors(flow.getProcessors.map(p => ProcessorInstance(p)).toList)
     f.setConnections(flow.getConnections.map(c => Connection(c.getComponent)).toList)
     f
