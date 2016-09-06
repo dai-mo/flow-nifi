@@ -14,7 +14,7 @@ object TestProcessorSpec {
 
   MockZookeeperServiceTracker.addProcessor(
     clientProcessor.processorClassName(),
-    new MockRemoteProcessor(remoteProcessor, "{\"response\":\"Hello Bob, This is DCS!\"}".getBytes)
+    new MockRemoteProcessor(remoteProcessor, "{\"response\":\"Hello Bob\"}".getBytes)
   )
 
   clientProcessor.remoteService = MockRemoteService
