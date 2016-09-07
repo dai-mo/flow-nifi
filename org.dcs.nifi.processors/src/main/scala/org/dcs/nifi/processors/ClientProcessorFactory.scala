@@ -35,7 +35,7 @@ object Relationship {
   def apply(remoteRelationship: RemoteRelationship): Relationship = {
    val relationshipBuilder = new RelationshipBuilder()
 
-    relationshipBuilder.name(remoteRelationship.name)
+    relationshipBuilder.name(remoteRelationship.id)
     relationshipBuilder.description(remoteRelationship.description)
 
     relationshipBuilder.build()

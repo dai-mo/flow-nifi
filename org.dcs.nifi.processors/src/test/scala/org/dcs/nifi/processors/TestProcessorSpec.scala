@@ -10,14 +10,16 @@ import scala.collection.JavaConverters._
 object TestProcessorSpec {
   object MockRemoteService extends RemoteService with MockZookeeperServiceTracker
   val clientProcessor: TestProcessor = new TestProcessor()
+  clientProcessor.remoteService = MockRemoteService
+
   val remoteProcessor: org.dcs.core.processor.TestProcessor = new org.dcs.core.processor.TestProcessor()
 
   MockZookeeperServiceTracker.addProcessor(
     clientProcessor.processorClassName(),
-    new MockRemoteProcessor(remoteProcessor, "{\"response\":\"Hello Bob\"}".getBytes)
+    new MockRemoteProcessorService(remoteProcessor, "{\"response\":\"Hello Bob\"}".getBytes)
   )
 
-  clientProcessor.remoteService = MockRemoteService
+
 }
 
 class TestProcessorSpec extends ProcessorsBaseUnitSpec with TestProcessorBehaviors {
