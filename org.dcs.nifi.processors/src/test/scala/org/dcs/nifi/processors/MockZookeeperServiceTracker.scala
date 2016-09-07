@@ -1,6 +1,6 @@
 package org.dcs.nifi.processors
 
-import org.dcs.api.processor.RemoteProcessor
+import org.dcs.api.service.RemoteProcessorService
 import org.dcs.nifi.processors.MockZookeeperServiceTracker._
 import org.dcs.remote.ServiceTracker
 
@@ -8,10 +8,10 @@ import scala.reflect.ClassTag
 
 object MockZookeeperServiceTracker {
   
-  var mockProcessorMap = collection.mutable.Map[String, RemoteProcessor]()
+  var mockProcessorMap = collection.mutable.Map[String, RemoteProcessorService]()
       
-  def addProcessor(processorName:String, processor: RemoteProcessor) {
-    mockProcessorMap(processorName) = processor
+  def addProcessor(processorName:String, processorService: RemoteProcessorService) {
+    mockProcessorMap(processorName) = processorService
   }
 }
 

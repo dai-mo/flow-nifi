@@ -6,7 +6,7 @@ import java.util.{Map => JavaMap}
 import org.apache.commons.io.IOUtils
 import org.apache.nifi.annotation.lifecycle._
 import org.apache.nifi.components.PropertyDescriptor
-import org.apache.nifi.processor.{ProcessContext, ProcessorInitializationContext}
+import org.apache.nifi.processor.ProcessContext
 import org.dcs.api.service.{RemoteProcessorService, StatefulRemoteProcessorService}
 
 import scala.collection.JavaConverters._
@@ -20,9 +20,6 @@ abstract class StatefulClientProcessor extends ClientProcessor {
 
   override def processorService(): RemoteProcessorService = statefulRemoteProcessorService
 
-  override def init(context: ProcessorInitializationContext) {
-
-  }
 
   override def output(in: Option[InputStream],
                       valueProperties: JavaMap[String, String]): Array[Byte] = in match {
