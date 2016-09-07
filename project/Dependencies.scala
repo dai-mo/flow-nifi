@@ -5,10 +5,10 @@ object Dependencies {
 
 	    // Versions
 
-	    lazy val dcsApiVersion    = "0.2.0"
+	    lazy val dcsApiVersion    = "0.3.0-SNAPSHOT"
 	    lazy val dcsRemoteVersion = "0.2.0"
 			lazy val dcsCommonsVersion= "0.1.0"
-			lazy val dcsCoreVersion   = "0.1.0"
+			lazy val dcsCoreVersion   = "0.2.0-SNAPSHOT"
 			lazy val nifiVersion			= "1.0.0-BETA"
 			lazy val slf4jVersion			= "1.7.12"
 			lazy val jsonPathVersion	= "1.2.0"
@@ -20,6 +20,7 @@ object Dependencies {
 			lazy val scalaTestVersion = "2.2.6"
 			lazy val juiVersion       = "0.11"
       lazy val jacksonVersion   = "2.7.2"
+			lazy val paxCdiVersion    = "0.12.0"
 
       val dcsNifiServApi  = "org.dcs"                          % "org.dcs.nifi.services-api"
       val dcsNifiServices = "org.dcs"                  			   % "org.dcs.nifi.services"
@@ -48,6 +49,7 @@ object Dependencies {
 			val junitInterface  = "com.novocode"                     % "junit-interface"                    % juiVersion
 			val jerseyClient    = "org.glassfish.jersey.core"        % "jersey-client"                      % jerseyVersion
 			val jerseyMoxy      = "org.glassfish.jersey.media"       % "jersey-media-moxy"                  % jerseyVersion
+      val paxCdiApi       = "org.ops4j.pax.cdi"                % "pax-cdi-api"                        % paxCdiVersion
 
 			// Collect Processors Dependencies
 			val processorsDependencies = Seq(
@@ -60,7 +62,7 @@ object Dependencies {
           jksonCore,
           jksonDataFormat,
 
-
+          paxCdiApi       % "test",
 					slf4jSimple     % "test",
 					dcsCore         % "test",
 					nifiMock				% "test",

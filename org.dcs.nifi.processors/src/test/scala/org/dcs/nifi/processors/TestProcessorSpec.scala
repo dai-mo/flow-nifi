@@ -1,27 +1,31 @@
 package org.dcs.nifi.processors
 
-import org.apache.nifi.util.MockFlowFile
-import org.apache.nifi.util.TestRunner
-import org.apache.nifi.util.TestRunners
-import org.dcs.core.module.flow.TestFlowModule
-import org.dcs.nifi.processors.TestProcessorSpec.testProcessor
+import org.apache.nifi.util.{MockFlowFile, TestRunner, TestRunners}
+import org.dcs.api.processor.RelationshipType
 import org.dcs.remote.RemoteService
 import org.scalatest.FlatSpec
 
+import scala.collection.JavaConverters._
+
 object TestProcessorSpec {
   object MockRemoteService extends RemoteService with MockZookeeperServiceTracker
-  MockZookeeperServiceTracker.addService(
-    "org.dcs.api.service.ModuleFactoryService",
-    new MockModuleFactoryService(new TestFlowModule, "{\"response\":\"Hello Bob, This is DCS!\"}"))
+  val clientProcessor: TestProcessor = new TestProcessor()
+  val remoteProcessor: org.dcs.core.processor.TestProcessor = new org.dcs.core.processor.TestProcessor()
 
-  val testProcessor: TestProcessor = new TestProcessor()
-  testProcessor.remoteService = MockRemoteService
+  MockZookeeperServiceTracker.addProcessor(
+    clientProcessor.processorClassName(),
+    new MockRemoteProcessor(remoteProcessor, "{\"response\":\"Hello Bob\"}".getBytes)
+  )
+
+  clientProcessor.remoteService = MockRemoteService
 }
 
 class TestProcessorSpec extends ProcessorsBaseUnitSpec with TestProcessorBehaviors {
 
+  import org.dcs.nifi.processors.TestProcessorSpec._
+
   "Test Processor Response" must " be valid " in {
-    validResponse(testProcessor)
+    validResponse(clientProcessor)
   }
 }
 
@@ -31,21 +35,22 @@ trait TestProcessorBehaviors { this: FlatSpec =>
 
     // Generate a test runner to mock a processor in a flow
     val runner: TestRunner = TestRunners.newTestRunner(testProcessor)
-    val user = "Bob";
+    val user = "Bob"
+
 
     // Add properties
-    runner.setProperty("User Name", user)
-
+    runner.setProperty("user", user)
+    runner.enqueue("Hello ".getBytes)
     // Run the enqueued content, it also takes an int = number of contents queued
     runner.run(1)
 
-    val successRelationship = ProcessorUtils.successRelationship(testProcessor.getRelationships())
-    //      // If you need to read or do aditional tests on results you can access the content
+    val successRelationship = testProcessor.getRelationships().asScala.find(r => r.getName == RelationshipType.SucessRelationship)
+
     val results: java.util.List[MockFlowFile] = runner.getFlowFilesForRelationship(successRelationship.get)
     assert(results.size == 1)
-    val result: MockFlowFile = results.get(0);
+    val result: MockFlowFile = results.get(0)
     val resultValue: String = new String(runner.getContentAsByteArray(result))
-    assert(resultValue == "{\"response\":\"Hello " + user + ", This is DCS!\"}")
+    assert(resultValue == "{\"response\":\"Hello " + user + "\"}")
   }
 
 }
