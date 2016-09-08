@@ -23,7 +23,6 @@ trait ClientProcessor extends AbstractProcessor with WriteOutput with IO {
 
   val logger: Logger = LoggerFactory.getLogger(classOf[ClientProcessor])
 
-  var remoteService: RemoteService = _
   var remoteProcessorService: RemoteProcessorService = _
 
   var propertyDescriptors: JavaList[PropertyDescriptor] = _
@@ -33,13 +32,13 @@ trait ClientProcessor extends AbstractProcessor with WriteOutput with IO {
 
   def processorClassName(): String
 
+  def remoteService: RemoteService = ZkRemoteService
+
   def processorService(): RemoteProcessorService = {
     remoteService.loadService[RemoteProcessorService](processorClassName())
   }
 
   override def init(context: ProcessorInitializationContext) {
-    if(remoteService == null) remoteService = ZkRemoteService
-
     remoteProcessorService = processorService()
 
     propertyDescriptors = remoteProcessorService.properties.map(ps => PropertyDescriptor(ps)).asJava

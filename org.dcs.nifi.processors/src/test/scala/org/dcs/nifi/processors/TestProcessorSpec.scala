@@ -3,14 +3,18 @@ package org.dcs.nifi.processors
 import org.apache.nifi.util.{MockFlowFile, TestRunner, TestRunners}
 import org.dcs.api.processor.RelationshipType
 import org.dcs.remote.RemoteService
+import org.mockito.Mockito._
 import org.scalatest.FlatSpec
 
 import scala.collection.JavaConverters._
 
 object TestProcessorSpec {
   object MockRemoteService extends RemoteService with MockZookeeperServiceTracker
-  val clientProcessor: TestProcessor = new TestProcessor()
-  clientProcessor.remoteService = MockRemoteService
+  val clientProcessor: TestProcessor = spy(new TestProcessor())
+
+  doReturn(MockRemoteService).
+    when(clientProcessor).
+    remoteService
 
   val remoteProcessor: org.dcs.core.processor.TestProcessor = new org.dcs.core.processor.TestProcessor()
 
@@ -18,6 +22,7 @@ object TestProcessorSpec {
     clientProcessor.processorClassName(),
     new MockRemoteProcessorService(remoteProcessor, "{\"response\":\"Hello Bob\"}".getBytes)
   )
+
 
 
 }

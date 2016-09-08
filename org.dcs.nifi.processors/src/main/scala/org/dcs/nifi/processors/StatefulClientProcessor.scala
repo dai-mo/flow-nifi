@@ -6,7 +6,7 @@ import java.util.{Map => JavaMap}
 import org.apache.commons.io.IOUtils
 import org.apache.nifi.annotation.lifecycle._
 import org.apache.nifi.components.PropertyDescriptor
-import org.apache.nifi.processor.ProcessContext
+import org.apache.nifi.processor.{ProcessContext, ProcessorInitializationContext}
 import org.dcs.api.service.{RemoteProcessorService, StatefulRemoteProcessorService}
 
 import scala.collection.JavaConverters._
@@ -15,11 +15,24 @@ import scala.collection.JavaConverters._
   */
 abstract class StatefulClientProcessor extends ClientProcessor {
 
-  val statefulRemoteProcessorService = remoteService.loadService[StatefulRemoteProcessorService](processorClassName())
-  val processorStateId: String = statefulRemoteProcessorService.init()
+  var statefulRemoteProcessorService: StatefulRemoteProcessorService = _
+  var processorStateId: String = _
 
-  override def processorService(): RemoteProcessorService = statefulRemoteProcessorService
 
+  override def processorService(): RemoteProcessorService = {
+    statefulRemoteProcessorService
+  }
+
+  override def init(context: ProcessorInitializationContext): Unit = {
+    // FIXME: This remote service load does not work due to a null type in the
+    //        StatefulRemoteProcessorService declaration
+    //        Maybe due to the AnyRef return object of the execute method
+    statefulRemoteProcessorService =
+      remoteService.loadService[StatefulRemoteProcessorService](processorClassName())
+    super.init(context)
+    processorStateId = statefulRemoteProcessorService.init()
+
+  }
 
   override def output(in: Option[InputStream],
                       valueProperties: JavaMap[String, String]): Array[Byte] = in match {
