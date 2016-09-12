@@ -1,13 +1,16 @@
 package org.dcs.nifi.processors
 
 import java.util
+import java.util.UUID
 
 import org.dcs.api.processor._
-import org.dcs.api.service.RemoteProcessorService
+import org.dcs.api.service.{RemoteProcessorService, StatefulRemoteProcessorService}
+import org.dcs.core.state.LocalStateManager
 /**
   * Created by cmathew on 31/08/16.
   */
-class MockRemoteProcessorService(processor: RemoteProcessor, response: Array[Byte]) extends RemoteProcessorService {
+class MockRemoteProcessorService(processor: RemoteProcessor, response: Array[Byte])
+  extends RemoteProcessorService {
 
   override def execute(input: Array[Byte], properties: util.Map[String, String]): AnyRef = processor.execute(input, properties)
 
@@ -24,4 +27,12 @@ class MockRemoteProcessorService(processor: RemoteProcessor, response: Array[Byt
   override def getDef(processor: RemoteProcessor): ProcessorDefinition = processor
 
   override def initialise(): RemoteProcessor = processor
+}
+
+
+class MockStatefulRemoteProcessorService(processor: StatefulRemoteProcessor, response: Array[Byte])
+  extends MockRemoteProcessorService(processor, response)
+    with StatefulRemoteProcessorService
+    with LocalStateManager {
+  override def init(): String = put(processor)
 }

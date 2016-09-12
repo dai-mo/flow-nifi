@@ -23,7 +23,6 @@ trait ClientProcessor extends AbstractProcessor with WriteOutput with IO {
 
   val logger: Logger = LoggerFactory.getLogger(classOf[ClientProcessor])
 
-  var remoteService: RemoteService = _
   var remoteProcessorService: RemoteProcessorService = _
 
   var propertyDescriptors: JavaList[PropertyDescriptor] = _
@@ -33,13 +32,13 @@ trait ClientProcessor extends AbstractProcessor with WriteOutput with IO {
 
   def processorClassName(): String
 
+  def remoteService: RemoteService = ZkRemoteService
+
   def processorService(): RemoteProcessorService = {
     remoteService.loadService[RemoteProcessorService](processorClassName())
   }
 
   override def init(context: ProcessorInitializationContext) {
-    if(remoteService == null) remoteService = ZkRemoteService
-
     remoteProcessorService = processorService()
 
     propertyDescriptors = remoteProcessorService.properties.map(ps => PropertyDescriptor(ps)).asJava
@@ -53,8 +52,8 @@ trait ClientProcessor extends AbstractProcessor with WriteOutput with IO {
 
   override def output(in: Option[InputStream],
                       valueProperties: JavaMap[String, String]): Array[Byte] = in match {
-    case None => remoteProcessorService.trigger("".getBytes(), valueProperties)
-    case Some(in) => remoteProcessorService.trigger(IOUtils.toByteArray(in), valueProperties)
+    case None => remoteProcessorService.trigger("".getBytes, valueProperties)
+    case Some(input) => remoteProcessorService.trigger(IOUtils.toByteArray(input), valueProperties)
   }
 
   override def onTrigger(context: ProcessContext, session: ProcessSession) {
