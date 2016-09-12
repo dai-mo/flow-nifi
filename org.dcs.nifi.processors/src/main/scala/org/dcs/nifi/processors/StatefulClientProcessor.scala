@@ -32,50 +32,57 @@ abstract class StatefulClientProcessor extends ClientProcessor {
     super.init(context)
     processorStateId = statefulRemoteProcessorService.init()
 
+
   }
 
   override def output(in: Option[InputStream],
                       valueProperties: JavaMap[String, String]): Array[Byte] = in match {
-    case None => statefulRemoteProcessorService.trigger(processorStateId, "".getBytes(), valueProperties)
-    case Some(in) => statefulRemoteProcessorService.trigger(processorStateId, IOUtils.toByteArray(in), valueProperties)
+    case None => statefulRemoteProcessorService.instanceTrigger(processorStateId, "".getBytes, valueProperties)
+    case Some(input) => statefulRemoteProcessorService.instanceTrigger(processorStateId, IOUtils.toByteArray(input), valueProperties)
   }
 
   @OnConfigurationRestored
   def onConfigurationRestore(): Unit = {
-    statefulRemoteProcessorService.onConfigurationRestore(processorStateId)
+    statefulRemoteProcessorService.onInstanceConfigurationRestore(processorStateId)
   }
 
   override def onPropertyModified(descriptor: PropertyDescriptor, oldValue: String, newValue: String): Unit = {
-    statefulRemoteProcessorService.onPropertyChanged(processorStateId, RemoteProperty(descriptor))
+    statefulRemoteProcessorService.onInstancePropertyChanged(processorStateId,
+      RemoteProperty(descriptor))
   }
 
   @OnAdded
   def onAdd(): Unit = {
-    statefulRemoteProcessorService.onAdd(processorStateId)
+    statefulRemoteProcessorService.onInstanceAdd(processorStateId)
   }
 
   @OnScheduled
   def onSchedule(processContext: ProcessContext): Unit = {
-    statefulRemoteProcessorService.onSchedule(processorStateId, processContext.getProperties.asScala.keys.map(pd => RemoteProperty(pd)).toList.asJava)
+    statefulRemoteProcessorService.onInstanceSchedule(processorStateId,
+      processContext.getProperties.asScala.keys.map(pd => RemoteProperty(pd)).toList.asJava)
   }
 
   @OnUnscheduled
   def onUnschedule(processContext: ProcessContext) = {
-    statefulRemoteProcessorService.onUnschedule(processorStateId, processContext.getProperties.asScala.keys.map(pd => RemoteProperty(pd)).toList.asJava)
+    statefulRemoteProcessorService.onInstanceUnschedule(processorStateId,
+      processContext.getProperties.asScala.keys.map(pd => RemoteProperty(pd)).toList.asJava)
   }
 
   @OnStopped
   def onStop(processContext: ProcessContext) = {
-    statefulRemoteProcessorService.onStop(processorStateId, processContext.getProperties.asScala.keys.map(pd => RemoteProperty(pd)).toList.asJava)
+    statefulRemoteProcessorService.onInstanceStop(processorStateId,
+      processContext.getProperties.asScala.keys.map(pd => RemoteProperty(pd)).toList.asJava)
   }
 
   @OnShutdown
   def onShutdown(processContext: ProcessContext) = {
-    statefulRemoteProcessorService.onShutdown(processorStateId, processContext.getProperties.asScala.keys.map(pd => RemoteProperty(pd)).toList.asJava)
+    statefulRemoteProcessorService.onInstanceShutdown(processorStateId,
+      processContext.getProperties.asScala.keys.map(pd => RemoteProperty(pd)).toList.asJava)
   }
 
   @OnRemoved
   def onRemove(processContext: ProcessContext) = {
-    statefulRemoteProcessorService.onRemove(processorStateId, processContext.getProperties.asScala.keys.map(pd => RemoteProperty(pd)).toList.asJava)
+    statefulRemoteProcessorService.onInstanceRemove(processorStateId,
+      processContext.getProperties.asScala.keys.map(pd => RemoteProperty(pd)).toList.asJava)
   }
 }
