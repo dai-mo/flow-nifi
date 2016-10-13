@@ -3,11 +3,12 @@ package org.dcs.flow.nifi
 import javax.ws.rs.core.Response
 
 import org.dcs.api.error.{ErrorConstants, ErrorResponse}
-import org.dcs.commons.config.ConfigurationFacade
+import org.dcs.commons.YamlSerializerImplicits._
+import org.dcs.commons.config.{GlobalConfiguration, GlobalConfigurator}
 import org.dcs.flow.ApiConfig
 
 object NifiApiConfig {
-  val BaseUrl = ConfigurationFacade.config.nifiBaseUrl  
+  val BaseUrl = GlobalConfigurator.config.toObject[GlobalConfiguration].nifiBaseUrl
 }
 
 trait NifiApiConfig extends ApiConfig {
@@ -23,7 +24,7 @@ trait NifiApiConfig extends ApiConfig {
     case 409 => ErrorConstants.DCS305
     case _ => {
       val er = ErrorConstants.DCS001
-      er.errorMessage = response.readEntity(classOf[String])
+      er.withErrorMessage(response.readEntity(classOf[String]))
       er
     }
   }
