@@ -17,18 +17,13 @@ class FlowApiISpec extends RestBaseUnitSpec
   with ProvenanceApiBehaviours {
 
   val flowClient = new NifiFlowApi
-  flowClient.requestFilter(new LoggingFilter())
 
   val processorClient = new NifiProcessorApi
-  // processorClient.requestFilter(new LoggingFilter())
 
   val provenanceClient = new NifiProvenanceApi
-  // provenanceClient.requestFilter(new LoggingFilter())
-
-
 
   "Flow Instantiation" must "be valid  for existing template id" taggedAs IT in {
-    val templateId = flowClient.templates(FlowApiSpec.ClientToken).find(t => t.name == "DateConversion").get.getId
+    val templateId = flowClient.templates(FlowApiSpec.ClientToken).futureValue.find(t => t.name == "DateConversion").get.getId
     val fi = validateFlowInstantiation(flowClient, "DateConversion", templateId)
     validateFlowRetrieval(flowClient, fi.getId)
     validateFlowInstance(fi)
@@ -40,9 +35,9 @@ class FlowApiISpec extends RestBaseUnitSpec
   }
 
   "Flow Instance State Change" must "result in valid state" taggedAs IT in {
-    val templateId = flowClient.templates(FlowApiSpec.ClientToken).find(t => t.name == "DateConversion").get.getId
+    val templateId = flowClient.templates(FlowApiSpec.ClientToken).futureValue.find(t => t.name == "DateConversion").get.getId
     // Instantiate a flow instance from an existing flow template
-    val flowInstance = flowClient.instantiate(templateId, FlowApiSpec.UserId, FlowApiSpec.ClientToken)
+    val flowInstance = flowClient.instantiate(templateId, FlowApiSpec.UserId, FlowApiSpec.ClientToken).futureValue
     // Start the flow i.e. start all the processors of the flow
     val processors: List[ProcessorInstance] = validateStart(flowClient, flowInstance.id)
     // Wait a bit to allow processors to generate output

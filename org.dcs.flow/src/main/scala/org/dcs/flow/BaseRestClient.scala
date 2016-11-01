@@ -39,7 +39,7 @@ trait BaseRestClient extends ApiConfig {
       case NonFatal(t) =>
         throw new RESTException(ErrorConstants.DCS201.withErrorMessage(t.getMessage))
     }
-    if (res.getStatus >= 400 && res.getStatus < 600) throw new RESTException(error(res))
+    if (res.getStatus >= 400 && res.getStatus < 600) throw new RESTException(error(res.getStatus, res.readEntity(classOf[String])))
     res
   }
 
@@ -62,7 +62,7 @@ trait BaseRestClient extends ApiConfig {
       case NonFatal(t) =>
         throw new RESTException(ErrorConstants.DCS201.withErrorMessage(t.getMessage))
     }
-    if(res.getStatus >= 400 && res.getStatus < 600) throw new RESTException(error(res))
+    if(res.getStatus >= 400 && res.getStatus < 600) throw new RESTException(error(res.getStatus, res.readEntity(classOf[String])))
     res
   }
 
@@ -86,7 +86,7 @@ trait BaseRestClient extends ApiConfig {
       case NonFatal(t) =>
         throw new RESTException(ErrorConstants.DCS201.withErrorMessage(t.getMessage))
     }
-    if(res.getStatus >= 400 && res.getStatus < 600) throw new RESTException(error(res))
+    if(res.getStatus >= 400 && res.getStatus < 600) throw new RESTException(error(res.getStatus, res.readEntity(classOf[String])))
     res
   }
 
@@ -108,7 +108,7 @@ trait BaseRestClient extends ApiConfig {
       case NonFatal(t) =>
         throw new RESTException(ErrorConstants.DCS201.withErrorMessage(t.getMessage))
     }
-    if(res.getStatus >= 400 && res.getStatus < 600) throw new RESTException(error(res))
+    if(res.getStatus >= 400 && res.getStatus < 600) throw new RESTException(error(res.getStatus, res.readEntity(classOf[String])))
     res
   }
 

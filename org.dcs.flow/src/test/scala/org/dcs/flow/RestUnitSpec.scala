@@ -6,6 +6,8 @@ import org.scalatest._
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.junit.JUnitSuite
 import org.scalatest.FlatSpec
+import org.scalatest.concurrent.ScalaFutures
+import org.scalatest.time.{Millis, Seconds, Span}
 
 
 trait FlowTestUtil {
@@ -25,6 +27,12 @@ abstract class RestBaseUnitSpec extends FlatSpec
   with BeforeAndAfter
   with MockitoSugar
   with FlowTestUtil
+  with ScalaFutures {
+
+  implicit val defaultPatience =
+    PatienceConfig(timeout = Span(2, Seconds), interval = Span(100, Millis))
+
+}
 
 // FIXME: Currently the only way to use the mockito
 // inject mock mechanism to test the CDI
