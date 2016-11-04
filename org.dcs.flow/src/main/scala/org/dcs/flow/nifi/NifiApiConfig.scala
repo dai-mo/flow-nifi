@@ -11,6 +11,8 @@ import play.api.libs.json.Json
 
 object NifiApiConfig {
   val BaseUrl = GlobalConfigurator.config.toObject[GlobalConfiguration].nifiBaseUrl
+
+  val ClientIdKey = "clientId"
 }
 
 trait NifiApiConfig extends ApiConfig {

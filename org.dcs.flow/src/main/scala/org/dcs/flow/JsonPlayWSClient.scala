@@ -24,7 +24,7 @@ trait JsonPlayWSClient extends ApiConfig {
   val wsClient = AhcWSClient()
 
   def defaultHeaders(): List[(String, String)] = {
-    ("Accept", MimeTypes.JSON) :: Nil
+    ("Content-Type", MimeTypes.JSON) :: Nil
   }
 
   def get(path: String,
@@ -32,7 +32,7 @@ trait JsonPlayWSClient extends ApiConfig {
           headers: List[(String, String)] = List()): Future[WSResponse] = {
     wsClient.url(endpoint(path))
       .withQueryString(queryParams:_*)
-      .withHeaders(defaultHeaders() ++ headers:_*)
+      .withHeaders(headers:_*)
       .get
       .map { response =>
         if(response.status >= 400 && response.status < 600)
@@ -54,7 +54,7 @@ trait JsonPlayWSClient extends ApiConfig {
 
 
   def put[B](path: String,
-             body: B,
+             body: B = AnyRef,
              queryParams: List[(String, String)] = List(),
              headers: List[(String, String)] = List()): Future[WSResponse] = {
     wsClient.url(endpoint(path))
@@ -71,7 +71,7 @@ trait JsonPlayWSClient extends ApiConfig {
 
 
   def putAsJson[B](path: String,
-                   body: B,
+                   body: B = AnyRef,
                    queryParams: List[(String, String)] = List(),
                    headers: List[(String, String)] = List()): Future[String] = {
     put(path, body, queryParams, headers)
@@ -81,7 +81,7 @@ trait JsonPlayWSClient extends ApiConfig {
   }
 
   def post[B](path: String,
-              body: B,
+              body: B = AnyRef,
               queryParams: List[(String, String)] = List(),
               headers: List[(String, String)] = List()): Future[WSResponse] = {
     wsClient.url(endpoint(path))
@@ -98,7 +98,7 @@ trait JsonPlayWSClient extends ApiConfig {
 
 
   def postAsJson[B](path: String,
-                    body: B,
+                    body: B = AnyRef,
                     queryParams: List[(String, String)] = List(),
                     headers: List[(String, String)] = List()): Future[String] = {
     post(path, body, queryParams, headers)
@@ -112,7 +112,7 @@ trait JsonPlayWSClient extends ApiConfig {
              headers: List[(String, String)] = List()): Future[WSResponse] = {
     wsClient.url(endpoint(path))
       .withQueryString(queryParams:_*)
-      .withHeaders(defaultHeaders() ++ headers:_*)
+      .withHeaders(headers:_*)
       .delete
       .map { response =>
         if(response.status >= 400 && response.status < 600)

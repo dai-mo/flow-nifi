@@ -1,15 +1,14 @@
 package org.dcs.flow.nifi
 
-import javax.ws.rs.core.MediaType
-
 import org.apache.nifi.web.api.entity.{ProcessorEntity, ProcessorTypesEntity}
 import org.dcs.api.error.{ErrorConstants, RESTException}
 import org.dcs.api.service.{ProcessorApiService, ProcessorInstance, ProcessorType}
 import org.dcs.commons.JsonSerializerImplicits._
-import org.dcs.flow.nifi.NifiBaseRestClient._
-import org.slf4j.{Logger, LoggerFactory}
+import org.dcs.flow.JsonPlayWSClient
 
 import scala.collection.JavaConverters._
+import scala.concurrent.ExecutionContext.Implicits._
+import scala.concurrent.Future
 
 class NifiProcessorApi extends NifiProcessorClient with NifiApiConfig
 
@@ -26,82 +25,71 @@ object NifiProcessorClient  {
     "/processors/" + processorId
 }
 
-trait NifiProcessorClient extends ProcessorApiService with NifiBaseRestClient {
-
-  val logger: Logger = LoggerFactory.getLogger(classOf[NifiProcessorClient])
+trait NifiProcessorClient extends ProcessorApiService with JsonPlayWSClient {
 
   import NifiProcessorClient._
 
-  override def types(userId: String): List[ProcessorType] = {
-    val qp = Map(
-      ClientIdKey -> userId
-    )
-    val processorTypes = getAsJson(path = TypesPath,
-      queryParams = qp).toObject[ProcessorTypesEntity]
-    processorTypes.getProcessorTypes.asScala.map(dt => ProcessorType(dt)).toList
-  }
+  override def types(userId: String): Future[List[ProcessorType]] =
+    getAsJson(path = TypesPath)
+      .map { response =>
+        response.toObject[ProcessorTypesEntity]
+          .getProcessorTypes.asScala.map(dt => ProcessorType(dt)).toList
+      }
 
-  def typesSearchTags(str:String, clientToken: String): List[ProcessorType] = {
-    types(clientToken).filter( dtype => dtype.tags.exists(tag => tag.contains(str)))
-  }
+  def typesSearchTags(str:String, clientToken: String): Future[List[ProcessorType]] =
+    types(clientToken)
+      .map { response =>
+        response.filter( dtype => dtype.tags.exists(tag => tag.contains(str)))
+      }
 
-  override def create(name: String, ptype: String, userId: String): ProcessorInstance = {
-    val qp = Map(
-        ClientIdKey -> userId,
-        "name" -> name,
-        "type" -> ptype,
-        "x" -> "17",
-        "y" -> "100")
+  override def create(name: String, ptype: String, userId: String): Future[ProcessorInstance] =
+    postAsJson(path = processorsPath(userId))
+      .map { response =>
+        ProcessorInstance(response.toObject[ProcessorEntity])
+      }
 
-    val processorEntity = postAsJson(path = processorsPath(userId),
-      queryParams = qp,
-      contentType = MediaType.APPLICATION_FORM_URLENCODED
-    ).toObject[ProcessorEntity]
+  override def instance(processorId: String, userId: String): Future[ProcessorInstance] =
+    getAsJson(processorsPath(processorId))
+      .map { response =>
+        ProcessorInstance(response.toObject[ProcessorEntity])
+      }
 
-    ProcessorInstance(processorEntity)
-  }
+  override def start(processorId: String, userId: String): Future[ProcessorInstance] =
+    for {
+      instance <- instance(processorId, userId)
+      startedInstance <- start(processorId, instance.version, userId)
+    } yield startedInstance
 
-  override def instance(processorId: String, userId: String): ProcessorInstance = {
-    val processorEntity = getAsJson(processorsPath(processorId)).
-      toObject[ProcessorEntity]
-    ProcessorInstance(processorEntity)
-  }
-
-  override def start(processorId: String, userId: String): ProcessorInstance = {
-    start(processorId, instance(processorId, userId).version, userId)
-  }
-
-  def start(processorId: String, currentVersion: Long, userId: String): ProcessorInstance = {
+  def start(processorId: String, currentVersion: Long, userId: String): Future[ProcessorInstance] = {
     changeState(processorId, currentVersion, StateRunning, userId)
   }
 
-  override def stop(processorId: String, userId: String): ProcessorInstance = {
-    stop(processorId, instance(processorId, userId).version, userId)
-  }
+  override def stop(processorId: String, userId: String): Future[ProcessorInstance] =
+    for {
+      instance <- instance(processorId, userId)
+      stoppedInstance <- stop(processorId, instance.version, userId)
+    } yield stoppedInstance
 
-  def stop(processorId: String, currentVersion: Long, userId: String): ProcessorInstance = {
+
+  def stop(processorId: String, currentVersion: Long, userId: String): Future[ProcessorInstance] = {
     changeState(processorId, currentVersion, StateStopped, userId)
   }
 
 
-  override def remove(processorId: String, userId: String): Boolean = {
-    val qp = Map(
-      ClientIdKey -> userId
-    )
-    val processor = deleteAsJson(path = processorsPath(userId) + "/" + processorId,
-      queryParams = qp).toObject[ProcessorEntity]
+  override def remove(processorId: String, userId: String): Future[Boolean] =
+    deleteAsJson(path = processorsPath(userId) + "/" + processorId)
+      .map { response =>
+        response.toObject[ProcessorEntity] != null
+      }
 
-    processor != null
-  }
 
-  def changeState(processorId: String, currentVersion: Long, state: String, userId: String): ProcessorInstance = {
+  def changeState(processorId: String, currentVersion: Long, state: String, userId: String): Future[ProcessorInstance] = {
     if(!States.contains(state))
       throw new RESTException(ErrorConstants.DCS305.withErrorMessage("State [" + state + "] not recognised"))
 
-    val processorEntity = putAsJson(path = processorsPath(processorId) ,
-      obj = ProcessorStateUpdateRequest(processorId, state, currentVersion, userId).toJson
-    ).toObject[ProcessorEntity]
-
-    ProcessorInstance(processorEntity)
+    putAsJson(path = processorsPath(processorId), body = ProcessorStateUpdateRequest(processorId, state, currentVersion, userId))
+      .map { response =>
+        ProcessorInstance(response.toObject[ProcessorEntity])
+      }
   }
 }

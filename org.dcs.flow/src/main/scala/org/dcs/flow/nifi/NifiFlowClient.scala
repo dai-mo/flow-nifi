@@ -134,9 +134,14 @@ trait NifiFlowClient extends FlowApiService with JsonPlayWSClient {
   }
 
   override def remove(flowInstanceId: String, userId: String, authToken: String): Future[Boolean] = {
-    deleteAsJson(path = processGroupsPath(flowInstanceId))
-      .map { response =>
-        response != null
+    processGroupVersion(flowInstanceId)
+      .flatMap { version =>
+        val qp = ("version", version) :: (NifiApiConfig.ClientIdKey, userId) :: Nil
+        deleteAsJson(path = processGroupsPath(flowInstanceId),
+          queryParams = qp)
+          .map { response =>
+            response != null
+          }
       }
   }
 

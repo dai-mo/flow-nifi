@@ -3,14 +3,17 @@ package org.dcs.flow.nifi
 import java.time.{LocalDateTime, ZoneId}
 import java.util.Date
 
+import org.apache.nifi.web.api.dto.provenance.ProvenanceEventDTO
 import org.apache.nifi.web.api.entity.ProvenanceEntity
 import org.dcs.api.error.{ErrorConstants, RESTException}
 import org.dcs.api.service.{Provenance, ProvenanceApiService}
-
-import scala.beans.BeanProperty
-import scala.collection.JavaConverters._
 import org.dcs.commons.JsonSerializerImplicits._
+import org.dcs.flow.JsonPlayWSClient
 import org.slf4j.{Logger, LoggerFactory}
+
+import scala.collection.JavaConverters._
+import scala.concurrent.Future
+import scala.concurrent.ExecutionContext.Implicits._
 
 /**
   * Created by cmathew on 12/08/16.
@@ -36,66 +39,92 @@ object NifiProvenanceClient {
   val logger: Logger = LoggerFactory.getLogger(classOf[NifiProvenanceClient])
 }
 
-trait NifiProvenanceClient extends ProvenanceApiService with NifiBaseRestClient {
+trait NifiProvenanceClient extends ProvenanceApiService with JsonPlayWSClient {
   import NifiProvenanceClient._
 
-  override def provenance(processorId: String, maxResults: Int, startDate: Date = defaultStart, endDate: Date = defaultEnd): List[Provenance] = {
-    // FIXME: This entire method needs to be moved to Future / Promise pattern
+  override def provenance(processorId: String,
+                          maxResults: Int,
+                          startDate: Date = defaultStart,
+                          endDate: Date = defaultEnd): Future[List[Provenance]] = {
 
-    val provenanceEntity = provenanceQueryRepeat(
-      submitProvenanceQuery(processorId, maxResults, startDate, endDate),
-      ProvenanceQueryMaxTries
-    )
+    for {
+      prequest <- submitProvenanceQuery(processorId, maxResults, startDate, endDate)
+      pqresult <- provenanceQueryResult(prequest)
+      presult <- provenanceResult(pqresult)
+    } yield presult
 
-    try {
-      if(!provenanceEntity.getProvenance.isFinished)
-        throw new RESTException(ErrorConstants.DCS301)
-
-      provenanceEntity.getProvenance.getResults.getProvenanceEvents.asScala.map(
-        pe => Provenance(pe.getId,
-          provenanceEntity.getProvenance.getId,
-          pe.getClusterNodeId,
-          getAsJson(path = provenanceOutput(pe.getEventId.toString),
-            queryParams = params(pe.getClusterNodeId)))
-      ).toList
-
-    } finally {
-
-      val delete = deleteAsJson(path = ProvenancePath + "/" + provenanceEntity.getProvenance.getId)
-      logger.warn("Executing DELETE on " + ProvenancePath + "/" + provenanceEntity.getProvenance.getId)
-    }
 
   }
 
   // ------ Helper Methods ------
 
-  def submitProvenanceQuery(processorId: String, maxResults: Int, startDate: Date, endDate: Date): ProvenanceEntity =
+
+  def submitProvenanceQuery(processorId: String,
+                            maxResults: Int,
+                            startDate: Date,
+                            endDate: Date): Future[ProvenanceEntity] =
     postAsJson(path = ProvenancePath,
-      obj = ProcessorProvenanceSearchRequest(processorId,
+      body = ProcessorProvenanceSearchRequest(processorId,
         maxResults,
         startDate,
-        endDate).toJson).
-      toObject[ProvenanceEntity]
+        endDate))
+      .map { response =>
+        response.toObject[ProvenanceEntity]
+      }
 
-  def provenanceQueryRepeat(provenanceEntity: ProvenanceEntity, triesLeft: Int): ProvenanceEntity = triesLeft match {
-    case 0 => provenanceEntity
-    case _ => provenanceEntity.getProvenance.isFinished match {
-      case java.lang.Boolean.TRUE => provenanceEntity
-      case java.lang.Boolean.FALSE => provenanceQueryRepeat(
-        provenanceQuery(provenanceEntity.getProvenance.getId, provenanceEntity.getProvenance.getRequest.getClusterNodeId),
-        triesLeft - 1
-      )
-    }
+  def provenanceQueryResult(provenanceEntity: ProvenanceEntity): Future[ProvenanceEntity] =
+    provenanceQueryRepeat(provenanceEntity, ProvenanceQueryMaxTries)
+      .map { response =>
+        try {
+          if (!response.getProvenance.isFinished)
+            throw new RESTException(ErrorConstants.DCS301)
+          else
+            response
+        } finally {
+          deleteAsJson(path = ProvenancePath + "/" + provenanceEntity.getProvenance.getId)
+          logger.warn("Executing DELETE on " + ProvenancePath + "/" + provenanceEntity.getProvenance.getId)
+        }
+      }
+
+  def provenanceQueryRepeat(provenanceEntity: ProvenanceEntity, triesLeft: Int): Future[ProvenanceEntity] = triesLeft match {
+    case 0 => Future.successful(provenanceEntity)
+    case _ => provenanceQuery(provenanceEntity.getProvenance.getId, provenanceEntity.getProvenance.getRequest.getClusterNodeId)
+      .flatMap { response =>
+        response.getProvenance.isFinished match {
+          case java.lang.Boolean.TRUE => Future.successful(response)
+          case java.lang.Boolean.FALSE => provenanceQuery(response.getProvenance.getId, response.getProvenance.getRequest.getClusterNodeId)
+            .flatMap { nextProvenanceEntity =>
+              provenanceQueryRepeat(nextProvenanceEntity, triesLeft - 1)
+            }
+        }
+      }
   }
 
-  def provenanceQuery(provenanceEntityId: String, clusterNodeId: String): ProvenanceEntity =
-    getAsJson(path = ProvenancePath + "/" + provenanceEntityId,
-      queryParams = params(clusterNodeId)).toObject[ProvenanceEntity]
+  def provenanceQuery(provenanceEntityId: String, clusterNodeId: String): Future[ProvenanceEntity] =
+    getAsJson(path = ProvenancePath + "/" + provenanceEntityId, queryParams = params(clusterNodeId))
+      .map { response =>
+        response.toObject[ProvenanceEntity]
+      }
 
-  def params(clusterNodeId: String): Map[String, String] = {
+  def params(clusterNodeId: String): List[(String, String)] = {
     if(clusterNodeId == null)
-      Map()
+      List()
     else
-      Map("clusterNodeId" -> clusterNodeId)
+      List(("clusterNodeId", clusterNodeId))
   }
+
+  def provenanceResult(presult: ProvenanceEntity): Future[List[Provenance]] =
+    Future.sequence(presult.getProvenance.getResults.getProvenanceEvents.asScala
+      .map { pevent =>
+        provenanceContent(pevent, presult)
+      }.toList)
+
+  def provenanceContent(provenanceEvent: ProvenanceEventDTO, provenanceResult: ProvenanceEntity): Future[Provenance] =
+    getAsJson(path = provenanceOutput(provenanceEvent.getEventId.toString),
+      queryParams = params(provenanceEvent.getClusterNodeId))
+      .map { response =>
+        Provenance(provenanceEvent.getId, provenanceResult.getProvenance.getId, provenanceEvent.getClusterNodeId, response)
+      }
+
+
 }
