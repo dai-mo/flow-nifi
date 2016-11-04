@@ -2,7 +2,7 @@ package org.dcs.flow.nifi
 
 import org.apache.nifi.web.api.dto._
 import org.apache.nifi.web.api.entity._
-import org.dcs.api.service._
+import org.dcs.api.service.{Connection, ConnectionPort, FlowInstance, FlowTemplate, ProcessorInstance, ProcessorType}
 import org.dcs.flow.nifi.internal.{ProcessGroup, ProcessGroupHelper}
 
 import scala.collection.JavaConversions._
@@ -40,7 +40,7 @@ object ProcessGroup {
 object FlowInstance {
   def apply(processGroupEntity: ProcessGroupEntity): FlowInstance = {
 
-    val f = new FlowInstance
+    val f = new org.dcs.api.service.FlowInstance
     val contents = processGroupEntity.getComponent.getContents
 
     val nameId = ProcessGroupHelper.extractFromName(processGroupEntity.getComponent.getName)

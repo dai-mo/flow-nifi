@@ -1,7 +1,6 @@
 package org.dcs.flow.client
 
 import java.nio.file.{Path, Paths}
-import javax.ws.rs.core.{Form, MediaType}
 
 import org.dcs.api.error.RESTException
 import org.dcs.api.service.{FlowInstance, FlowTemplate, ProcessorInstance}
@@ -11,6 +10,8 @@ import org.mockito.Matchers
 import org.mockito.Mockito._
 import org.scalatest.FlatSpec
 import org.slf4j.{Logger, LoggerFactory}
+
+import scala.concurrent.Future
 
 
 /**
@@ -35,11 +36,11 @@ class FlowApiSpec extends RestBaseUnitSpec with FlowApiBehaviors {
     val flowTemplatesPath: Path = Paths.get(this.getClass.getResource("templates.json").toURI)
     val flowClient = spy(new NifiFlowApi())
 
-    doReturn(jsonFromFile(flowTemplatesPath.toFile)).
-      when(flowClient).
-      getAsJson(
+    doReturn(Future.successful(jsonFromFile(flowTemplatesPath.toFile)))
+      .when(flowClient)
+      .getAsJson(
         Matchers.eq(NifiFlowClient.TemplatesPath),
-        Matchers.any[Map[String, String]],
+        Matchers.any[List[(String, String)]],
         Matchers.any[List[(String, String)]]
       )
 
@@ -54,32 +55,30 @@ class FlowApiSpec extends RestBaseUnitSpec with FlowApiBehaviors {
 
     val flowClient = spy(new NifiFlowApi())
 
-    doReturn(jsonFromFile(flowTemplatesPath.toFile)).
-      when(flowClient).
-      getAsJson(
+    doReturn(Future.successful(jsonFromFile(flowTemplatesPath.toFile)))
+      .when(flowClient)
+      .getAsJson(
         Matchers.eq(NifiFlowClient.TemplatesPath),
-        Matchers.any[Map[String, String]],
+        Matchers.any[List[(String, String)]],
         Matchers.any[List[(String, String)]]
       )
 
-    doReturn(jsonFromFile(createProcessGroupPath.toFile)).
-      when(flowClient).
-      postAsJson(
+    doReturn(Future.successful(jsonFromFile(createProcessGroupPath.toFile)))
+      .when(flowClient)
+      .postAsJson(
         Matchers.eq(NifiFlowClient.processGroupsPath(UserId) + "/process-groups"),
-        Matchers.any[Form],
-        Matchers.any[Map[String, String]],
+        Matchers.any[AnyRef],
         Matchers.any[List[(String, String)]],
-        Matchers.eq(MediaType.APPLICATION_JSON)
+        Matchers.any[List[(String, String)]]
       )
 
-    doReturn(jsonFromFile(templateInstancePath.toFile)).
-      when(flowClient).
-      postAsJson(
+    doReturn(Future.successful(jsonFromFile(templateInstancePath.toFile))).
+      when(flowClient)
+      .postAsJson(
         Matchers.eq(NifiFlowClient.templateInstancePath(FlowInstanceId)),
-        Matchers.any[Form],
-        Matchers.any[Map[String, String]],
+        Matchers.any[AnyRef],
         Matchers.any[List[(String, String)]],
-        Matchers.eq(MediaType.APPLICATION_JSON)
+        Matchers.any[List[(String, String)]]
       )
 
     validateFlowInstantiation(flowClient, "DateConversion", TemplateId)
@@ -92,11 +91,11 @@ class FlowApiSpec extends RestBaseUnitSpec with FlowApiBehaviors {
     val flowClient = spy(new NifiFlowApi())
 
 
-    doReturn(jsonFromFile(flowInstancePath.toFile)).
-      when(flowClient).
-      getAsJson(
+    doReturn(Future.successful(jsonFromFile(flowInstancePath.toFile)))
+      .when(flowClient)
+      .getAsJson(
         Matchers.eq(NifiFlowClient.flowProcessGroupsPath(FlowInstanceId)),
-        Matchers.any[Map[String, String]],
+        Matchers.any[List[(String, String)]],
         Matchers.any[List[(String, String)]]
       )
 
@@ -104,35 +103,35 @@ class FlowApiSpec extends RestBaseUnitSpec with FlowApiBehaviors {
     validateFlowRetrieval(flowClient, FlowInstanceId)
   }
 
-    "Flow Deletion" must "be valid" in {
+  "Flow Deletion" must "be valid" in {
 
-      val processGroupPath: Path = Paths.get(this.getClass.getResource("process-group.json").toURI)
-      val deleteFlowPath: Path = Paths.get(this.getClass.getResource("delete-flow.json").toURI)
+    val processGroupPath: Path = Paths.get(this.getClass.getResource("process-group.json").toURI)
+    val deleteFlowPath: Path = Paths.get(this.getClass.getResource("delete-flow.json").toURI)
 
-      val flowClient = spy(new NifiFlowApi())
+    val flowClient = spy(new NifiFlowApi())
 
-      doReturn(jsonFromFile(processGroupPath.toFile)).
-        when(flowClient).
-        getAsJson(
-          Matchers.eq(NifiFlowClient.processGroupsPath(FlowInstanceId)),
-          Matchers.any[Map[String, String]],
-          Matchers.any[List[(String, String)]]
-        )
+    doReturn(Future.successful(jsonFromFile(processGroupPath.toFile)))
+      .when(flowClient)
+      .getAsJson(
+        Matchers.eq(NifiFlowClient.processGroupsPath(FlowInstanceId)),
+        Matchers.any[List[(String, String)]],
+        Matchers.any[List[(String, String)]]
+      )
 
 
-      doReturn(jsonFromFile(deleteFlowPath.toFile)).
-        when(flowClient).
-        deleteAsJson(
-          Matchers.eq(NifiFlowClient.processGroupsPath(FlowInstanceId)),
-          Matchers.any[Map[String, String]],
-          Matchers.any[List[(String, String)]]
-        )
+    doReturn(Future.successful(jsonFromFile(deleteFlowPath.toFile)))
+      .when(flowClient)
+      .deleteAsJson(
+        Matchers.eq(NifiFlowClient.processGroupsPath(FlowInstanceId)),
+        Matchers.any[List[(String, String)]],
+        Matchers.any[List[(String, String)]]
+      )
 
-      validateFlowDeletion(flowClient, FlowInstanceId)
-    }
+    validateFlowDeletion(flowClient, FlowInstanceId)
+  }
 }
 
-trait FlowApiBehaviors {
+trait FlowApiBehaviors extends RestBaseUnitSpec {
   this: FlatSpec =>
 
   import FlowApiSpec._
@@ -144,13 +143,13 @@ trait FlowApiBehaviors {
 
 
   def validateTemplatesRetrieval(flowClient: NifiFlowClient): List[FlowTemplate] = {
-    val templates = flowClient.templates(ClientToken)
-    assert(templates.size == 2)
+    val templates = flowClient.templates(ClientToken).futureValue
+    assert (templates.size == 2)
     templates
   }
 
   def validateFlowInstantiation(flowClient: NifiFlowClient, name: String, templateId: String): FlowInstance = {
-    val flow = flowClient.instantiate(templateId, UserId , ClientToken)
+    val flow = flowClient.instantiate(templateId, UserId , ClientToken).futureValue
     assert(flow.processors.size == 5)
     assert(flow.connections.size == 4)
     assert(flow.name == name)
@@ -158,7 +157,6 @@ trait FlowApiBehaviors {
       assert(c.source.`type` == "PROCESSOR")
       assert(c.destination.`type` == "PROCESSOR")
     })
-
     assert(!flow.getId.isEmpty)
     flow
   }
@@ -171,7 +169,7 @@ trait FlowApiBehaviors {
   }
 
   def validateFlowRetrieval(flowClient: NifiFlowClient, flowInstanceId: String) {
-    val flowInstance = flowClient.instance(flowInstanceId, UserId, ClientToken)
+    val flowInstance = flowClient.instance(flowInstanceId, UserId, ClientToken).futureValue
     assert(flowInstance.processors.size == 5)
     assert(flowInstance.connections.size == 4)
   }
@@ -182,19 +180,19 @@ trait FlowApiBehaviors {
   }
 
   def validateFlowDeletion(flowClient: NifiFlowClient, flowInstanceId: String) {
-    assert(flowClient.remove(flowInstanceId, UserId, ClientToken))
+    assert(flowClient.remove(flowInstanceId, UserId, ClientToken).futureValue)
   }
 
   def validateStart(flowClient: NifiFlowClient, flowInstanceId: String): List[ProcessorInstance] = {
-    assert(flowClient.start(flowInstanceId, UserId, ClientToken))
-    val processors = flowClient.instance(flowInstanceId, UserId, ClientToken).processors
+    assert(flowClient.start(flowInstanceId, UserId, ClientToken).futureValue)
+    val processors = flowClient.instance(flowInstanceId, UserId, ClientToken).futureValue.processors
     processors.foreach(p => p.status == NifiProcessorClient.StateRunning)
     processors
   }
 
   def validateStop(flowClient: NifiFlowClient, flowInstanceId: String): List[ProcessorInstance] = {
-    assert(flowClient.stop(flowInstanceId, UserId, ClientToken))
-    val processors = flowClient.instance(flowInstanceId, UserId, ClientToken).processors
+    assert(flowClient.stop(flowInstanceId, UserId, ClientToken).futureValue)
+    val processors = flowClient.instance(flowInstanceId, UserId, ClientToken).futureValue.processors
     processors.foreach(p => p.status == NifiProcessorClient.StateStopped)
     processors
   }

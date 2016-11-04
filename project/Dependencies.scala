@@ -24,7 +24,7 @@ object Dependencies {
   val dcsNifiServApi  = "org.dcs"                          % "org.dcs.nifi.services-api"
   val dcsNifiServices = "org.dcs"                  			   % "org.dcs.nifi.services"
 
-  val dcsCommons          = "org.dcs"                          % "org.dcs.commons"                    % dcsCommonsVersion
+  val dcsCommons      = "org.dcs"                          % "org.dcs.commons"                    % dcsCommonsVersion
   val dcsApi          = "org.dcs"                          % "org.dcs.api"                        % dcsApiVersion
   val dcsRemote    		= "org.dcs"                          % "org.dcs.remote"                     % dcsRemoteVersion
 
@@ -38,6 +38,7 @@ object Dependencies {
   val logbackCore     = "ch.qos.logback"                   % "logback-core"                       % logbackVersion
   val logbackClassic  =	"ch.qos.logback"                   % "logback-classic"                    % logbackVersion
   val dcsCore         = "org.dcs"                          % "org.dcs.core"                       % dcsCoreVersion
+  val playWs          = "com.typesafe.play"                %% "play-ws"                           % playVersion
 
   val mockitoCore     = "org.mockito"                      % "mockito-core"                       % mockitoVersion
   val mockitoAll      = "org.mockito"                      % "mockito-all"                        % mockitoVersion
@@ -97,6 +98,7 @@ object Dependencies {
     jerseyClient,
     jerseyMoxy,
     nifiClientDTO	,
+    playWs,
     logbackCore     % "provided",
     logbackClassic  % "provided",
 

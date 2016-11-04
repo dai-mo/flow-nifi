@@ -9,6 +9,8 @@ import org.mockito.Matchers
 import org.mockito.Mockito._
 import org.scalatest.FlatSpec
 
+import scala.concurrent.Future
+
 /**
   * Created by cmathew on 04/08/16.
   */
@@ -23,11 +25,11 @@ class NifiFlowGraphSpec extends RestBaseUnitSpec with NifiFlowGraphBehaviors {
     val flowClient = spy(new NifiFlowApi())
 
 
-    doReturn(jsonFromFile(flowInstancePath.toFile)).
+    doReturn(Future.successful(jsonFromFile(flowInstancePath.toFile))).
       when(flowClient).
       getAsJson(
         Matchers.eq(NifiFlowClient.flowProcessGroupsPath(FlowInstanceId)),
-        Matchers.any[Map[String, String]],
+        Matchers.any[List[(String, String)]],
         Matchers.any[List[(String, String)]]
       )
 
@@ -35,13 +37,13 @@ class NifiFlowGraphSpec extends RestBaseUnitSpec with NifiFlowGraphBehaviors {
   }
 }
 
-trait NifiFlowGraphBehaviors {
+trait NifiFlowGraphBehaviors extends RestBaseUnitSpec {
   this: FlatSpec =>
 
   import FlowApiSpec._
 
   def validateFlowGraphConstruction(flowClient: NifiFlowClient, flowInstanceId: String) {
-    val flowInstance = flowClient.instance(flowInstanceId, UserId, ClientToken)
+    val flowInstance = flowClient.instance(flowInstanceId, UserId, ClientToken).futureValue
     val graphNodes = NifiFlowGraph.buildFlowGraph(flowInstance)
     assert(graphNodes.count(n => n.parents.isEmpty) == 1)
     assert(graphNodes.count(n => n.children.isEmpty) == 1)
