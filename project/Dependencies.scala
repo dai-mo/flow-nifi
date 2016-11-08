@@ -15,7 +15,6 @@ object Dependencies {
   lazy val logbackVersion    = "1.1.3"
   lazy val rxScalaVersion    = "0.26.1"
   lazy val playVersion			 = "2.5.3"
-  lazy val jerseyVersion  	 = "2.22.1"
   lazy val mockitoVersion    = "1.10.19"
   lazy val scalaTestVersion  = "2.2.6"
   lazy val juiVersion        = "0.11"
@@ -44,8 +43,6 @@ object Dependencies {
   val mockitoAll      = "org.mockito"                      % "mockito-all"                        % mockitoVersion
   val scalaTest       = "org.scalatest"                    %% "scalatest"                         % scalaTestVersion
   val junitInterface  = "com.novocode"                     % "junit-interface"                    % juiVersion
-  val jerseyClient    = "org.glassfish.jersey.core"        % "jersey-client"                      % jerseyVersion
-  val jerseyMoxy      = "org.glassfish.jersey.media"       % "jersey-media-moxy"                  % jerseyVersion
   val paxCdiApi       = "org.ops4j.pax.cdi"                % "pax-cdi-api"                        % paxCdiVersion
 
   // Collect Processors Dependencies
@@ -95,10 +92,8 @@ object Dependencies {
   val flowDependencies = Seq(
     dcsCommons,
     dcsApi,
-    jerseyClient,
-    jerseyMoxy,
-    nifiClientDTO	,
-    playWs,
+    nifiClientDTO,
+
     logbackCore     % "provided",
     logbackClassic  % "provided",
 

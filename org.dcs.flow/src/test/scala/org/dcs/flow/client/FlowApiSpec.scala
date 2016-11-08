@@ -2,8 +2,8 @@ package org.dcs.flow.client
 
 import java.nio.file.{Path, Paths}
 
-import org.dcs.api.error.RESTException
 import org.dcs.api.service.{FlowInstance, FlowTemplate, ProcessorInstance}
+import org.dcs.commons.error.RESTException
 import org.dcs.flow.RestBaseUnitSpec
 import org.dcs.flow.nifi.{NifiFlowApi, NifiFlowClient, NifiProcessorClient}
 import org.mockito.Matchers

@@ -1,7 +1,6 @@
 package org.dcs.flow.client
 
 import java.nio.file.{Path, Paths}
-import javax.ws.rs.core.{Form, MediaType}
 
 import org.dcs.api.service.Provenance
 import org.dcs.flow.RestBaseUnitSpec

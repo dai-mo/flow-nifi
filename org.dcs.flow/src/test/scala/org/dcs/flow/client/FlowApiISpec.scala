@@ -1,11 +1,10 @@
 package org.dcs.flow.client
 
 
-import org.dcs.api.error.RESTException
 import org.dcs.api.service.ProcessorInstance
+import org.dcs.commons.error.RESTException
 import org.dcs.flow.nifi.{NifiFlowApi, NifiProcessorApi, NifiProvenanceApi}
 import org.dcs.flow.{IT, RestBaseUnitSpec}
-import org.glassfish.jersey.filter.LoggingFilter
 
 
 /**

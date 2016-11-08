@@ -1,10 +1,10 @@
 package org.dcs.flow.nifi
 
 import org.apache.nifi.web.api.entity.{ProcessorEntity, ProcessorTypesEntity}
-import org.dcs.api.error.{ErrorConstants, RESTException}
 import org.dcs.api.service.{ProcessorApiService, ProcessorInstance, ProcessorType}
-import org.dcs.commons.JsonSerializerImplicits._
-import org.dcs.flow.JsonPlayWSClient
+import org.dcs.commons.ws.JsonPlayWSClient
+import org.dcs.commons.serde.JsonSerializerImplicits._
+import org.dcs.commons.error.{ErrorConstants, RESTException}
 
 import scala.collection.JavaConverters._
 import scala.concurrent.ExecutionContext.Implicits._

@@ -17,7 +17,7 @@
 package org.dcs.nifi.services;
 
 import org.apache.nifi.reporting.InitializationException;
-import org.dcs.api.error.RESTException;
+import org.dcs.commons.error.RESTException;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
