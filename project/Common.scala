@@ -16,7 +16,6 @@ object Common {
 			scalaVersion := "2.11.7",
 			crossPaths := false,
 			checksums in update := Nil,
-		  scalacOptions += "-Ylog-classpath",
 			javacOptions ++= Seq("-source", "1.8", "-target", "1.8", "-Xlint:unchecked"),
 			javacOptions in doc := Seq("-source", "1.8")
 			)
