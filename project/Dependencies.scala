@@ -39,7 +39,7 @@ object Dependencies {
   val logbackClassic  =	"ch.qos.logback"                   % "logback-classic"                    % logbackVersion
   val dcsCore         = "org.dcs"                          % "org.dcs.core"                       % dcsCoreVersion
   val akkaActor 			= "com.typesafe.akka" 							 %% "akka-actor" 												% akkaVersion
-
+  val akkaStream     = "com.typesafe.akka"                %% "akka-stream"                       % akkaVersion
   val mockitoCore     = "org.mockito"                      % "mockito-core"                       % mockitoVersion
   val mockitoAll      = "org.mockito"                      % "mockito-all"                        % mockitoVersion
   val scalaTest       = "org.scalatest"                    %% "scalatest"                         % scalaTestVersion
@@ -95,7 +95,8 @@ object Dependencies {
     dcsApi,
     nifiClientDTO,
     akkaActor,
-    
+    akkaStream,
+
     logbackCore     % "provided",
     logbackClassic  % "provided",
 
