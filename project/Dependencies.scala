@@ -95,6 +95,9 @@ object Dependencies {
     dcsCommons,
     dcsApi,
     nifiClientDTO,
+    // FIXME: The play-ws dependency should not be required as it
+    //        should be resolved via the dcs_commons dependency
+    //        This is a work-around for AL-49
     playWs,
 
     logbackCore     % "provided",
