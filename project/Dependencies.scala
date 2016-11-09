@@ -14,6 +14,8 @@ object Dependencies {
   lazy val jsonPathVersion	 = "1.2.0"
   lazy val logbackVersion    = "1.1.3"
   lazy val rxScalaVersion    = "0.26.1"
+  lazy val akkaVersion      = "2.4.4"
+
   lazy val mockitoVersion    = "1.10.19"
   lazy val scalaTestVersion  = "2.2.6"
   lazy val juiVersion        = "0.11"
@@ -36,6 +38,7 @@ object Dependencies {
   val logbackCore     = "ch.qos.logback"                   % "logback-core"                       % logbackVersion
   val logbackClassic  =	"ch.qos.logback"                   % "logback-classic"                    % logbackVersion
   val dcsCore         = "org.dcs"                          % "org.dcs.core"                       % dcsCoreVersion
+  val akkaActor 			= "com.typesafe.akka" 							 %% "akka-actor" 												% akkaVersion
 
   val mockitoCore     = "org.mockito"                      % "mockito-core"                       % mockitoVersion
   val mockitoAll      = "org.mockito"                      % "mockito-all"                        % mockitoVersion
@@ -91,7 +94,8 @@ object Dependencies {
     dcsCommons,
     dcsApi,
     nifiClientDTO,
-
+    akkaActor,
+    
     logbackCore     % "provided",
     logbackClassic  % "provided",
 
