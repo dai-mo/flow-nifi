@@ -5,15 +5,15 @@ import java.util.Date
 
 import org.apache.nifi.web.api.dto.provenance.ProvenanceEventDTO
 import org.apache.nifi.web.api.entity.ProvenanceEntity
-import org.dcs.api.error.{ErrorConstants, RESTException}
 import org.dcs.api.service.{Provenance, ProvenanceApiService}
-import org.dcs.commons.JsonSerializerImplicits._
-import org.dcs.flow.JsonPlayWSClient
+import org.dcs.commons.ws.JsonPlayWSClient
+import org.dcs.commons.serde.JsonSerializerImplicits._
+import org.dcs.commons.error.{ErrorConstants, RESTException}
 import org.slf4j.{Logger, LoggerFactory}
 
 import scala.collection.JavaConverters._
-import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits._
+import scala.concurrent.Future
 
 /**
   * Created by cmathew on 12/08/16.

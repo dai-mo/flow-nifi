@@ -9,13 +9,14 @@ object Dependencies {
   lazy val dcsApiVersion     = "0.3.0-SNAPSHOT"
   lazy val dcsRemoteVersion  = "0.3.0-SNAPSHOT"
   lazy val dcsCoreVersion    = "0.2.0-SNAPSHOT"
+  lazy val playVersion			 = "2.5.3"
   lazy val nifiVersion			 = "1.0.0-BETA"
   lazy val slf4jVersion			 = "1.7.12"
   lazy val jsonPathVersion	 = "1.2.0"
   lazy val logbackVersion    = "1.1.3"
   lazy val rxScalaVersion    = "0.26.1"
-  lazy val playVersion			 = "2.5.3"
-  lazy val jerseyVersion  	 = "2.22.1"
+  lazy val akkaVersion       = "2.4.4"
+
   lazy val mockitoVersion    = "1.10.19"
   lazy val scalaTestVersion  = "2.2.6"
   lazy val juiVersion        = "0.11"
@@ -38,14 +39,12 @@ object Dependencies {
   val logbackCore     = "ch.qos.logback"                   % "logback-core"                       % logbackVersion
   val logbackClassic  =	"ch.qos.logback"                   % "logback-classic"                    % logbackVersion
   val dcsCore         = "org.dcs"                          % "org.dcs.core"                       % dcsCoreVersion
-  val playWs          = "com.typesafe.play"                %% "play-ws"                           % playVersion
 
+  val playWs          = "com.typesafe.play"                %% "play-ws"                           % playVersion
   val mockitoCore     = "org.mockito"                      % "mockito-core"                       % mockitoVersion
   val mockitoAll      = "org.mockito"                      % "mockito-all"                        % mockitoVersion
   val scalaTest       = "org.scalatest"                    %% "scalatest"                         % scalaTestVersion
   val junitInterface  = "com.novocode"                     % "junit-interface"                    % juiVersion
-  val jerseyClient    = "org.glassfish.jersey.core"        % "jersey-client"                      % jerseyVersion
-  val jerseyMoxy      = "org.glassfish.jersey.media"       % "jersey-media-moxy"                  % jerseyVersion
   val paxCdiApi       = "org.ops4j.pax.cdi"                % "pax-cdi-api"                        % paxCdiVersion
 
   // Collect Processors Dependencies
@@ -95,10 +94,12 @@ object Dependencies {
   val flowDependencies = Seq(
     dcsCommons,
     dcsApi,
-    jerseyClient,
-    jerseyMoxy,
-    nifiClientDTO	,
+    nifiClientDTO,
+    // FIXME: The play-ws dependency should not be required as it
+    //        should be resolved via the dcs_commons dependency
+    //        This is a work-around for AL-49
     playWs,
+
     logbackCore     % "provided",
     logbackClassic  % "provided",
 

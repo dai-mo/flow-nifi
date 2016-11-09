@@ -1,13 +1,10 @@
 package org.dcs.flow.nifi
 
-import javax.ws.rs.core.Response
 
-import org.apache.nifi.web.api.entity.{FlowEntity, ProcessGroupFlowEntity, TemplatesEntity}
-import org.dcs.api.error.{ErrorConstants, ErrorResponse}
-import org.dcs.commons.YamlSerializerImplicits._
+import org.dcs.commons.ws.ApiConfig
+import org.dcs.commons.serde.YamlSerializerImplicits._
 import org.dcs.commons.config.{GlobalConfiguration, GlobalConfigurator}
-import org.dcs.flow.ApiConfig
-import play.api.libs.json.Json
+import org.dcs.commons.error.{ErrorConstants, ErrorResponse}
 
 object NifiApiConfig {
   val BaseUrl = GlobalConfigurator.config.toObject[GlobalConfiguration].nifiBaseUrl

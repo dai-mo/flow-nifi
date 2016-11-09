@@ -1,14 +1,13 @@
 package org.dcs.flow.client
 
 import java.nio.file.{Path, Paths}
-import javax.ws.rs.core.{Form, MediaType}
 
-import org.dcs.api.error.RESTException
+import org.dcs.commons.error.RESTException
 import org.dcs.flow.RestBaseUnitSpec
-import org.dcs.flow.nifi.{NifiApiConfig, NifiProcessorApi, NifiProcessorClient}
+import org.dcs.flow.nifi.{NifiProcessorApi, NifiProcessorClient}
 import org.mockito.Mockito._
 import org.mockito.{Matchers, Mockito}
-import org.scalatest.{FlatSpec, Ignore}
+import org.scalatest.FlatSpec
 import org.slf4j.{Logger, LoggerFactory}
 
 import scala.concurrent.Future
