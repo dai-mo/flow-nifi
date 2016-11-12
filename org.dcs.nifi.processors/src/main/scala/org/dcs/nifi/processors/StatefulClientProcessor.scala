@@ -1,7 +1,7 @@
 package org.dcs.nifi.processors
 
 import java.io.InputStream
-import java.util.{Map => JavaMap}
+import java.util.{List => JavaList, Map => JavaMap}
 
 import org.apache.commons.io.IOUtils
 import org.apache.nifi.annotation.lifecycle._
@@ -35,10 +35,19 @@ abstract class StatefulClientProcessor extends ClientProcessor {
 
   }
 
+
   override def output(in: Option[InputStream],
-                      valueProperties: JavaMap[String, String]): Array[Byte] = in match {
-    case None => statefulRemoteProcessorService.instanceTrigger(processorStateId, "".getBytes, valueProperties)
-    case Some(input) => statefulRemoteProcessorService.instanceTrigger(processorStateId, IOUtils.toByteArray(input), valueProperties)
+                      valueProperties: JavaMap[String, String]): JavaList[Array[Byte]] = in match {
+    case None => response(statefulRemoteProcessorService.instanceTrigger(
+      processorStateId,
+      "".getBytes,
+      valueProperties)
+    )
+    case Some(input) => response(statefulRemoteProcessorService.instanceTrigger(
+      processorStateId,
+      IOUtils.toByteArray(input),
+      valueProperties)
+    )
   }
 
   @OnConfigurationRestored

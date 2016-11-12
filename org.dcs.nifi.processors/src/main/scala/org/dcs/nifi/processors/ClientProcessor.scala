@@ -50,37 +50,36 @@ trait ClientProcessor extends AbstractProcessor with WriteOutput with IO {
     configuration = remoteProcessorService.configuration
   }
 
+
+  def response(out: JavaList[Either[Array[Byte], Array[Byte]]]): JavaList[Array[Byte]] = {
+    out.asScala.map { result =>
+      if (result.isLeft)
+        result.left.get
+      else
+        result.right.get
+    }
+  }
+
   override def output(in: Option[InputStream],
-                      valueProperties: JavaMap[String, String]): Array[Byte] = in match {
-    case None => remoteProcessorService.trigger("".getBytes, valueProperties)
-    case Some(input) => remoteProcessorService.trigger(IOUtils.toByteArray(input), valueProperties)
+                      valueProperties: JavaMap[String, String]): JavaList[Array[Byte]] = in match {
+    case None => response(remoteProcessorService.trigger(
+      "".getBytes,
+      valueProperties)
+    )
+    case Some(input) => response(remoteProcessorService.trigger(
+      IOUtils.toByteArray(input),
+      valueProperties)
+    )
   }
 
   override def onTrigger(context: ProcessContext, session: ProcessSession) {
     val valueProperties = context.getProperties.asScala.map(x => (x._1.getName, x._2))
     var flowFile: FlowFile = session.get()
-    // FIXME: Currently we only have one client processor type using StreamCallback for write
-    //        It may be required to have two more client processor types which allow
-    //        InputStreamCallback and OutputStream Callback.
-    //        Once the add processor functionality is implemented in the flow api
-    //        the type information can be set in the remote processor
-    flowFile = writeCallback(flowFile, valueProperties, session)
-
-    val attributes = scala.collection.mutable.Map[String, String]()
-
-    attributes(CoreAttributes.MIME_TYPE.key()) = configuration.outputMimeType
-
-    flowFile = session.putAllAttributes(flowFile, attributes);
-
-    val successRelationship: Option[Relationship] = relationships.find(r => r.getName == RelationshipType.SucessRelationship)
-    if (successRelationship.isDefined) {
-      session.transfer(flowFile, successRelationship.get);
-    }
-
+    flowFile = writeCallback(flowFile, valueProperties, session, configuration, relationships)
   }
 
   override def getRelationships: JavaSet[Relationship] = {
-    relationships;
+    relationships
   }
 
   override def getSupportedPropertyDescriptors: JavaList[PropertyDescriptor] = {
