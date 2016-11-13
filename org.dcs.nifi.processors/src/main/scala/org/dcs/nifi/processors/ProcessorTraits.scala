@@ -1,8 +1,10 @@
 package org.dcs.nifi.processors
 
 import java.io.{InputStream, OutputStream}
+import java.util.concurrent.atomic.AtomicReference
 import java.util.{List => JavaList, Map => JavaMap, Set => JavaSet}
 
+import org.apache.commons.io.IOUtils
 import org.apache.nifi.annotation.behavior.{InputRequirement, SideEffectFree}
 import org.apache.nifi.annotation.behavior.InputRequirement.Requirement
 import org.apache.nifi.flowfile.FlowFile
@@ -17,80 +19,56 @@ import scala.collection.JavaConverters._
 /**
   * Created by cmathew on 07/09/16.
   */
-trait WriteOutput {
-  def output(in: Option[InputStream], valueProperties: JavaMap[String, String]): JavaList[Array[Byte]]
 
-  def flush(flowFile: FlowFile,
-            session: ProcessSession,
-            configuration: Configuration,
-            relationships: JavaSet[Relationship]) = {
-    val attributes = mutable.Map[String, String]()
 
-    attributes(CoreAttributes.MIME_TYPE.key()) = configuration.outputMimeType
-
-    val updatedFlowFile = session.putAllAttributes(flowFile, attributes.asJava)
-
-    val successRelationship: Option[Relationship] =
-      relationships.asScala.find(r => r.getName == RelationshipType.SucessRelationship)
-    if (successRelationship.isDefined) {
-      session.transfer(updatedFlowFile, successRelationship.get)
-    }
-  }
-}
-
-trait IO {
+trait Write {
   def writeCallback(flowFile: FlowFile,
-                    valueProperties: JavaMap[String, String],
                     session: ProcessSession,
-                    configuration: Configuration,
-                    relationships: JavaSet[Relationship]): FlowFile
-}
-
-trait InputOutput extends IO with WriteOutput{
-  def writeCallback(flowFile: FlowFile,
-                    valueProperties: JavaMap[String, String],
-                    session: ProcessSession,
-                    configuration: Configuration,
-                    relationships: JavaSet[Relationship]): FlowFile = {
-   session.write(flowFile, new StreamCallback() {
-      override def process(in: InputStream, out: OutputStream) {
-        output(Some(in), valueProperties).asScala.foreach { result =>
-          out.write(result)
-          flush(flowFile, session, configuration, relationships)
-        }
-      }
-    })
-  }
-}
-
-trait Output extends IO with WriteOutput{
-  def writeCallback(flowFile: FlowFile,
-                    valueProperties: JavaMap[String, String],
-                    session: ProcessSession,
-                    configuration: Configuration,
-                    relationships: JavaSet[Relationship]): FlowFile = {
-    session.write(flowFile, new OutputStreamCallback() {
+                    toWrite: Array[Byte]): FlowFile = {
+   session.write(flowFile, new OutputStreamCallback() {
       override def process(out: OutputStream) {
-        output(None, valueProperties).asScala.foreach { result =>
-          out.write(result)
-          flush(flowFile, session, configuration, relationships)
-        }
+        out.write(toWrite)
+      }
+    })
+  }
+}
+
+trait Read {
+  def readCallback(flowFile: FlowFile,
+                    session: ProcessSession,
+                    toRead: AtomicReference[Array[Byte]]) = {
+    session.read(flowFile, new InputStreamCallback() {
+      override def process(in: InputStream) {
+        toRead.set(IOUtils.toByteArray(in))
       }
     })
   }
 }
 
 
+
 @SideEffectFree
 @InputRequirement(Requirement.INPUT_REQUIRED)
-trait InputOutputClientProcessor extends ClientProcessor with InputOutput
+trait InputOutputClientProcessor extends ClientProcessor {
+  override def canRead: Boolean = true
+  override def canWrite: Boolean = true
+}
 
 @InputRequirement(Requirement.INPUT_REQUIRED)
-trait InputOutputStatefulClientProcessor extends StatefulClientProcessor with InputOutput
+trait InputOutputStatefulClientProcessor extends StatefulClientProcessor {
+  override def canRead: Boolean = true
+  override def canWrite: Boolean = true
+}
 
 @SideEffectFree
 @InputRequirement(Requirement.INPUT_FORBIDDEN)
-trait OutputClientProcessor extends ClientProcessor with Output
+trait OutputClientProcessor extends ClientProcessor {
+  override def canRead: Boolean = false
+  override def canWrite: Boolean = true
+}
 
 @InputRequirement(Requirement.INPUT_FORBIDDEN)
-trait OutputStatefulClientProcessor extends StatefulClientProcessor with Output
+trait OutputStatefulClientProcessor extends StatefulClientProcessor {
+  override def canRead: Boolean = false
+  override def canWrite: Boolean = true
+}
