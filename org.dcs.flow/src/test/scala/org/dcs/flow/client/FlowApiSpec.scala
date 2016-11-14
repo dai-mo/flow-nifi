@@ -1,6 +1,7 @@
 package org.dcs.flow.client
 
 import java.nio.file.{Path, Paths}
+import javax.ws.rs.core.MediaType
 
 import org.dcs.api.service.{FlowInstance, FlowTemplate, ProcessorInstance}
 import org.dcs.commons.error.RESTException
@@ -69,7 +70,8 @@ class FlowApiSpec extends RestBaseUnitSpec with FlowApiBehaviors {
         Matchers.eq(NifiFlowClient.processGroupsPath(UserId) + "/process-groups"),
         Matchers.any[AnyRef],
         Matchers.any[List[(String, String)]],
-        Matchers.any[List[(String, String)]]
+        Matchers.any[List[(String, String)]],
+        Matchers.eq(MediaType.APPLICATION_JSON)
       )
 
     doReturn(Future.successful(jsonFromFile(templateInstancePath.toFile))).
@@ -78,7 +80,8 @@ class FlowApiSpec extends RestBaseUnitSpec with FlowApiBehaviors {
         Matchers.eq(NifiFlowClient.templateInstancePath(FlowInstanceId)),
         Matchers.any[AnyRef],
         Matchers.any[List[(String, String)]],
-        Matchers.any[List[(String, String)]]
+        Matchers.any[List[(String, String)]],
+        Matchers.eq(MediaType.APPLICATION_JSON)
       )
 
     validateFlowInstantiation(flowClient, "DateConversion", TemplateId)

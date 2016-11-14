@@ -1,6 +1,7 @@
 package org.dcs.flow.client
 
 import java.nio.file.{Path, Paths}
+import javax.ws.rs.core.MediaType
 
 import org.dcs.commons.error.RESTException
 import org.dcs.flow.RestBaseUnitSpec
@@ -35,8 +36,8 @@ class ProcessorApiSpec extends ProcessorApiBehaviors {
     val processorClient = Mockito.spy(new NifiProcessorApi())
 
     doReturn(Future.successful(jsonFromFile(typesPath.toFile)))
-        .when(processorClient)
-        .getAsJson(
+      .when(processorClient)
+      .getAsJson(
         Matchers.eq(NifiProcessorClient.TypesPath),
         Matchers.any[List[(String, String)]],
         Matchers.any[List[(String, String)]]
@@ -54,12 +55,13 @@ class ProcessorApiSpec extends ProcessorApiBehaviors {
     validateInvalidProcessorStateChange(processorApi, UserId, 0.0.toLong)
 
     doReturn(Future.successful(jsonFromFile(processorStartPath.toFile)))
-        .when(processorApi)
-        .putAsJson(
+      .when(processorApi)
+      .putAsJson(
         Matchers.eq(NifiProcessorClient.processorsPath(ProcessorInstanceId)),
         Matchers.any[AnyRef],
         Matchers.any[List[(String, String)]],
-        Matchers.any[List[(String, String)]]
+        Matchers.any[List[(String, String)]],
+        Matchers.eq(MediaType.APPLICATION_JSON)
       )
 
     validateProcessorStart(processorApi, ProcessorInstanceId, 0.0.toLong)
@@ -67,12 +69,13 @@ class ProcessorApiSpec extends ProcessorApiBehaviors {
     processorApi = Mockito.spy(new NifiProcessorApi())
 
     doReturn(Future.successful(jsonFromFile(processorStopPath.toFile)))
-        .when(processorApi)
-        .putAsJson(
+      .when(processorApi)
+      .putAsJson(
         Matchers.eq(NifiProcessorClient.processorsPath(ProcessorInstanceId)),
         Matchers.any[AnyRef],
         Matchers.any[List[(String, String)]],
-        Matchers.any[List[(String, String)]]
+        Matchers.any[List[(String, String)]],
+        Matchers.eq(MediaType.APPLICATION_JSON)
       )
 
     validateProcessorStop(processorApi, ProcessorInstanceId, 0.0.toLong)
@@ -81,35 +84,35 @@ class ProcessorApiSpec extends ProcessorApiBehaviors {
 
   // FIXME: Re-check implementations of create and remove
 
-//  "A Processor" must "should be created and removed correctly" in {
-//
-//    val processorCreationPath: Path = Paths.get(this.getClass().getResource("create-gf-processor.json").toURI())
-//    val processorApi = Mockito.spy(new NifiProcessorApi())
-//
-//    doReturn(jsonFromFile(processorCreationPath.toFile)).
-//      when(processorApi).
-//      postAsJson(
-//        Matchers.eq(NifiProcessorClient.processorsPath(UserId)),
-//        Matchers.any[Form],
-//        Matchers.eq(Map(
-//          "name" -> GFFPName,
-//          "type" -> GFFPType,
-//          "x" -> "17",
-//          "y" -> "100")),
-//        Matchers.any[List[(String, String)]],
-//        Matchers.eq(MediaType.APPLICATION_FORM_URLENCODED)
-//      )
-//
-//    val processorDeletionPath: Path = Paths.get(this.getClass().getResource("delete-gf-processor.json").toURI())
-//    doReturn(jsonFromFile(processorDeletionPath.toFile)).
-//      when(processorApi).
-//      deleteAsJson(
-//        Matchers.eq(NifiProcessorClient.processorsPath(UserId) + "/" + GFPId),
-//        Matchers.any[Map[String, String]],
-//        Matchers.any[List[(String, String)]]
-//      )
-//    validateProcessorLifecycle(processorApi)
-//  }
+  //  "A Processor" must "should be created and removed correctly" in {
+  //
+  //    val processorCreationPath: Path = Paths.get(this.getClass().getResource("create-gf-processor.json").toURI())
+  //    val processorApi = Mockito.spy(new NifiProcessorApi())
+  //
+  //    doReturn(jsonFromFile(processorCreationPath.toFile)).
+  //      when(processorApi).
+  //      postAsJson(
+  //        Matchers.eq(NifiProcessorClient.processorsPath(UserId)),
+  //        Matchers.any[Form],
+  //        Matchers.eq(Map(
+  //          "name" -> GFFPName,
+  //          "type" -> GFFPType,
+  //          "x" -> "17",
+  //          "y" -> "100")),
+  //        Matchers.any[List[(String, String)]],
+  //        Matchers.eq(MediaType.APPLICATION_FORM_URLENCODED)
+  //      )
+  //
+  //    val processorDeletionPath: Path = Paths.get(this.getClass().getResource("delete-gf-processor.json").toURI())
+  //    doReturn(jsonFromFile(processorDeletionPath.toFile)).
+  //      when(processorApi).
+  //      deleteAsJson(
+  //        Matchers.eq(NifiProcessorClient.processorsPath(UserId) + "/" + GFPId),
+  //        Matchers.any[Map[String, String]],
+  //        Matchers.any[List[(String, String)]]
+  //      )
+  //    validateProcessorLifecycle(processorApi)
+  //  }
 }
 
 trait ProcessorApiBehaviors extends RestBaseUnitSpec {

@@ -33,16 +33,16 @@ abstract class StatefulClientProcessor extends ClientProcessor {
 
 
   override def output(in: Option[Array[Byte]],
-             valueProperties: JavaMap[String, String]): JavaList[Array[Byte]] = in match {
-    case None => response(statefulRemoteProcessorService.instanceTrigger(
+             valueProperties: JavaMap[String, String]): Array[Array[Byte]] = in match {
+    case None => statefulRemoteProcessorService.instanceTrigger(
       processorStateId,
       "".getBytes,
-      valueProperties)
+      valueProperties
     )
-    case Some(input) => response(statefulRemoteProcessorService.instanceTrigger(
+    case Some(input) => statefulRemoteProcessorService.instanceTrigger(
       processorStateId,
       input,
-      valueProperties)
+      valueProperties
     )
   }
 

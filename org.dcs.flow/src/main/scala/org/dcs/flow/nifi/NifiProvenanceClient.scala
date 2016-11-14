@@ -6,9 +6,9 @@ import java.util.Date
 import org.apache.nifi.web.api.dto.provenance.ProvenanceEventDTO
 import org.apache.nifi.web.api.entity.ProvenanceEntity
 import org.dcs.api.service.{Provenance, ProvenanceApiService}
-import org.dcs.commons.ws.JsonPlayWSClient
-import org.dcs.commons.serde.JsonSerializerImplicits._
 import org.dcs.commons.error.{ErrorConstants, RESTException}
+import org.dcs.commons.serde.JsonSerializerImplicits._
+import org.dcs.commons.ws.JerseyRestClient
 import org.slf4j.{Logger, LoggerFactory}
 
 import scala.collection.JavaConverters._
@@ -39,7 +39,7 @@ object NifiProvenanceClient {
   val logger: Logger = LoggerFactory.getLogger(classOf[NifiProvenanceClient])
 }
 
-trait NifiProvenanceClient extends ProvenanceApiService with JsonPlayWSClient {
+trait NifiProvenanceClient extends ProvenanceApiService with JerseyRestClient {
   import NifiProvenanceClient._
 
   override def provenance(processorId: String,

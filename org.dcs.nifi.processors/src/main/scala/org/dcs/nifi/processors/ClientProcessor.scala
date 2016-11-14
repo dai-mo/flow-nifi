@@ -60,15 +60,9 @@ trait ClientProcessor extends AbstractProcessor with Write with Read {
   }
 
   def output(in: Option[Array[Byte]],
-             valueProperties: JavaMap[String, String]): JavaList[Array[Byte]] = in match {
-    case None => response(remoteProcessorService.trigger(
-      "".getBytes,
-      valueProperties)
-    )
-    case Some(input) => response(remoteProcessorService.trigger(
-      input,
-      valueProperties)
-    )
+             valueProperties: JavaMap[String, String]): Array[Array[Byte]] = in match {
+    case None => remoteProcessorService.trigger("".getBytes, valueProperties)
+    case Some(input) => remoteProcessorService.trigger(input, valueProperties)
   }
 
   override def onTrigger(context: ProcessContext, session: ProcessSession) {
@@ -83,10 +77,10 @@ trait ClientProcessor extends AbstractProcessor with Write with Read {
     val out = output(Option(in.get()), valueProperties)
 
     if(canWrite) {
-      if(out.size() == 1) {
-        route(writeCallback(update(flowFile, session), session, out.get(0)), session)
+      if(out.length == 1) {
+        route(writeCallback(update(flowFile, session), session, out(0)), session)
       } else {
-        out.asScala.foreach { response =>
+        out.foreach { response =>
           val newFlowFile = session.create(flowFile)
           route(writeCallback(newFlowFile, session, response), session)
         }
