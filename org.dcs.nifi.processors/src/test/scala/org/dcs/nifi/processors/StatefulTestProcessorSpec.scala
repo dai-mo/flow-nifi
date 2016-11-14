@@ -20,11 +20,11 @@ object StatefulTestProcessorSpec {
 
   val remoteProcessor: org.dcs.core.processor.StatefulTestProcessor = new org.dcs.core.processor.StatefulTestProcessor()
 
-  val response: Either[Array[Byte], Array[Byte]] =
-    Right(("{\"id\":" + UUID.randomUUID().toString +  "\"response\":\"Hello Bob\"}").getBytes())
+  val response: Array[Array[Byte]] =
+    Array(("{\"id\":" + UUID.randomUUID().toString +  "\"response\":\"Hello Bob\"}").getBytes())
   MockZookeeperServiceTracker.addProcessor(
     clientProcessor.processorClassName(),
-    new MockStatefulRemoteProcessorService(remoteProcessor, List(response).asJava)
+    new MockStatefulRemoteProcessorService(remoteProcessor, response)
   )
 
 

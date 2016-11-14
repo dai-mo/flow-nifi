@@ -13,13 +13,13 @@ import scala.collection.JavaConverters._
 /**
   * Created by cmathew on 31/08/16.
   */
-class MockRemoteProcessorService(processor: RemoteProcessor, response: JavaList[Either[Array[Byte], Array[Byte]]])
+class MockRemoteProcessorService(processor: RemoteProcessor, response: Array[Array[Byte]])
   extends RemoteProcessorService {
 
   override def execute(input: Array[Byte], properties: util.Map[String, String]): List[Either[ErrorResponse, AnyRef]] =
     processor.execute(input, properties)
 
-  override def trigger(input: Array[Byte], properties: util.Map[String, String]): JavaList[Either[Array[Byte], Array[Byte]]] = {
+  override def trigger(input: Array[Byte], properties: util.Map[String, String]): Array[Array[Byte]] = {
     response
   }
 
@@ -38,13 +38,13 @@ class MockRemoteProcessorService(processor: RemoteProcessor, response: JavaList[
 
 
 class MockStatefulRemoteProcessorService(processor: StatefulRemoteProcessor,
-                                         response: JavaList[Either[Array[Byte], Array[Byte]]])
+                                         response: Array[Array[Byte]])
   extends MockRemoteProcessorService(processor, response)
     with StatefulRemoteProcessorService
     with LocalStateManager {
   override def init(): String = put(processor)
 
   override def instanceTrigger(processorStateId: String, input: Array[Byte],
-                               properties: util.Map[String, String]): JavaList[Either[Array[Byte], Array[Byte]]] =
+                               properties: util.Map[String, String]): Array[Array[Byte]] =
     response
 }
