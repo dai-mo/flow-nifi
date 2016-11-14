@@ -1,6 +1,5 @@
 package org.dcs.nifi.processors
 
-import org.apache.nifi.annotation.behavior.SideEffectFree
 import org.apache.nifi.annotation.documentation.{CapabilityDescription, Tags}
 
 

@@ -4,9 +4,9 @@ import java.util.UUID
 
 import org.apache.nifi.web.api.entity._
 import org.dcs.api.service.{FlowApiService, FlowInstance, FlowTemplate}
-import org.dcs.commons.ws.JsonPlayWSClient
-import org.dcs.commons.serde.JsonSerializerImplicits._
 import org.dcs.commons.error.{ErrorConstants, RESTException}
+import org.dcs.commons.serde.JsonSerializerImplicits._
+import org.dcs.commons.ws.JerseyRestClient
 import org.dcs.flow.nifi.internal.{ProcessGroup, ProcessGroupHelper}
 
 import scala.collection.JavaConverters._
@@ -36,7 +36,7 @@ object NifiFlowClient {
 
 }
 
-trait NifiFlowClient extends FlowApiService with JsonPlayWSClient {
+trait NifiFlowClient extends FlowApiService with JerseyRestClient {
   import NifiFlowClient._
 
   override def templates(userId: String):Future[List[FlowTemplate]] =

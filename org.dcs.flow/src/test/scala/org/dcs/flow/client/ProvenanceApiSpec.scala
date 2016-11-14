@@ -1,6 +1,7 @@
 package org.dcs.flow.client
 
 import java.nio.file.{Path, Paths}
+import javax.ws.rs.core.MediaType
 
 import org.dcs.api.service.Provenance
 import org.dcs.flow.RestBaseUnitSpec
@@ -37,7 +38,8 @@ class ProvenanceApiSpec extends ProvenanceApiBehaviours {
         Matchers.eq(NifiProvenanceClient.ProvenancePath),
         Matchers.any[AnyRef],
         Matchers.any[List[(String, String)]],
-        Matchers.any[List[(String, String)]]
+        Matchers.any[List[(String, String)]],
+        Matchers.eq(MediaType.APPLICATION_JSON)
       )
 
     doReturn(Future.successful(jsonFromFile(provenanceResponse.toFile)))

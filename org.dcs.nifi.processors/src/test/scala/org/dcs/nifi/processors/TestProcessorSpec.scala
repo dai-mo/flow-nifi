@@ -18,9 +18,11 @@ object TestProcessorSpec {
 
   val remoteProcessor: org.dcs.core.processor.TestProcessor = new org.dcs.core.processor.TestProcessor()
 
+  val response: Array[Array[Byte]] = Array("{\"response\":\"Hello Bob\"}".getBytes)
+
   MockZookeeperServiceTracker.addProcessor(
     clientProcessor.processorClassName(),
-    new MockRemoteProcessorService(remoteProcessor, "{\"response\":\"Hello Bob\"}".getBytes)
+    new MockRemoteProcessorService(remoteProcessor, response)
   )
 
 

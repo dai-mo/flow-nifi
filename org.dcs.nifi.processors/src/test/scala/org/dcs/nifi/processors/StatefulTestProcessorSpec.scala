@@ -2,6 +2,7 @@ package org.dcs.nifi.processors
 
 import java.util.UUID
 
+
 import org.apache.nifi.util.{MockFlowFile, TestRunner, TestRunners}
 import org.dcs.api.processor.RelationshipType
 import org.dcs.remote.RemoteService
@@ -19,10 +20,11 @@ object StatefulTestProcessorSpec {
 
   val remoteProcessor: org.dcs.core.processor.StatefulTestProcessor = new org.dcs.core.processor.StatefulTestProcessor()
 
-  val response: String = "{\"id\":" + UUID.randomUUID().toString+  "\"response\":\"Hello Bob\"}"
+  val response: Array[Array[Byte]] =
+    Array(("{\"id\":" + UUID.randomUUID().toString +  "\"response\":\"Hello Bob\"}").getBytes())
   MockZookeeperServiceTracker.addProcessor(
     clientProcessor.processorClassName(),
-    new MockStatefulRemoteProcessorService(remoteProcessor, response.getBytes)
+    new MockStatefulRemoteProcessorService(remoteProcessor, response)
   )
 
 
@@ -32,7 +34,7 @@ class StatefulTestProcessorSpec extends ProcessorsBaseUnitSpec with StatefulTest
 
   import org.dcs.nifi.processors.StatefulTestProcessorSpec._
 
-  "Test Processor Response" must " be valid " in {
+  "Stateful Test Processor Response" must " be valid " in {
     validResponse(clientProcessor)
   }
 }

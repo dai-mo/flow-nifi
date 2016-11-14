@@ -2,9 +2,9 @@ package org.dcs.flow.nifi
 
 import org.apache.nifi.web.api.entity.{ProcessorEntity, ProcessorTypesEntity}
 import org.dcs.api.service.{ProcessorApiService, ProcessorInstance, ProcessorType}
-import org.dcs.commons.ws.JsonPlayWSClient
-import org.dcs.commons.serde.JsonSerializerImplicits._
 import org.dcs.commons.error.{ErrorConstants, RESTException}
+import org.dcs.commons.serde.JsonSerializerImplicits._
+import org.dcs.commons.ws.JerseyRestClient
 
 import scala.collection.JavaConverters._
 import scala.concurrent.ExecutionContext.Implicits._
@@ -25,7 +25,7 @@ object NifiProcessorClient  {
     "/processors/" + processorId
 }
 
-trait NifiProcessorClient extends ProcessorApiService with JsonPlayWSClient {
+trait NifiProcessorClient extends ProcessorApiService with JerseyRestClient {
 
   import NifiProcessorClient._
 
