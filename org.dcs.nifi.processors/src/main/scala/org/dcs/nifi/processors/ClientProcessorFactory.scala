@@ -21,7 +21,9 @@ object PropertyDescriptor {
     propDescBuilder.description(remoteProperty.description)
     if(!remoteProperty.defaultValue.isEmpty)
       propDescBuilder.defaultValue(remoteProperty.defaultValue)
-    propDescBuilder.allowableValues(remoteProperty.possibleValues.asScala.map(pv => pv.value).asJava)
+    val possibleValues = remoteProperty.possibleValues.asScala.map(pv => pv.value).asJava
+    if(possibleValues != null && !possibleValues.isEmpty)
+      propDescBuilder.allowableValues(possibleValues)
     propDescBuilder.required(remoteProperty.required)
     propDescBuilder.sensitive(remoteProperty.sensitive)
     propDescBuilder.dynamic(remoteProperty.dynamic)
@@ -45,11 +47,18 @@ object Relationship {
 
 object RemoteProperty {
   def apply(propertyDescriptor: PropertyDescriptor): RemoteProperty  = {
+
     org.dcs.api.processor.RemoteProperty(propertyDescriptor.getDisplayName,
       propertyDescriptor.getName,
       propertyDescriptor.getDescription,
       propertyDescriptor.getDefaultValue,
-      propertyDescriptor.getAllowableValues.asScala.to[Set].map(av => PossibleValue(av)).asJava,
+      {
+        val allowableValues = propertyDescriptor.getAllowableValues
+        if(allowableValues == null || allowableValues.isEmpty)
+          null
+        else
+        allowableValues.asScala.to[Set].map(av => PossibleValue(av)).asJava
+      },
       propertyDescriptor.isRequired,
       propertyDescriptor.isSensitive,
       propertyDescriptor.isDynamic,
