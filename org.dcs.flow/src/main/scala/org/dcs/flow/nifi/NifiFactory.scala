@@ -132,6 +132,7 @@ object ProcessorInstance {
     val processorInstance = new ProcessorInstance
 
     processorInstance.setId(processorDTO.getId)
+    processorInstance.setType(processorDTO.getType)
     processorInstance.setStatus({
       val state = processorDTO.getState
       if(state == null) "STANDBY" else state

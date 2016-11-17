@@ -6,10 +6,13 @@ import java.util.Date
 import org.apache.nifi.web.api.dto.provenance.ProvenanceEventDTO
 import org.apache.nifi.web.api.entity.ProvenanceEntity
 import org.dcs.api.service.{Provenance, ProvenanceApiService}
+import org.dcs.commons.ClientRemoteProcessorStore
 import org.dcs.commons.error.{ErrorConstants, RESTException}
 import org.dcs.commons.serde.JsonSerializerImplicits._
 import org.dcs.commons.ws.JerseyRestClient
 import org.slf4j.{Logger, LoggerFactory}
+import org.dcs.commons.serde.AvroImplicits._
+import org.dcs.commons.serde.AvroSchemaStore
 
 import scala.collection.JavaConverters._
 import scala.concurrent.ExecutionContext.Implicits._
@@ -43,6 +46,7 @@ trait NifiProvenanceClient extends ProvenanceApiService with JerseyRestClient {
   import NifiProvenanceClient._
 
   override def provenance(processorId: String,
+                          processorType: String,
                           maxResults: Int,
                           startDate: Date = defaultStart,
                           endDate: Date = defaultEnd): Future[List[Provenance]] = {
@@ -50,7 +54,7 @@ trait NifiProvenanceClient extends ProvenanceApiService with JerseyRestClient {
     for {
       prequest <- submitProvenanceQuery(processorId, maxResults, startDate, endDate)
       pqresult <- provenanceQueryResult(prequest)
-      presult <- provenanceResult(pqresult)
+      presult <- provenanceResult(pqresult, processorType)
     } yield presult
 
 
@@ -113,18 +117,22 @@ trait NifiProvenanceClient extends ProvenanceApiService with JerseyRestClient {
       List(("clusterNodeId", clusterNodeId))
   }
 
-  def provenanceResult(presult: ProvenanceEntity): Future[List[Provenance]] =
-    Future.sequence(presult.getProvenance.getResults.getProvenanceEvents.asScala
+  def provenanceResult(pResult: ProvenanceEntity, pType: String): Future[List[Provenance]] =
+    Future.sequence(pResult.getProvenance.getResults.getProvenanceEvents.asScala
       .map { pevent =>
-        provenanceContent(pevent, presult)
+        provenanceContent(pevent, pResult, pType)
       }.toList)
 
-  def provenanceContent(provenanceEvent: ProvenanceEventDTO, provenanceResult: ProvenanceEntity): Future[Provenance] =
-    getAsJson(path = provenanceOutput(provenanceEvent.getEventId.toString),
+  def provenanceContent(provenanceEvent: ProvenanceEventDTO, provenanceResult: ProvenanceEntity, processorType: String): Future[Provenance] = {
+    val schema = ClientRemoteProcessorStore.get(processorType).flatMap(AvroSchemaStore.get)
+    get(path = provenanceOutput(provenanceEvent.getEventId.toString),
       queryParams = params(provenanceEvent.getClusterNodeId))
       .map { response =>
-        Provenance(provenanceEvent.getId, provenanceResult.getProvenance.getId, provenanceEvent.getClusterNodeId, response)
+        Provenance(provenanceEvent.getId,
+          provenanceResult.getProvenance.getId,
+          provenanceEvent.getClusterNodeId,
+          response.readEntity(classOf[Array[Byte]]).deSerToJsonString(schema, schema))
       }
-
+  }
 
 }

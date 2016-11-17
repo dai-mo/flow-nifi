@@ -29,6 +29,8 @@ trait ClientProcessor extends AbstractProcessor with Write with Read {
   var metaData:MetaData = _
   var configuration: Configuration = _
 
+  var endOfStream = false
+
   def processorClassName(): String
 
   def remoteService: RemoteService = ZkRemoteService
@@ -50,15 +52,6 @@ trait ClientProcessor extends AbstractProcessor with Write with Read {
   }
 
 
-  def response(out: JavaList[Either[Array[Byte], Array[Byte]]]): JavaList[Array[Byte]] = {
-    out.asScala.map { result =>
-      if (result.isLeft)
-        result.left.get
-      else
-        result.right.get
-    }
-  }
-
   def output(in: Option[Array[Byte]],
              valueProperties: JavaMap[String, String]): Array[Array[Byte]] = in match {
     case None => remoteProcessorService.trigger("".getBytes, valueProperties)
@@ -66,23 +59,32 @@ trait ClientProcessor extends AbstractProcessor with Write with Read {
   }
 
   override def onTrigger(context: ProcessContext, session: ProcessSession) {
-    val in: AtomicReference[Array[Byte]] = new AtomicReference()
+    if (endOfStream) {
+      context.`yield`()
+    } else {
+      val in: AtomicReference[Array[Byte]] = new AtomicReference()
 
-    val valueProperties = context.getProperties.asScala.map(x => (x._1.getName, x._2))
-    val flowFile: FlowFile = session.get()
+      val valueProperties = context.getProperties.asScala.map(x => (x._1.getName, x._2))
+      val flowFile: FlowFile = session.get()
 
-    if(canRead)
-      readCallback(flowFile, session, in)
+      if (canRead)
+        readCallback(flowFile, session, in)
 
-    val out = output(Option(in.get()), valueProperties)
+      val out = output(Option(in.get()), valueProperties)
 
-    if(canWrite) {
-      if(out.length == 1) {
-        route(writeCallback(update(flowFile, session), session, out(0)), session)
+      if (out == null || out.isEmpty) {
+        context.`yield`()
+        endOfStream = true
       } else {
-        out.foreach { response =>
-          val newFlowFile = session.create(flowFile)
-          route(writeCallback(newFlowFile, session, response), session)
+        if (canWrite) {
+          if (out.length == 1) {
+            route(writeCallback(update(flowFile, session), session, out(0)), session)
+          } else {
+            out.foreach { response =>
+              val newFlowFile = if (flowFile == null) session.create() else session.create(flowFile)
+              route(writeCallback(newFlowFile, session, response), session)
+            }
+          }
         }
       }
     }
@@ -98,12 +100,12 @@ trait ClientProcessor extends AbstractProcessor with Write with Read {
 
   def route(flowFile: FlowFile,
             session: ProcessSession) = {
-      val successRelationship: Option[Relationship] =
-        relationships.asScala.find(r => r.getName == RelationshipType.SucessRelationship)
-      if (successRelationship.isDefined) {
-        session.transfer(flowFile, successRelationship.get)
-      }
+    val successRelationship: Option[Relationship] =
+      relationships.asScala.find(r => r.getName == RelationshipType.SucessRelationship)
+    if (successRelationship.isDefined) {
+      session.transfer(flowFile, successRelationship.get)
     }
+  }
 
   def update(flowFile: FlowFile,
              session: ProcessSession): FlowFile = {
