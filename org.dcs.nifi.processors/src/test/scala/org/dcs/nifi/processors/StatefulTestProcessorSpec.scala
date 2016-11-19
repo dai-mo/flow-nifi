@@ -2,12 +2,14 @@ package org.dcs.nifi.processors
 
 import java.util.UUID
 
-
+import org.apache.avro.generic.GenericData
 import org.apache.nifi.util.{MockFlowFile, TestRunner, TestRunners}
-import org.dcs.api.processor.RelationshipType
+import org.dcs.api.processor.{RelationshipType, RemoteProcessor}
+import org.dcs.commons.serde.AvroSchemaStore
 import org.dcs.remote.RemoteService
 import org.mockito.Mockito._
 import org.scalatest.FlatSpec
+import org.dcs.commons.serde.AvroImplicits._
 
 import scala.collection.JavaConverters._
 
@@ -51,8 +53,16 @@ trait StatefulTestProcessorBehaviors {
 
     // Add properties
     runner.setProperty("user", user)
+    // Add file attributes
+    val attributes = new java.util.HashMap[String, String]()
+    val schemaId = "org.dcs.core.processor.TestRequestProcessor"
+    attributes.put(RemoteProcessor.SchemaIdKey, schemaId)
 
-    runner.enqueue("Hello ".getBytes)
+    val schema = AvroSchemaStore.get("org.dcs.core.processor.TestRequestProcessor")
+    val record = new GenericData.Record(schema.get)
+    record.put("request", "Hello ")
+    runner.enqueue(record.serToBytes(schema), attributes)
+
     // Run the enqueued content, it also takes an int = number of contents queued
     runner.run(1)
 
@@ -63,7 +73,7 @@ trait StatefulTestProcessorBehaviors {
     val result1: MockFlowFile = results1.get(0)
     val resultValue1: String = new String(runner.getContentAsByteArray(result1))
 
-    runner.enqueue("Hello ".getBytes)
+    runner.enqueue(record.serToBytes(schema), attributes)
     // Run the enqueued content, it also takes an int = number of contents queued
     runner.run(1)
 

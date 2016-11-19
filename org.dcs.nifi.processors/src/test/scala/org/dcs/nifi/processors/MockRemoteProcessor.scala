@@ -1,8 +1,9 @@
 package org.dcs.nifi.processors
 
 import java.util
-import java.util.{List => JavaList, UUID}
+import java.util.{UUID, List => JavaList}
 
+import org.apache.avro.generic.GenericRecord
 import org.dcs.api.processor._
 import org.dcs.api.service.{RemoteProcessorService, StatefulRemoteProcessorService}
 import org.dcs.commons.error.ErrorResponse
@@ -16,11 +17,11 @@ import scala.collection.JavaConverters._
 class MockRemoteProcessorService(processor: RemoteProcessor, response: Array[Array[Byte]])
   extends RemoteProcessorService {
 
-  override def execute(input: Array[Byte], properties: util.Map[String, String]): List[Either[ErrorResponse, AnyRef]] =
-    processor.execute(input, properties)
+  override def execute(record: Option[GenericRecord], properties: util.Map[String, String]): List[Either[ErrorResponse, AnyRef]] =
+    processor.execute(record, properties)
 
   override def trigger(input: Array[Byte], properties: util.Map[String, String]): Array[Array[Byte]] = {
-    response
+    processor.trigger(input, properties)
   }
 
   override def relationships(): util.Set[RemoteRelationship] = processor.relationships()
@@ -46,5 +47,5 @@ class MockStatefulRemoteProcessorService(processor: StatefulRemoteProcessor,
 
   override def instanceTrigger(processorStateId: String, input: Array[Byte],
                                properties: util.Map[String, String]): Array[Array[Byte]] =
-    response
+    get(processorStateId).get.trigger(input, properties)
 }

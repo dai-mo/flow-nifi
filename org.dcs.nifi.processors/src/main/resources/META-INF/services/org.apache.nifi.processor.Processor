@@ -14,3 +14,4 @@
 # limitations under the License.
 org.dcs.nifi.processors.TestProcessor
 org.dcs.nifi.processors.StatefulGBIFOccurrenceProcessor
+org.dcs.nifi.processors.LatLongValidationProcessor

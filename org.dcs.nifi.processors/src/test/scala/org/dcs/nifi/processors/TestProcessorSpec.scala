@@ -1,12 +1,20 @@
 package org.dcs.nifi.processors
 
+import java.io.OutputStream
+
+import org.apache.avro.generic.GenericData
+import org.apache.nifi.flowfile.FlowFile
+import org.apache.nifi.processor.io.OutputStreamCallback
 import org.apache.nifi.util.{MockFlowFile, TestRunner, TestRunners}
-import org.dcs.api.processor.RelationshipType
+import org.dcs.api.processor.{RelationshipType, RemoteProcessor}
 import org.dcs.remote.RemoteService
 import org.mockito.Mockito._
 import org.scalatest.FlatSpec
+import org.dcs.commons.serde.AvroImplicits._
+import org.dcs.commons.serde.AvroSchemaStore
 
 import scala.collection.JavaConverters._
+import scala.collection.mutable
 
 object TestProcessorSpec {
   object MockRemoteService extends RemoteService with MockZookeeperServiceTracker
@@ -49,7 +57,15 @@ trait TestProcessorBehaviors { this: FlatSpec =>
 
     // Add properties
     runner.setProperty("user", user)
-    runner.enqueue("Hello ".getBytes)
+    // Add file attributes
+    val attributes = new java.util.HashMap[String, String]()
+    val schemaId = "org.dcs.core.processor.TestRequestProcessor"
+    attributes.put(RemoteProcessor.SchemaIdKey, schemaId)
+
+    val schema = AvroSchemaStore.get("org.dcs.core.processor.TestRequestProcessor")
+    val record = new GenericData.Record(schema.get)
+    record.put("request", "Hello ")
+    runner.enqueue(record.serToBytes(schema), attributes)
     // Run the enqueued content, it also takes an int = number of contents queued
     runner.run(1)
 
@@ -58,8 +74,12 @@ trait TestProcessorBehaviors { this: FlatSpec =>
     val results: java.util.List[MockFlowFile] = runner.getFlowFilesForRelationship(successRelationship.get)
     assert(results.size == 1)
     val result: MockFlowFile = results.get(0)
-    val resultValue: String = new String(runner.getContentAsByteArray(result))
-    assert(resultValue == "{\"response\":\"Hello " + user + "\"}")
+
+    val schemaResponse = AvroSchemaStore.get("org.dcs.core.processor.TestResponseProcessor")
+    val expectedRecord = new GenericData.Record(schemaResponse.get)
+    expectedRecord.put("response", "Hello " + user)
+    val actualRecord = runner.getContentAsByteArray(result).deSerToGenericRecord(schemaResponse, schemaResponse)
+    assert(actualRecord == expectedRecord)
   }
 
 }
