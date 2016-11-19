@@ -3,8 +3,10 @@ package org.dcs.flow.nifi
 import java.time.{LocalDateTime, ZoneId}
 import java.util.Date
 
+import org.apache.avro.Schema
 import org.apache.nifi.web.api.dto.provenance.ProvenanceEventDTO
 import org.apache.nifi.web.api.entity.ProvenanceEntity
+import org.dcs.api.processor.{RelationshipType, RemoteProcessor}
 import org.dcs.api.service.{Provenance, ProvenanceApiService}
 import org.dcs.commons.ClientRemoteProcessorStore
 import org.dcs.commons.error.{ErrorConstants, RESTException}
@@ -26,7 +28,7 @@ import scala.concurrent.Future
 class NifiProvenanceApi extends NifiProvenanceClient with NifiApiConfig
 
 object NifiProvenanceClient {
-  val ProvenanceQueryMaxTries = 10
+  val ProvenanceQueryMaxTries = 50
   val ProvenancePath = "/provenance"
 
   def provenanceOutput(provenanceEventId: String) = {
@@ -119,19 +121,30 @@ trait NifiProvenanceClient extends ProvenanceApiService with JerseyRestClient {
 
   def provenanceResult(pResult: ProvenanceEntity, pType: String): Future[List[Provenance]] =
     Future.sequence(pResult.getProvenance.getResults.getProvenanceEvents.asScala
-      .map { pevent =>
-        provenanceContent(pevent, pResult, pType)
-      }.toList)
+      .filter { pevent =>
+        val schema = pevent.getAttributes.asScala.find(_.getName == RemoteProcessor.SchemaIdKey).map(_.getValue).flatMap(AvroSchemaStore.get)
+        schema.isDefined
+      }
+      .map { pevent => {
+        val schema = pevent.getAttributes.asScala.find(_.getName == RemoteProcessor.SchemaIdKey).map(_.getValue).flatMap(AvroSchemaStore.get)
+        provenanceContent(pevent, pResult, pType, schema)
+      }}.toList)
 
-  def provenanceContent(provenanceEvent: ProvenanceEventDTO, provenanceResult: ProvenanceEntity, processorType: String): Future[Provenance] = {
-    val schema = ClientRemoteProcessorStore.get(processorType).flatMap(AvroSchemaStore.get)
+  def provenanceContent(provenanceEvent: ProvenanceEventDTO,
+                        provenanceResult: ProvenanceEntity,
+                        processorType: String,
+                        schema: Option[Schema]): Future[Provenance] = {
+
     get(path = provenanceOutput(provenanceEvent.getEventId.toString),
       queryParams = params(provenanceEvent.getClusterNodeId))
-      .map { response =>
+      .map { response => {
+        val content = response.readEntity(classOf[Array[Byte]])
+        println("content : " + new String(content))
         Provenance(provenanceEvent.getId,
           provenanceResult.getProvenance.getId,
           provenanceEvent.getClusterNodeId,
-          response.readEntity(classOf[Array[Byte]]).deSerToJsonString(schema, schema))
+          content.deSerToJsonString(schema, schema))
+      }
       }
   }
 

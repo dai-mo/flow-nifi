@@ -7,7 +7,7 @@ import org.apache.nifi.components.PropertyDescriptor
 import org.apache.nifi.flowfile.FlowFile
 import org.apache.nifi.flowfile.attributes.CoreAttributes
 import org.apache.nifi.processor._
-import org.dcs.api.processor.{Configuration, MetaData, RelationshipType}
+import org.dcs.api.processor.{Configuration, MetaData, RelationshipType, RemoteProcessor}
 import org.dcs.api.service.RemoteProcessorService
 import org.dcs.remote.{RemoteService, ZkRemoteService}
 import org.slf4j.{Logger, LoggerFactory}
@@ -28,6 +28,7 @@ trait ClientProcessor extends AbstractProcessor with Write with Read {
   var relationships: JavaSet[Relationship] = _
   var metaData:MetaData = _
   var configuration: Configuration = _
+  var schemaId: Option[String] = None
 
   var endOfStream = false
 
@@ -49,6 +50,8 @@ trait ClientProcessor extends AbstractProcessor with Write with Read {
     metaData = remoteProcessorService.metadata
 
     configuration = remoteProcessorService.configuration
+
+    schemaId = Option(remoteProcessorService.schemaId)
   }
 
 
@@ -70,20 +73,48 @@ trait ClientProcessor extends AbstractProcessor with Write with Read {
       if (canRead)
         readCallback(flowFile, session, in)
 
-      val out = output(Option(in.get()), valueProperties)
+      val out = output(Option(in.get()),
+        updateProperties(valueProperties, flowFile))
 
       if (out == null || out.isEmpty) {
         context.`yield`()
         endOfStream = true
       } else {
+
         if (canWrite) {
-          if (out.length == 1) {
-            route(writeCallback(update(flowFile, session), session, out(0)), session)
+          if (out.length == 3){
+            val relationship = new String(out(0))
+            val schemaId = Option(new String(out(1)))
+            route(
+              writeCallback(
+                updateFlowFileAttributes(flowFile,
+                  session,
+                  schemaId,
+                  relationship),
+                session,
+                out(2)
+              ),
+              session,
+              relationship
+            )
           } else {
-            out.foreach { response =>
+            out.grouped(3).foreach { resGrp =>
               val newFlowFile = if (flowFile == null) session.create() else session.create(flowFile)
-              route(writeCallback(newFlowFile, session, response), session)
+              val relationship = new String(resGrp(0))
+              val schemaId = Option(new String(resGrp(1)))
+              route(
+                writeCallback(
+                  updateFlowFileAttributes(newFlowFile,
+                    session,
+                    schemaId,
+                    relationship),
+                  session,
+                  resGrp(2)),
+                session,
+                relationship
+              )
             }
+
           }
         }
       }
@@ -99,19 +130,37 @@ trait ClientProcessor extends AbstractProcessor with Write with Read {
   }
 
   def route(flowFile: FlowFile,
-            session: ProcessSession) = {
-    val successRelationship: Option[Relationship] =
-      relationships.asScala.find(r => r.getName == RelationshipType.SucessRelationship)
-    if (successRelationship.isDefined) {
-      session.transfer(flowFile, successRelationship.get)
+            session: ProcessSession,
+            relationship: String) = {
+    val rel: Option[Relationship] =
+      relationships.asScala.find(r => r.getName == relationship)
+    if (rel.isDefined) {
+      session.transfer(flowFile, rel.get)
     }
   }
 
-  def update(flowFile: FlowFile,
-             session: ProcessSession): FlowFile = {
+  def updateFlowFileAttributes(flowFile: FlowFile,
+                               session: ProcessSession,
+                               schemaId: Option[String],
+                               relationship: String): FlowFile = {
     val attributes = mutable.Map[String, String]()
     attributes(CoreAttributes.MIME_TYPE.key()) = configuration.outputMimeType
-    session.putAllAttributes(flowFile, attributes.asJava)
+    var updatedFlowFile = flowFile
+    if(schemaId.isDefined && relationship != RelationshipType.FailureRelationship)
+      attributes(RemoteProcessor.SchemaIdKey) = schemaId.get
+    else
+      updatedFlowFile = session.removeAttribute(updatedFlowFile, RemoteProcessor.SchemaIdKey)
+    session.putAllAttributes(updatedFlowFile, attributes.asJava)
+  }
+
+  def updateProperties(properties: mutable.Map[String, String],
+                       flowFile: FlowFile): mutable.Map[String, String] = {
+    if(flowFile != null) {
+      val schemaId = flowFile.getAttribute(RemoteProcessor.SchemaIdKey)
+      if (schemaId != null)
+        properties.put(RemoteProcessor.SchemaIdKey, schemaId)
+    }
+    properties
   }
 
   def canRead: Boolean

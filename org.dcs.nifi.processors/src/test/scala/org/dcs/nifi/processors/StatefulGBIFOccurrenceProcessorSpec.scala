@@ -10,6 +10,7 @@ import org.scalatest.FlatSpec
 
 import scala.collection.JavaConverters._
 import org.dcs.commons.serde.AvroImplicits._
+import org.dcs.commons.serde.AvroSchemaStore
 
 object StatefulGBIFOccurrenceProcessorSpec {
   object MockRemoteService extends RemoteService with MockZookeeperServiceTracker
@@ -61,8 +62,9 @@ trait StatefulGBIFOccurrenceProcessorBehaviors {
 
     val results: java.util.List[MockFlowFile] = runner.getFlowFilesForRelationship(successRelationship.get)
     assert(results.size == 10)
+    val schema = AvroSchemaStore.get("org.dcs.core.processor.GBIFOccurrenceProcessor")
     results.asScala.foreach(result => {
-      assert(runner.getContentAsByteArray(result).deSerToJsonMap()("genus").asInstanceOf[String] == "Loxodonta")
+      assert(runner.getContentAsByteArray(result).deSerToGenericRecord(schema, schema).get("genus").toString == "Loxodonta")
     })
 
 
