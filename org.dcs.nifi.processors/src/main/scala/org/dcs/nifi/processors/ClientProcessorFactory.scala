@@ -19,7 +19,7 @@ object PropertyDescriptor {
     propDescBuilder.displayName(remoteProperty.displayName)
     propDescBuilder.name(remoteProperty.name)
     propDescBuilder.description(remoteProperty.description)
-    if(!remoteProperty.defaultValue.isEmpty)
+    if(!(remoteProperty.defaultValue == null))
       propDescBuilder.defaultValue(remoteProperty.defaultValue)
     val possibleValues = remoteProperty.possibleValues.asScala.map(pv => pv.value).asJava
     if(possibleValues != null && !possibleValues.isEmpty)

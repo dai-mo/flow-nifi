@@ -15,3 +15,5 @@
 org.dcs.nifi.processors.TestProcessor
 org.dcs.nifi.processors.StatefulGBIFOccurrenceProcessor
 org.dcs.nifi.processors.LatLongValidationProcessor
+org.dcs.nifi.processors.FilterProcessor
+org.dcs.nifi.processors.CSVFileOutputProcessor
