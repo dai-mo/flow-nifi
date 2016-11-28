@@ -2,6 +2,7 @@ package org.dcs.flow.nifi
 
 import org.apache.nifi.web.api.dto._
 import org.apache.nifi.web.api.entity._
+import org.dcs.api.processor.RemoteProcessor
 import org.dcs.api.service.{Connection, ConnectionPort, FlowInstance, FlowTemplate, ProcessorInstance, ProcessorType}
 import org.dcs.flow.nifi.internal.{ProcessGroup, ProcessGroupHelper}
 
@@ -128,6 +129,8 @@ object FlowInstance {
 
 object ProcessorInstance {
 
+
+
   def apply(processorDTO: ProcessorDTO): ProcessorInstance = {
     val processorInstance = new ProcessorInstance
 
@@ -137,6 +140,7 @@ object ProcessorInstance {
       val state = processorDTO.getState
       if(state == null) "STANDBY" else state
     })
+    processorInstance.setProcessorType(getProcessorType(processorDTO.getConfig))
 
     processorInstance
   }
@@ -150,8 +154,16 @@ object ProcessorInstance {
   def apply(processorId: String): ProcessorInstance = {
     val processorInstance = new ProcessorInstance
     processorInstance.setId(processorId)
-
+    processorInstance.setProcessorType(RemoteProcessor.WorkerProcessorType)
     processorInstance
+  }
+
+  def getProcessorType(config: ProcessorConfigDTO): String = {
+    val ptype = config.getDescriptors.get(RemoteProcessor.ProcessorTypeKey)
+    if(ptype == null)
+      RemoteProcessor.WorkerProcessorType
+    else
+      ptype.getDefaultValue
   }
 }
 
