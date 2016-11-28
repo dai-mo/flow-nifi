@@ -139,7 +139,6 @@ trait NifiProvenanceClient extends ProvenanceApiService with JerseyRestClient {
       queryParams = params(provenanceEvent.getClusterNodeId))
       .map { response => {
         val content = response.readEntity(classOf[Array[Byte]])
-        println("content : " + new String(content))
         Provenance(provenanceEvent.getId,
           provenanceResult.getProvenance.getId,
           provenanceEvent.getClusterNodeId,
