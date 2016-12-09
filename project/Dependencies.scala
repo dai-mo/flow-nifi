@@ -5,22 +5,27 @@ object Dependencies {
 
   // Versions
 
-  lazy val dcsCommonsVersion = "0.2.0-SNAPSHOT"
-  lazy val dcsApiVersion     = "0.3.0-SNAPSHOT"
-  lazy val dcsRemoteVersion  = "0.3.0-SNAPSHOT"
-  lazy val dcsCoreVersion    = "0.2.0-SNAPSHOT"
-  lazy val playVersion			 = "2.5.3"
-  lazy val nifiVersion			 = "1.0.0-BETA"
-  lazy val slf4jVersion			 = "1.7.12"
-  lazy val jsonPathVersion	 = "1.2.0"
-  lazy val logbackVersion    = "1.1.3"
-  lazy val rxScalaVersion    = "0.26.1"
-  lazy val akkaVersion       = "2.4.4"
+  lazy val dcsCommonsVersion      = "0.2.0-SNAPSHOT"
+  lazy val dcsApiVersion          = "0.3.0-SNAPSHOT"
+  lazy val dcsRemoteVersion       = "0.3.0-SNAPSHOT"
+  lazy val dcsCoreVersion         = "0.2.0-SNAPSHOT"
+  lazy val playVersion			      = "2.5.3"
+  lazy val nifiVersion			      = "1.0.0-BETA"
+  lazy val slf4jVersion			      = "1.7.12"
+  lazy val jsonPathVersion	      = "1.2.0"
+  lazy val logbackVersion         = "1.1.3"
+  lazy val rxScalaVersion         = "0.26.1"
+  lazy val akkaVersion            = "2.4.4"
+  lazy val quillVersion           = "1.0.0"
+  lazy val quillJdbcVersion       = "1.0.1"
+  lazy val dataStaxDriverVersion  = "3.1.0"
+  lazy val mysqlConnectorVersion  = "5.1.38"
 
-  lazy val mockitoVersion    = "1.10.19"
-  lazy val scalaTestVersion  = "2.2.6"
-  lazy val juiVersion        = "0.11"
-  lazy val paxCdiVersion     = "0.12.0"
+
+  lazy val mockitoVersion         = "1.10.19"
+  lazy val scalaTestVersion       = "2.2.6"
+  lazy val juiVersion             = "0.11"
+  lazy val paxCdiVersion          = "0.12.0"
 
   val dcsNifiServApi  = "org.dcs"                          % "org.dcs.nifi.services-api"
   val dcsNifiServices = "org.dcs"                  			   % "org.dcs.nifi.services"
@@ -32,6 +37,7 @@ object Dependencies {
   val nifiApi         = "org.apache.nifi"                  % "nifi-api"                    				% nifiVersion
   val nifiProcUtils   = "org.apache.nifi"                  % "nifi-processor-utils"        				% nifiVersion
   val nifiClientDTO	  = "org.apache.nifi"									 % "nifi-client-dto"										% nifiVersion
+  val nifiFrameworkApi= "org.apache.nifi"									 % "nifi-framework-api"								  % nifiVersion
   val nifiMock        = "org.apache.nifi"                  % "nifi-mock"                  				% nifiVersion
   val jsonPath        = "com.jayway.jsonpath"      			   % "json-path"                  				% jsonPathVersion
   val scalaLib				= "org.scala-lang"									 % "scala-library"                      % scVersion
@@ -39,6 +45,10 @@ object Dependencies {
   val logbackCore     = "ch.qos.logback"                   % "logback-core"                       % logbackVersion
   val logbackClassic  =	"ch.qos.logback"                   % "logback-classic"                    % logbackVersion
   val dcsCore         = "org.dcs"                          % "org.dcs.core"                       % dcsCoreVersion
+  val quill           = "io.getquill"                      %% "quill-cassandra"                   % quillVersion
+  val quillJdbc       = "io.getquill"                      %% "quill-jdbc"                        % quillJdbcVersion
+  val datastaxDriver  = "com.datastax.cassandra"           % "cassandra-driver-core"              % dataStaxDriverVersion
+  val mysqlDriver     = "mysql"                            % "mysql-connector-java"               % mysqlConnectorVersion
 
   val playWs          = "com.typesafe.play"                %% "play-ws"                           % playVersion
   val mockitoCore     = "org.mockito"                      % "mockito-core"                       % mockitoVersion
@@ -77,6 +87,11 @@ object Dependencies {
     dcsApi,
     dcsRemote,
     nifiProcUtils,
+    nifiFrameworkApi,
+    quill,
+    //quillJdbc,
+    datastaxDriver,
+    //mysqlDriver,
     scalaLib,
 
     nifiApi % "provided",
