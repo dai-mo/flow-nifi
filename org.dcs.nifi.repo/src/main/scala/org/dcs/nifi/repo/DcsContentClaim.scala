@@ -25,12 +25,8 @@ class DcsContentClaim(drc: DcsResourceClaim) extends ContentClaim {
     if(obj == null || !obj.isInstanceOf[DcsContentClaim])
       false
     else {
-      if(this == obj)
-        true
-      else {
-        val that = obj.asInstanceOf[DcsContentClaim]
-        this.getResourceClaim.eq(that.getResourceClaim)
-      }
+      val that = obj.asInstanceOf[DcsContentClaim]
+      this.getResourceClaim.eq(that.getResourceClaim)
     }
   }
 

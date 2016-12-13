@@ -34,12 +34,8 @@ class DcsResourceClaim(lossTolerant: Boolean) extends ResourceClaim {
     if(obj == null || !obj.isInstanceOf[DcsResourceClaim])
       false
     else {
-      if(this == obj)
-        true
-      else {
-        val that = obj.asInstanceOf[DcsResourceClaim]
-        this.uuid == that.uuid && this.createTimestamp.eq(that.createTimestamp)
-      }
+      val that = obj.asInstanceOf[DcsResourceClaim]
+      this.uuid == that.uuid && this.createTimestamp.eq(that.createTimestamp)
     }
   }
 

@@ -20,6 +20,8 @@ object Dependencies {
   lazy val quillJdbcVersion       = "1.0.1"
   lazy val dataStaxDriverVersion  = "3.1.0"
   lazy val mysqlConnectorVersion  = "5.1.38"
+  lazy val apacheCommonsVersion   = "1.3.2"
+
 
 
   lazy val mockitoVersion         = "1.10.19"
@@ -34,10 +36,12 @@ object Dependencies {
   val dcsApi          = "org.dcs"                          % "org.dcs.api"                        % dcsApiVersion
   val dcsRemote    		= "org.dcs"                          % "org.dcs.remote"                     % dcsRemoteVersion
 
+  val apacheCommons   = "org.apache.commons"               % "commons-io"                         % apacheCommonsVersion
   val nifiApi         = "org.apache.nifi"                  % "nifi-api"                    				% nifiVersion
   val nifiProcUtils   = "org.apache.nifi"                  % "nifi-processor-utils"        				% nifiVersion
   val nifiClientDTO	  = "org.apache.nifi"									 % "nifi-client-dto"										% nifiVersion
   val nifiFrameworkApi= "org.apache.nifi"									 % "nifi-framework-api"								  % nifiVersion
+  val nifiUtils       = "org.apache.nifi"									 % "nifi-utils"                         % nifiVersion
   val nifiMock        = "org.apache.nifi"                  % "nifi-mock"                  				% nifiVersion
   val jsonPath        = "com.jayway.jsonpath"      			   % "json-path"                  				% jsonPathVersion
   val scalaLib				= "org.scala-lang"									 % "scala-library"                      % scVersion
@@ -45,7 +49,7 @@ object Dependencies {
   val logbackCore     = "ch.qos.logback"                   % "logback-core"                       % logbackVersion
   val logbackClassic  =	"ch.qos.logback"                   % "logback-classic"                    % logbackVersion
   val dcsCore         = "org.dcs"                          % "org.dcs.core"                       % dcsCoreVersion
-  val quill           = "io.getquill"                      %% "quill-cassandra"                   % quillVersion
+  val quillCassandra  = "io.getquill"                      %% "quill-cassandra"                   % quillVersion
   val quillJdbc       = "io.getquill"                      %% "quill-jdbc"                        % quillJdbcVersion
   val datastaxDriver  = "com.datastax.cassandra"           % "cassandra-driver-core"              % dataStaxDriverVersion
   val mysqlDriver     = "mysql"                            % "mysql-connector-java"               % mysqlConnectorVersion
@@ -88,13 +92,10 @@ object Dependencies {
     dcsRemote,
     nifiProcUtils,
     nifiFrameworkApi,
-    quill,
-    //quillJdbc,
-    datastaxDriver,
-    //mysqlDriver,
+
     scalaLib,
 
-    nifiApi % "provided",
+    nifiApi         % "provided",
 
     slf4jSimple     % "test",
     dcsCore         % "test",
@@ -118,5 +119,24 @@ object Dependencies {
     mockitoAll      % "test",
     scalaTest       % "test",
     junitInterface  % "test"
+  )
+
+  // Collect Repo Dependencies
+  val repoDependencies = Seq(
+    quillCassandra,
+    //quillJdbc,
+    datastaxDriver,
+    //mysqlDriver,
+    apacheCommons,
+    scalaLib,
+
+    nifiUtils        % "provided",
+    nifiFrameworkApi % "provided",
+    nifiApi          % "provided",
+
+    mockitoCore      % "test",
+    mockitoAll       % "test",
+    scalaTest        % "test",
+    junitInterface   % "test"
   )
 }

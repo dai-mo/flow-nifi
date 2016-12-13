@@ -71,6 +71,7 @@ trait ClientProcessor extends AbstractProcessor with Write with Read {
       val valueProperties = context.getProperties.asScala.map(x => (x._1.getName, x._2))
       val flowFile: FlowFile = session.get()
 
+
       if (canRead)
         readCallback(flowFile, session, in)
 

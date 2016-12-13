@@ -234,7 +234,7 @@ class CassandraContentRepository extends ContentRepository {
       val dataUpdate = quote {
         query[FlowDataContent]
           .filter(p => p.id == lift(claim.getResourceClaim.getId))
-          .update(fdc => fdc.data -> lift(bytes))
+          .update(_.data -> lift(bytes), _.claimCount -> 0)
       }
       ctx.run(dataUpdate)
 

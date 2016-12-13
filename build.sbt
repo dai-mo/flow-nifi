@@ -69,6 +69,18 @@ lazy val processors =
     libraryDependencies ++= (Seq(dcsNifiServices % version.value % "provided") ++ processorsDependencies)
   )
 
+lazy val repoProjectName = "org.dcs.nifi.repo"
+lazy val repoProjectID   = "repo"
+
+lazy val repo =
+  BaseProject(repoProjectID, repoProjectName).
+    settings(commonSettings: _*).
+    settings(
+      name := repoProjectName,
+      moduleName := repoProjectName,
+      libraryDependencies ++= repoDependencies
+    )
+
 
 // ------- Versioning , Release Section --------
 

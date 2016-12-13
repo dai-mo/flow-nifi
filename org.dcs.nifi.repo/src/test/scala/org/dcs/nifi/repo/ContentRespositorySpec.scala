@@ -1,16 +1,17 @@
-package org.dcs.nifi.repository
+package org.dcs.nifi.repo
 
 import java.nio.charset.StandardCharsets
 
 import org.apache.commons.io.IOUtils
-import org.dcs.nifi.services.ServicesUnitSpec
+import org.dcs.nifi.repository.CassandraContentRepository
+import org.dcs.nifi.services.RepoUnitSpec
 import org.scalatest.Ignore
 
 /**
   * Created by cmathew on 08.12.16.
   */
 @Ignore // set to ignore until integration environment is setup
-class ContentRespositorySpec extends ServicesUnitSpec {
+class ContentRespositorySpec extends RepoUnitSpec {
 
   "Content Repository" should "be valid for every stage in processor content lifecycle" in {
 
