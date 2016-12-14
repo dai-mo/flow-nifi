@@ -42,6 +42,8 @@ object Dependencies {
   val nifiClientDTO	  = "org.apache.nifi"									 % "nifi-client-dto"										% nifiVersion
   val nifiFrameworkApi= "org.apache.nifi"									 % "nifi-framework-api"								  % nifiVersion
   val nifiUtils       = "org.apache.nifi"									 % "nifi-utils"                         % nifiVersion
+  val nifiProperties  = "org.apache.nifi"									 % "nifi-properties"                    % nifiVersion
+  val nifiProvUtils   = "org.apache.nifi"									 % "nifi-data-provenance-utils"         % nifiVersion
   val nifiMock        = "org.apache.nifi"                  % "nifi-mock"                  				% nifiVersion
   val jsonPath        = "com.jayway.jsonpath"      			   % "json-path"                  				% jsonPathVersion
   val scalaLib				= "org.scala-lang"									 % "scala-library"                      % scVersion
@@ -131,6 +133,8 @@ object Dependencies {
     scalaLib,
 
     nifiUtils        % "provided",
+    nifiProperties   % "provided",
+    nifiProvUtils    % "provided",
     nifiFrameworkApi % "provided",
     nifiApi          % "provided",
 
