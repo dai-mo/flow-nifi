@@ -4,7 +4,6 @@ import java.nio.charset.StandardCharsets
 
 import org.apache.commons.io.IOUtils
 import org.dcs.nifi.repository.CassandraContentRepository
-import org.dcs.nifi.services.RepoUnitSpec
 import org.scalatest.Ignore
 
 /**
@@ -18,6 +17,9 @@ class ContentRespositorySpec extends RepoUnitSpec {
     val data = "Sample Flow Data Content".getBytes(StandardCharsets.UTF_8)
 
     val cr = new CassandraContentRepository()
+
+    cr.purge()
+
     val claim = cr.create(true)
     assert(claim.getLength == -1)
 

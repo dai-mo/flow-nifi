@@ -1,26 +1,29 @@
 package org.dcs.nifi.repo
 
-import java.lang.{Iterable, Long}
+import java.lang.Iterable
 import java.time.Instant
 import java.util
 import java.util.Date
-import java.util.concurrent.atomic.AtomicLong
 
 import io.getquill.{CassandraSyncContext, SnakeCase}
 import org.apache.nifi.authorization.Authorizer
 import org.apache.nifi.authorization.user.NiFiUser
 import org.apache.nifi.events.EventReporter
+import org.apache.nifi.provenance.StandardProvenanceEventRecord.Builder
+import org.apache.nifi.provenance._
 import org.apache.nifi.provenance.lineage.ComputeLineageSubmission
 import org.apache.nifi.provenance.search.{Query, QueryResult, QuerySubmission, SearchableField}
-import org.apache.nifi.provenance._
 import org.apache.nifi.util.NiFiProperties
-import org.dcs.nifi.{FlowDataContent, FlowDataProvenance}
+import org.dcs.nifi._
 
 import scala.collection.JavaConverters._
+
 
 /**
   * Created by cmathew on 13.12.16.
   */
+
+
 class CassandraProvenanceRepository extends ProvenanceRepository {
 
   private val ctx = new CassandraSyncContext[SnakeCase]("cassandra")
@@ -32,6 +35,8 @@ class CassandraProvenanceRepository extends ProvenanceRepository {
     SearchableFieldParser.extractSearchableFields(properties.getProperty(NiFiProperties.PROVENANCE_INDEXED_FIELDS), true)
   private val searchableAttributes: util.List[SearchableField] =
     SearchableFieldParser.extractSearchableFields(properties.getProperty(NiFiProperties.PROVENANCE_INDEXED_ATTRIBUTES), false)
+
+  private val ProvenanceEventName = "provenance_event_id"
 
 
   override def getSearchableFields: util.List[SearchableField] = searchableFields
@@ -58,8 +63,10 @@ class CassandraProvenanceRepository extends ProvenanceRepository {
   override def getEvents(firstRecordId: Long, maxRecords: Int, user: NiFiUser): util.List[ProvenanceEventRecord] = {
     import ctx._
 
-    val provQuery = quote(query[FlowDataProvenance].filter(fdp => fdp.eventId >= lift(firstRecordId) && fdp.eventId < lift(firstRecordId + maxRecords)))
-    ctx.run(provQuery).map(_.toProvenanceEventRecord()).asJava
+    val provQuery = quote(query[FlowDataProvenance].filter(fdp =>
+      fdp.eventId >= lift(firstRecordId.toDouble) && fdp.eventId < lift(firstRecordId.toDouble + maxRecords)
+    ).allowFiltering)
+    ctx.run(provQuery).map(_.toProvenanceEventRecord()).sortBy(_.getEventId).asJava
   }
 
   override def submitExpandChildren(eventId: Long, user: NiFiUser): ComputeLineageSubmission =
@@ -68,63 +75,120 @@ class CassandraProvenanceRepository extends ProvenanceRepository {
   override def getEvent(id: Long, user: NiFiUser): ProvenanceEventRecord = {
     import ctx._
 
-    val provQuery = quote(query[FlowDataProvenance].filter(fdp => fdp.eventId == lift(id)))
+    val provQuery = quote(query[FlowDataProvenance].filter(fdp => fdp.eventId == lift(id.toDouble)))
     ctx.run(provQuery).map(_.toProvenanceEventRecord()).head
   }
 
-  override def submitQuery(query: Query, user: NiFiUser): QuerySubmission = {
-    val submissionTime = Date.from(Instant.now())
+  override def submitQuery(searchQuery: Query, user: NiFiUser): QuerySubmission = {
+    val startDate = Date.from(Instant.now())
+    val records = searchTermQuery(searchQuery)
+    val endDate = Date.from(Instant.now())
+    searchQuery.setStartDate(startDate)
+    searchQuery.setEndDate(endDate)
+    val minFileSize = records.min(Ordering.by((per: ProvenanceEventRecord) => per.getFileSize))
+    searchQuery.setMinFileSize(minFileSize.toString)
+    val maxFileSize = records.max(Ordering.by((per: ProvenanceEventRecord) => per.getFileSize))
+    searchQuery.setMinFileSize(maxFileSize.toString)
 
-    import ctx._
-
-    val provQuery = searchTermQuery(query)
-    val result = run(provQuery).map(_.toProvenanceEventRecord())
-    val qr = new DbQueryResult(result, "", 1L)
-
-    new DbQuerySubmission(query, user.getIdentity, submissionTime, qr)
+    val qr = new DbQueryResult(records, "", 1L)
+    new DbQuerySubmission(searchQuery, "nifi_user", startDate, qr)
   }
 
-  private def searchTermQuery(query: Query): ctx.Quoted[ctx.Query[FlowDataProvenance]] = {
+  private def searchTermQuery(searchQuery: Query): List[ProvenanceEventRecord] = {
     import ctx._
 
-    quote {
-      var ctxQuery = query[FlowDataProvenance]
-      query.getSearchTerms.asScala.foreach(st => {
-        val sfid = st.getSearchableField.getIdentifier
-        sfid match {
-          case SearchableFields.EventType.getIdentifier => ctxQuery = ctxQuery.filter(_.eventType == lift(sfid))
-          case SearchableFields.FlowFileUUID.getIdentifier => ctxQuery = ctxQuery.filter(_.flowFileUuid == lift(sfid))
-          case SearchableFields.ComponentID.getIdentifier => ctxQuery = ctxQuery.filter(_.componentId == lift(sfid))
-          case SearchableFields.Relationship.getIdentifier => ctxQuery = ctxQuery.filter(_.relationship == lift(sfid))
-        }
-      })
-
-      ctxQuery
+    val withFilter = quote {
+      (g: FlowDataProvenance => Boolean) =>
+        query[FlowDataProvenance].withFilter(g(_))
     }
+
+    val searchableIds = SearchableIds(searchQuery)
+
+    var records: List[ProvenanceEventRecord] = Nil
+
+    if(searchableIds.eventType.isDefined)
+      records = ctx.run(quote {
+        withFilter((fdp: FlowDataProvenance) => fdp.eventType == lift(searchableIds.eventType.get))
+      }).map(_.toProvenanceEventRecord()).sortBy(_.getEventId).take(searchQuery.getMaxResults) ++ records
+
+    if(searchableIds.flowFileUuid.isDefined)
+      records = ctx.run(quote {
+        withFilter((fdp: FlowDataProvenance) => fdp.flowFileUuid == lift(searchableIds.flowFileUuid.get))
+      }).map(_.toProvenanceEventRecord()).sortBy(_.getEventId).take(searchQuery.getMaxResults) ++ records
+
+    if(searchableIds.componentId.isDefined)
+      records = ctx.run(quote {
+        withFilter((fdp: FlowDataProvenance) => fdp.componentId == lift(searchableIds.componentId.get))
+      }).map(_.toProvenanceEventRecord()).sortBy(_.getEventId).take(searchQuery.getMaxResults) ++ records
+
+    if(searchableIds.relationship.isDefined)
+      records = ctx.run(quote {
+        withFilter((fdp: FlowDataProvenance) => fdp.relationship == lift(searchableIds.relationship.get))
+      }).map(_.toProvenanceEventRecord()).sortBy(_.getEventId).take(searchQuery.getMaxResults) ++ records
+
+    records.groupBy(_.getEventId).map(_._2.head).toList.sortBy(_.getEventId).take(searchQuery.getMaxResults)
   }
 
   override def getSearchableAttributes: util.List[SearchableField] = searchableAttributes
 
-  override def registerEvent(event: ProvenanceEventRecord): Unit = ???
-
-  private def eventId(): Long = {
+  override def registerEvent(event: ProvenanceEventRecord): Unit = {
     import ctx._
 
-    val dataQuery = quote(query[FlowDataContent].filter(p => p.id == lift(contentClaim.getResourceClaim.getId)))
-    val result = ctx.run(dataQuery)
+    val fdp: FlowDataProvenance = FlowProvenanceEventRecord.toFlowDataProvenance(event, Some(nextEventId()))
+
+    val eventInsert = quote(query[FlowDataProvenance].insert(lift(fdp)))
+    ctx.run(eventInsert)
   }
 
-  override def registerEvents(events: Iterable[ProvenanceEventRecord]): Unit = ???
+  def nextEventId(): Double = {
+    import ctx._
 
-  override def getMaxEventId: Long = ???
+    val nextEventIdUpdate = quote(query[FlowId].filter(_.name == lift(ProvenanceEventName)).update(fdp => fdp.latestId -> (fdp.latestId + 1)))
+    ctx.run(nextEventIdUpdate)
+
+    val latestEventIdQuery = quote(query[FlowId].filter(fid => fid.name == lift(ProvenanceEventName)))
+    val latestEventId = ctx.run(latestEventIdQuery).head.latestId
+    latestEventId
+  }
+
+  override def registerEvents(events: Iterable[ProvenanceEventRecord]): Unit = {
+    events.asScala.foreach(registerEvent)
+  }
+
+  override def getMaxEventId: java.lang.Long = {
+    import ctx._
+
+    val latestEventIdQuery = quote(query[FlowId].filter(fid => fid.name == lift(ProvenanceEventName)))
+    val latestEventId = ctx.run(latestEventIdQuery)
+    if(latestEventId.isEmpty)
+      null
+    else
+      latestEventId.head.latestId.toLong
+  }
 
   override def getEvents(firstRecordId: Long, maxRecords: Int): util.List[ProvenanceEventRecord] = getEvents(firstRecordId, maxRecords, null)
 
-  override def eventBuilder(): ProvenanceEventBuilder = ???
+  override def eventBuilder(): ProvenanceEventBuilder = new Builder
 
   override def close(): Unit = ctx.close()
 
   override def getEvent(id: Long): ProvenanceEventRecord = getEvent(id, null)
+
+  def purge(): Unit = {
+    import ctx._
+
+    val provenancePurge = quote {
+      query[FlowDataProvenance]
+        .delete
+    }
+    ctx.run(provenancePurge)
+
+    val flowIdPurge = quote {
+      query[FlowId]
+        .delete
+    }
+    ctx.run(flowIdPurge)
+  }
 }
 
 class DbQuerySubmission(query: Query,
@@ -155,13 +219,13 @@ class DbQueryResult(matchingEvents: List[ProvenanceEventRecord],
 
   override def getExpiration: Date = Date.from(Instant.parse("2100-12-03T10:15:30.00Z"))
 
-  override def getTotalHitCount: Long = matchingEvents.size.toLong
+  override def getTotalHitCount = matchingEvents.size.toLong
 
   override def getError: String = error
 
   override def getPercentComplete: Int = 100
 
-  override def getQueryTime: Long = queryTime
+  override def getQueryTime = queryTime
 
   override def getMatchingEvents: util.List[ProvenanceEventRecord] = matchingEvents.asJava
 }

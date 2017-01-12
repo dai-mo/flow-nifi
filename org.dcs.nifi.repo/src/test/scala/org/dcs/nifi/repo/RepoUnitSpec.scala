@@ -1,4 +1,4 @@
-package org.dcs.nifi.services
+package org.dcs.nifi.repo
 
 import org.scalatest._
 import org.scalatest.concurrent.ScalaFutures
