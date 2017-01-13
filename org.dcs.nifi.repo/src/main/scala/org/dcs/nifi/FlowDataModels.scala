@@ -85,13 +85,14 @@ case class FlowDataProvenance(id: String,
 object FlowProvenanceEventRecord {
   def toFlowDataProvenance(per: ProvenanceEventRecord, eventId: Option[Double]): FlowDataProvenance = {
     val eid = eventId.getOrElse(per.getEventId.toDouble)
+    val previousFileSize = if(per.getPreviousFileSize == null) 0 else per.getPreviousFileSize.toDouble
     FlowDataProvenance(UUID.randomUUID().toString,
       eid,
       per.getEventTime,
       per.getFlowFileEntryDate,
       per.getLineageStartDate,
       per.getFileSize.toDouble,
-      per.getPreviousFileSize.toDouble,
+      previousFileSize,
       per.getEventDuration,
       per.getEventType.name(),
       mapToString(per.getAttributes),
@@ -99,17 +100,17 @@ object FlowProvenanceEventRecord {
       mapToString(per.getUpdatedAttributes),
       per.getComponentId,
       per.getComponentType,
-      per.getTransitUri,
-      per.getSourceSystemFlowFileIdentifier,
+      Option(per.getTransitUri).getOrElse(""),
+      Option(per.getSourceSystemFlowFileIdentifier).getOrElse(""),
       per.getFlowFileUuid,
       listToString(per.getParentUuids),
       listToString(per.getChildUuids),
-      per.getAlternateIdentifierUri,
-      per.getDetails,
-      per.getRelationship,
-      per.getSourceQueueIdentifier,
+      Option(per.getAlternateIdentifierUri).getOrElse(""),
+      Option(per.getDetails).getOrElse(""),
+      Option(per.getRelationship).getOrElse(""),
+      Option(per.getSourceQueueIdentifier).getOrElse(""),
       per.getContentClaimIdentifier,
-      per.getPreviousContentClaimIdentifier)
+      Option(per.getPreviousContentClaimIdentifier).getOrElse(""))
   }
 
   def mapToString[K, V](map: util.Map[K, V]): String = {
@@ -133,20 +134,30 @@ class FlowProvenanceEventRecord(flowDataProvenance: FlowDataProvenance) extends 
   override def getDetails: String = flowDataProvenance.details
 
   override def getAttributes: util.Map[String, String] =
-    flowDataProvenance.attributes.split(",").map(a => {
-      val attr = a.split(":")
-      attr.head -> attr.tail.head
-    }).toMap.asJava
+    if(flowDataProvenance.attributes.isEmpty)
+      new util.HashMap[String, String]
+    else
+      flowDataProvenance.attributes.split(",").map(a => {
+        val attr = a.split(":")
+        attr.head -> attr.tail.head
+      }).toMap.asJava
 
 
   override def getParentUuids: util.List[String] =
-    flowDataProvenance.parentUuids.split(",").toList.asJava
+    if(flowDataProvenance.parentUuids.isEmpty)
+      new util.ArrayList[String]
+    else
+      flowDataProvenance.parentUuids.split(",").toList.asJava
 
   override def getFlowFileEntryDate: Long = flowDataProvenance.flowFileEntryDate.toLong
 
   override def getAlternateIdentifierUri: String = flowDataProvenance.alternateIdentifierUri
 
-  override def getChildUuids: util.List[String] = flowDataProvenance.childUuids.split(",").toList.asJava
+  override def getChildUuids: util.List[String] =
+    if(flowDataProvenance.childUuids.isEmpty)
+      new util.ArrayList[String]
+    else
+      flowDataProvenance.childUuids.split(",").toList.asJava
 
   override def getContentClaimContainer: String = ""
 
@@ -185,10 +196,13 @@ class FlowProvenanceEventRecord(flowDataProvenance: FlowDataProvenance) extends 
   override def getPreviousFileSize: java.lang.Long = flowDataProvenance.previousFileSize.toLong
 
   override def getPreviousAttributes: util.Map[String, String] =
-    flowDataProvenance.previousAttributes.split(",").map(a => {
-      val attr = a.split(":")
-      attr.head -> attr.tail.head
-    }).toMap.asJava
+    if(flowDataProvenance.previousAttributes.isEmpty)
+      new util.HashMap[String, String]
+    else
+      flowDataProvenance.previousAttributes.split(",").map(a => {
+        val attr = a.split(":")
+        attr.head -> attr.tail.head
+      }).toMap.asJava
 
   override def getSourceSystemFlowFileIdentifier: String = flowDataProvenance.sourceSystemFlowFileIdentifier
 
@@ -203,10 +217,13 @@ class FlowProvenanceEventRecord(flowDataProvenance: FlowDataProvenance) extends 
   override def getPreviousContentClaimOffset: java.lang.Long = 0L
 
   override def getUpdatedAttributes: util.Map[String, String] =
-    flowDataProvenance.updatedAttributes.split(",").map(a => {
-      val attr = a.split(":")
-      attr.head -> attr.tail.head
-    }).toMap.asJava
+    if(flowDataProvenance.updatedAttributes.isEmpty)
+      new util.HashMap[String, String]
+    else
+      flowDataProvenance.updatedAttributes.split(",").map(a => {
+        val attr = a.split(":")
+        attr.head -> attr.tail.head
+      }).toMap.asJava
 
   override def getPreviousContentClaimContainer: String = ""
 
@@ -244,4 +261,6 @@ object SearchableIds {
 case class SearchableIds(var eventType: Option[String] = None,
                          var flowFileUuid: Option[String] = None,
                          var componentId: Option[String] = None,
-                         var relationship: Option[String] = None)
+                         var relationship: Option[String] = None) {
+  def isEmpty(): Boolean = eventType.isEmpty && flowFileUuid.isEmpty && componentId.isEmpty && relationship.isEmpty
+}

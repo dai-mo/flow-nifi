@@ -132,9 +132,9 @@ object Dependencies {
     apacheCommons,
     scalaLib,
 
-    nifiUtils        % "provided",
+    nifiUtils,
     nifiProperties   % "provided",
-    nifiProvUtils    % "provided",
+    nifiProvUtils,
     nifiFrameworkApi % "provided",
     nifiApi          % "provided",
 

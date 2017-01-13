@@ -1,4 +1,4 @@
-package org.dcs.nifi.repo
+package org.dcs.nifi.repository
 
 import java.nio.charset.StandardCharsets
 

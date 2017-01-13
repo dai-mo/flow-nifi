@@ -42,7 +42,10 @@ class CassandraContentRepository extends ContentRepository {
 
 
   override def isAccessible(contentClaim: ContentClaim): Boolean = {
-    getContentRecord(contentClaim).isDefined
+    if(contentClaim.getResourceClaim.getId.isEmpty)
+      false
+    else
+      getContentRecord(contentClaim).isDefined
   }
 
   override def exportTo(claim: ContentClaim, destination: Path, append: Boolean): Long = throw new UnsupportedOperationException()
