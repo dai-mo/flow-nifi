@@ -19,8 +19,6 @@ class ProvenanceRepositorySpec extends RepoUnitSpec {
   val nifiPropertiespath: Path = Paths.get(this.getClass.getResource("nifi.properties").toURI)
   System.setProperty("nifi.properties.file.path", nifiPropertiespath.toString)
 
-  val cpr = new CassandraProvenanceRepository()
-
   val Attributes = "attr1:value1,attr2:value2"
   val PreviousAttributes = "prevattr1:value1,prevattr2:value2"
   val UpdatedAttributes = "updatedvattr1:value1,updatedattr2:value2"
@@ -59,6 +57,8 @@ class ProvenanceRepositorySpec extends RepoUnitSpec {
   }
 
   "Flow Data Provenance" should "should be registered correctly" in {
+    val cpr = new CassandraProvenanceRepository()
+
     cpr.purge()
 
     val maxEventId = cpr.getMaxEventId()
