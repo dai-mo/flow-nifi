@@ -24,14 +24,14 @@ import scala.collection.JavaConverters._
   * Created by cmathew on 13.12.16.
   */
 
-object CassandraProvenanceRepository {
+object SQLProvenanceRepository {
   val QueryMap = new ConcurrentHashMap[String, Query]()
 }
 
-class CassandraProvenanceRepository extends ProvenanceRepository {
+class SQLProvenanceRepository extends ProvenanceRepository {
 
 
-  private val ctx = new CassandraSyncContext[SnakeCase]("cassandra")
+  protected val ctx = new QuillContext
 
   private val eventIdIncrementor = new EventIdIncrementor
 
@@ -51,7 +51,7 @@ class CassandraProvenanceRepository extends ProvenanceRepository {
     throw new UnsupportedOperationException()
 
   override def retrieveQuerySubmission(queryIdentifier: String, user: NiFiUser): QuerySubmission = {
-    val searchQuery = CassandraProvenanceRepository.QueryMap.get(queryIdentifier)
+    val searchQuery = SQLProvenanceRepository.QueryMap.get(queryIdentifier)
     if(searchQuery == null)
       null
     else {
@@ -67,7 +67,7 @@ class CassandraProvenanceRepository extends ProvenanceRepository {
         searchQuery.setMinFileSize(maxFileSize.toString)
       }
       val qr = new DbQueryResult(records, "", 1L, 100)
-      CassandraProvenanceRepository.QueryMap.remove(queryIdentifier)
+      SQLProvenanceRepository.QueryMap.remove(queryIdentifier)
       new DbQuerySubmission(searchQuery, "nifi_user", startDate, qr)
     }
   }
@@ -91,7 +91,8 @@ class CassandraProvenanceRepository extends ProvenanceRepository {
 
     val provQuery = quote(query[FlowDataProvenance].filter(fdp =>
       fdp.eventId >= lift(firstRecordId.toDouble) && fdp.eventId < lift(firstRecordId.toDouble + maxRecords)
-    ).allowFiltering)
+    ))
+
     ctx.run(provQuery).map(_.toProvenanceEventRecord()).sortBy(_.getEventId).asJava
   }
 
@@ -109,7 +110,7 @@ class CassandraProvenanceRepository extends ProvenanceRepository {
 
     val startDate = Date.from(Instant.now())
     val qr = new DbQueryResult(Nil, "", 1L, 0)
-    CassandraProvenanceRepository.QueryMap.put(searchQuery.getIdentifier, searchQuery)
+    SQLProvenanceRepository.QueryMap.put(searchQuery.getIdentifier, searchQuery)
     new DbQuerySubmission(searchQuery, "nifi_user", startDate, qr)
   }
 
