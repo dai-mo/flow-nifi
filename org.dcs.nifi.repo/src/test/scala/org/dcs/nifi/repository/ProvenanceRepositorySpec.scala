@@ -6,6 +6,7 @@ import java.util.{Date, UUID}
 import org.apache.nifi.provenance.search.{Query, SearchTerm, SearchableField}
 import org.apache.nifi.provenance.{ProvenanceEventRecord, ProvenanceEventType, ProvenanceRepository, SearchableFields}
 import org.dcs.nifi.{FlowDataProvenance, FlowProvenanceEventRecord}
+import org.scalatest.Ignore
 
 import scala.collection.JavaConverters._
 /**
