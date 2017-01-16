@@ -1,5 +1,6 @@
 package org.dcs.nifi.processors
 
+
 import java.util.concurrent.atomic.AtomicReference
 import java.util.{List => JavaList, Map => JavaMap, Set => JavaSet}
 
@@ -69,6 +70,7 @@ trait ClientProcessor extends AbstractProcessor with Write with Read {
 
       val valueProperties = context.getProperties.asScala.map(x => (x._1.getName, x._2))
       val flowFile: FlowFile = session.get()
+
 
       if (canRead)
         readCallback(flowFile, session, in)
@@ -146,6 +148,7 @@ trait ClientProcessor extends AbstractProcessor with Write with Read {
     val attributes = mutable.Map[String, String]()
     attributes(CoreAttributes.MIME_TYPE.key()) = configuration.outputMimeType
     var updatedFlowFile = flowFile
+
     if(schemaId.isDefined && relationship != RelationshipType.FailureRelationship)
       attributes(RemoteProcessor.SchemaIdKey) = schemaId.get
     else

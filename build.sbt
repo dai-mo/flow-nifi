@@ -11,7 +11,7 @@ lazy val dcsnifi = (project in file(".")).
   settings(commonSettings: _*).
   settings(
     name := projectName
-  ).aggregate(servicesapi, services, processors, flow)
+  ).aggregate(servicesapi, services, processors, flow, repo)
 
 
 
@@ -68,6 +68,25 @@ lazy val processors =
     moduleName := processorsProjectName,
     libraryDependencies ++= (Seq(dcsNifiServices % version.value % "provided") ++ processorsDependencies)
   )
+
+val defaultDatabase = "cassandra"
+lazy val database = sys.props.getOrElse("database", default = defaultDatabase)
+
+lazy val repoProjectName = "org.dcs.nifi.repo"
+lazy val repoProjectID   = "repo"
+
+lazy val repo =
+  BaseProject(repoProjectID, repoProjectName).
+    settings(commonSettings: _*).
+    settings(
+      name := repoProjectName,
+      moduleName := repoProjectName,
+      libraryDependencies ++= repoDependencies,
+      unmanagedSourceDirectories in Compile ++= Seq(baseDirectory.value / "src" / database / "scala"),
+      artifactName := { (sv: ScalaVersion, module: ModuleID, artifact: Artifact) =>
+        artifact.name + "." + database + "-" + module.revision + "." + artifact.extension
+      }
+    )
 
 
 // ------- Versioning , Release Section --------
