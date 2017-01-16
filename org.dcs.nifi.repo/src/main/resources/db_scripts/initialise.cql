@@ -44,3 +44,4 @@ CREATE TABLE IF NOT EXISTS dcs.flow_id (
 	latest_id counter
 );
 
+INSERT INTO dcs.flow_id(name, latest_id) VALUES('provenance_event_id', 0)

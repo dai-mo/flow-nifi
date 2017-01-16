@@ -20,18 +20,20 @@ object ProvenanceRepositorySpec {
   val UpdatedAttributes = "updatedvattr1:value1,updatedattr2:value2"
 }
 
-@Ignore // set to ignore until integration environment is setup
+//@Ignore // set to ignore until integration environment is setup
 class ProvenanceRepositorySpec extends ProvenanceRepositoryBehaviors {
 
   val nifiPropertiesPath: Path = Paths.get(this.getClass.getResource("nifi.properties").toURI)
   System.setProperty("nifi.properties.file.path", nifiPropertiesPath.toString)
 
 
-  "Flow Data Provenance using Cassandra" should "should be registered / queried correctly" in {
-    val cpr: ProvenanceRepository = new CassandraProvenanceRepository()
-    cpr.asInstanceOf[CassandraProvenanceRepository].purge()
+  "Flow Data Provenance" should "should be registered / queried correctly" in {
+    val cpr: ProvenanceRepository = new DCSProvenanceRepository()
+    cpr.asInstanceOf[ManageRepository].purge()
     validateProvenance(cpr)
+    cpr.asInstanceOf[ManageRepository].purge()
   }
+
 }
 
 

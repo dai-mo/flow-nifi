@@ -19,6 +19,7 @@ object Dependencies {
   lazy val quillVersion           = "1.0.0"
   lazy val quillJdbcVersion       = "1.0.1"
   lazy val dataStaxDriverVersion  = "3.1.0"
+  lazy val postgresDriverVersion  = "9.4.1208"
   lazy val mysqlConnectorVersion  = "5.1.38"
   lazy val apacheCommonsVersion   = "1.3.2"
 
@@ -54,6 +55,7 @@ object Dependencies {
   val quillCassandra  = "io.getquill"                      %% "quill-cassandra"                   % quillVersion
   val quillJdbc       = "io.getquill"                      %% "quill-jdbc"                        % quillJdbcVersion
   val datastaxDriver  = "com.datastax.cassandra"           % "cassandra-driver-core"              % dataStaxDriverVersion
+  val postgresDriver  = "org.postgresql"                   % "postgresql"                         % postgresDriverVersion
   val mysqlDriver     = "mysql"                            % "mysql-connector-java"               % mysqlConnectorVersion
 
   val playWs          = "com.typesafe.play"                %% "play-ws"                           % playVersion
@@ -124,10 +126,10 @@ object Dependencies {
   )
 
   // Collect Repo Dependencies
-  val repoDependencies = Seq(
-    quillCassandra,
+  def repoDependencies(database: String) = Seq(
+    //quillCassandra,
     //quillJdbc,
-    datastaxDriver,
+    //datastaxDriver,
     //mysqlDriver,
     apacheCommons,
     scalaLib,
@@ -142,5 +144,11 @@ object Dependencies {
     mockitoAll       % "test",
     scalaTest        % "test",
     junitInterface   % "test"
-  )
+  ) ++ quillDependecies(database)
+
+  def quillDependecies(database: String) = database match {
+    case "cassandra" => Seq(quillCassandra, datastaxDriver)
+    case "postgres" => Seq(quillJdbc, postgresDriver)
+    case _ => throw new IllegalStateException("Target DB " + database + " is not recognised. Should be one of postgres or cassandra")
+  }
 }

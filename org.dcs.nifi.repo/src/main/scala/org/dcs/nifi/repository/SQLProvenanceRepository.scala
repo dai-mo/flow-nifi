@@ -6,7 +6,6 @@ import java.util
 import java.util.Date
 import java.util.concurrent.ConcurrentHashMap
 
-import io.getquill.{CassandraSyncContext, SnakeCase}
 import org.apache.nifi.authorization.Authorizer
 import org.apache.nifi.authorization.user.NiFiUser
 import org.apache.nifi.events.EventReporter
@@ -28,7 +27,11 @@ object SQLProvenanceRepository {
   val QueryMap = new ConcurrentHashMap[String, Query]()
 }
 
-class SQLProvenanceRepository extends ProvenanceRepository {
+trait ManageRepository {
+  def purge(): Unit
+}
+
+class SQLProvenanceRepository extends ProvenanceRepository with ManageRepository {
 
 
   protected val ctx = new QuillContext
@@ -209,7 +212,7 @@ class SQLProvenanceRepository extends ProvenanceRepository {
 
   override def getEvent(id: Long): ProvenanceEventRecord = getEvent(id, null)
 
-  def purge(): Unit = {
+  override def purge(): Unit = {
     import ctx._
 
     val provenancePurge = quote {
@@ -218,11 +221,8 @@ class SQLProvenanceRepository extends ProvenanceRepository {
     }
     ctx.run(provenancePurge)
 
-    val flowIdPurge = quote {
-      query[FlowId]
-        .delete
-    }
-    ctx.run(flowIdPurge)
+    val nextEventIdUpdate = quote(query[FlowId].filter(_.name == lift(ProvenanceEventName)).update(fdp => fdp.latestId -> 0))
+    ctx.run(nextEventIdUpdate)
   }
 }
 

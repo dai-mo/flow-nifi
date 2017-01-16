@@ -3,23 +3,25 @@ package org.dcs.nifi.repository
 import java.nio.charset.StandardCharsets
 
 import org.apache.commons.io.IOUtils
-import org.dcs.nifi.repository.CassandraContentRepository
-import org.scalatest.Ignore
 
 /**
   * Created by cmathew on 08.12.16.
   */
-@Ignore // set to ignore until integration environment is setup
-class ContentRespositorySpec extends RepoUnitSpec {
+//@Ignore // set to ignore until integration environment is setup
+class ContentRespositorySpec extends ContentRespositoryBehaviours {
 
-  "Content Repository" should "be valid for every stage in processor content lifecycle" in {
+  "Content Repository using Cassandra" should "be valid for every stage in processor content lifecycle" in {
+    val cr = new DCSContentRepository()
+    cr.purge()
+    validateContent(cr)
+  }
+}
+
+trait ContentRespositoryBehaviours extends RepoUnitSpec {
+
+  def validateContent(cr: SQLContentRepository) = {
 
     val data = "Sample Flow Data Content".getBytes(StandardCharsets.UTF_8)
-
-    val cr = new CassandraContentRepository()
-
-    cr.purge()
-
     val claim = cr.create(true)
     assert(claim.getLength == -1)
 
