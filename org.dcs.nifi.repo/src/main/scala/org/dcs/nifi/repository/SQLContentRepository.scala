@@ -4,7 +4,6 @@ import java.io.{ByteArrayInputStream, ByteArrayOutputStream, InputStream, Output
 import java.nio.file.Path
 import java.util
 
-import io.getquill._
 import org.apache.nifi.controller.repository.ContentRepository
 import org.apache.nifi.controller.repository.claim.{ContentClaim, ResourceClaimManager}
 import org.apache.nifi.stream.io.StreamUtils
@@ -13,19 +12,12 @@ import org.dcs.nifi.FlowDataContent
 import scala.collection.JavaConverters._
 
 /**
-  * FIXME: This class is duplicated for all other Content Repository
-  * implementations using Quill. This is done as a workaround until
-  * the implementation of https://github.com/getquill/quill/issues/379
-  * which will allow for the possibility of choosing the target context
-  * at runtime. This means that the diff between all the implementations
-  * should be only the class name and the ''val ctx = ....'' line
-  *
   * Created by cmathew on 05.12.16.
   */
 
-class CassandraContentRepository extends ContentRepository {
+class SQLContentRepository extends ContentRepository {
 
-  val ctx = new CassandraSyncContext[SnakeCase]("cassandra")
+  val ctx = new QuillContext
 
 
   def getContentRecord(contentClaim: ContentClaim): Option[FlowDataContent] = {

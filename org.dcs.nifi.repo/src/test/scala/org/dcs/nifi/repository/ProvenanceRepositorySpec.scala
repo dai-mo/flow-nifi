@@ -27,11 +27,13 @@ class ProvenanceRepositorySpec extends ProvenanceRepositoryBehaviors {
   System.setProperty("nifi.properties.file.path", nifiPropertiesPath.toString)
 
 
-  "Flow Data Provenance using Cassandra" should "should be registered / queried correctly" in {
-    val cpr: ProvenanceRepository = new CassandraProvenanceRepository()
-    cpr.asInstanceOf[CassandraProvenanceRepository].purge()
+  "Flow Data Provenance" should "should be registered / queried correctly" in {
+    val cpr: ProvenanceRepository = new DCSProvenanceRepository()
+    cpr.asInstanceOf[ManageRepository].purge()
     validateProvenance(cpr)
+    cpr.asInstanceOf[ManageRepository].purge()
   }
+
 }
 
 

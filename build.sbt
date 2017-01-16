@@ -11,7 +11,7 @@ lazy val dcsnifi = (project in file(".")).
   settings(commonSettings: _*).
   settings(
     name := projectName
-  ).aggregate(servicesapi, services, processors, flow, repo)
+  ).aggregate(servicesapi, services, processors, flow)
 
 
 
@@ -69,7 +69,10 @@ lazy val processors =
     libraryDependencies ++= (Seq(dcsNifiServices % version.value % "provided") ++ processorsDependencies)
   )
 
-val defaultDatabase = "cassandra"
+val defaultDatabase = "postgres"
+// The target database can be provided when building the 'repo' project
+// by using the system property option '-Ddatabase=<target>'.
+// Possible targets include postgres, cassandra
 lazy val database = sys.props.getOrElse("database", default = defaultDatabase)
 
 lazy val repoProjectName = "org.dcs.nifi.repo"
@@ -80,13 +83,14 @@ lazy val repo =
     settings(commonSettings: _*).
     settings(
       name := repoProjectName,
-      moduleName := repoProjectName,
-      libraryDependencies ++= repoDependencies,
+      moduleName := repoProjectName + "." + database,
+      libraryDependencies ++= repoDependencies(database),
       unmanagedSourceDirectories in Compile ++= Seq(baseDirectory.value / "src" / database / "scala"),
       artifactName := { (sv: ScalaVersion, module: ModuleID, artifact: Artifact) =>
         artifact.name + "." + database + "-" + module.revision + "." + artifact.extension
       }
     )
+
 
 
 // ------- Versioning , Release Section --------
