@@ -13,13 +13,14 @@ import scala.collection.JavaConverters._
   * Created by cmathew on 11.01.17.
   */
 
-@Ignore // set to ignore until integration environment is setup
+
 object ProvenanceRepositorySpec {
   val Attributes = "attr1:value1,attr2:value2"
   val PreviousAttributes = "prevattr1:value1,prevattr2:value2"
   val UpdatedAttributes = "updatedvattr1:value1,updatedattr2:value2"
 }
 
+@Ignore // set to ignore until integration environment is setup
 class ProvenanceRepositorySpec extends ProvenanceRepositoryBehaviors {
 
   val nifiPropertiesPath: Path = Paths.get(this.getClass.getResource("nifi.properties").toURI)
