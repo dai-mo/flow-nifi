@@ -20,7 +20,7 @@ object ProvenanceRepositorySpec {
   val UpdatedAttributes = "updatedvattr1:value1,updatedattr2:value2"
 }
 
-//@Ignore // set to ignore until integration environment is setup
+@Ignore // set to ignore until integration environment is setup
 class ProvenanceRepositorySpec extends ProvenanceRepositoryBehaviors {
 
   val nifiPropertiesPath: Path = Paths.get(this.getClass.getResource("nifi.properties").toURI)

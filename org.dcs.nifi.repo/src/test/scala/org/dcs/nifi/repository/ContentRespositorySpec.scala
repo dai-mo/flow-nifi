@@ -3,11 +3,12 @@ package org.dcs.nifi.repository
 import java.nio.charset.StandardCharsets
 
 import org.apache.commons.io.IOUtils
+import org.scalatest.Ignore
 
 /**
   * Created by cmathew on 08.12.16.
   */
-//@Ignore // set to ignore until integration environment is setup
+@Ignore // set to ignore until integration environment is setup
 class ContentRespositorySpec extends ContentRespositoryBehaviours {
 
   "Content Repository using Cassandra" should "be valid for every stage in processor content lifecycle" in {
