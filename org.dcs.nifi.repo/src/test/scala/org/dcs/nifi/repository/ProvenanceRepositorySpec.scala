@@ -9,6 +9,7 @@ import org.dcs.nifi.{FlowDataProvenance, FlowProvenanceEventRecord}
 import org.scalatest.Ignore
 
 import scala.collection.JavaConverters._
+
 /**
   * Created by cmathew on 11.01.17.
   */
@@ -72,8 +73,7 @@ trait ProvenanceRepositoryBehaviors extends RepoUnitSpec {
     )
   }
   def validateProvenance(proveRepo: ProvenanceRepository) = {
-    val maxEventId = proveRepo.getMaxEventId()
-    val startEventId: Long = if(maxEventId == null) 0L else maxEventId
+
 
     val eventType = ProvenanceEventType.CONTENT_MODIFIED
     var componentId = UUID.randomUUID().toString
@@ -87,13 +87,13 @@ trait ProvenanceRepositoryBehaviors extends RepoUnitSpec {
     var per: ProvenanceEventRecord = fdp.toProvenanceEventRecord()
     proveRepo.registerEvent(per)
 
-    val eventId1 = proveRepo.getMaxEventId
-    assert(eventId1 == startEventId + 1)
+    val maxEventId = proveRepo.getMaxEventId()
+    val startEventId: Long = if(maxEventId == null) 0L else maxEventId
 
 
-    val registerdPer = proveRepo.getEvent(eventId1)
+    val registerdPer = proveRepo.getEvent(startEventId)
     val registeredFdp = FlowProvenanceEventRecord.toFlowDataProvenance(registerdPer, None)
-    assert(registeredFdp.eventId == eventId1)
+    assert(registeredFdp.eventId == startEventId)
     assert(registeredFdp.attributes == Attributes)
     assert(registeredFdp.previousAttributes == PreviousAttributes)
     assert(registeredFdp.updatedAttributes == UpdatedAttributes)
@@ -112,14 +112,14 @@ trait ProvenanceRepositoryBehaviors extends RepoUnitSpec {
     per = fdp.toProvenanceEventRecord()
     proveRepo.registerEvent(per)
 
-    val eventId2 = proveRepo.getMaxEventId
-    assert(eventId2 == startEventId + 2)
+    val eventId1 = proveRepo.getMaxEventId
+    assert(eventId1 == startEventId + 1)
 
-    val registerdPers = proveRepo.getEvents(eventId2 - 1, 2, null)
+    val registerdPers = proveRepo.getEvents(eventId1 - 1, 2, null)
 
     val registeredFdps = registerdPers.asScala.map(FlowProvenanceEventRecord.toFlowDataProvenance(_, None))
-    assert(registeredFdps.head.eventId == eventId1)
-    assert(registeredFdps.tail.head.eventId == eventId2)
+    assert(registeredFdps.head.eventId == startEventId)
+    assert(registeredFdps.tail.head.eventId == eventId1)
 
     val searchQuery = new Query(UUID.randomUUID().toString)
     searchQuery.setMaxResults(2)
@@ -140,7 +140,7 @@ trait ProvenanceRepositoryBehaviors extends RepoUnitSpec {
     qs = proveRepo.retrieveQuerySubmission(qs.getQueryIdentifier, null)
     events = qs.getResult.getMatchingEvents
     assert(events.size == 1)
-    assert(events.get(0).getEventId == eventId2)
+    assert(events.get(0).getEventId == eventId1)
 
     val relationshipIdSearchTerm = new SearchTerm() {
       override def getValue: String = relationship
@@ -152,8 +152,8 @@ trait ProvenanceRepositoryBehaviors extends RepoUnitSpec {
     qs = proveRepo.retrieveQuerySubmission(qs.getQueryIdentifier, null)
     events = qs.getResult.getMatchingEvents
     assert(events.size == 2)
-    assert(events.get(0).getEventId == eventId1)
-    assert(events.get(1).getEventId == eventId2)
+    assert(events.get(0).getEventId == startEventId)
+    assert(events.get(1).getEventId == eventId1)
 
 
   }

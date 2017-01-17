@@ -23,7 +23,7 @@ import scala.collection.JavaConverters._
   * Created by cmathew on 13.12.16.
   */
 
-object SQLProvenanceRepository {
+object BaseProvenanceRepository {
   val QueryMap = new ConcurrentHashMap[String, Query]()
 }
 
@@ -31,12 +31,10 @@ trait ManageRepository {
   def purge(): Unit
 }
 
-class SQLProvenanceRepository extends ProvenanceRepository with ManageRepository {
+abstract class BaseProvenanceRepository extends ProvenanceRepository with ManageRepository {
 
 
   protected val ctx = new QuillContext
-
-  private val eventIdIncrementor = new EventIdIncrementor
 
   private val properties: NiFiProperties = NiFiProperties.getInstance()
 
@@ -45,8 +43,6 @@ class SQLProvenanceRepository extends ProvenanceRepository with ManageRepository
   private val searchableAttributes: util.List[SearchableField] =
     SearchableFieldParser.extractSearchableFields(properties.getProperty(NiFiProperties.PROVENANCE_INDEXED_ATTRIBUTES), false)
 
-  private val ProvenanceEventName = "provenance_event_id"
-
 
   override def getSearchableFields: util.List[SearchableField] = searchableFields
 
@@ -54,7 +50,7 @@ class SQLProvenanceRepository extends ProvenanceRepository with ManageRepository
     throw new UnsupportedOperationException()
 
   override def retrieveQuerySubmission(queryIdentifier: String, user: NiFiUser): QuerySubmission = {
-    val searchQuery = SQLProvenanceRepository.QueryMap.get(queryIdentifier)
+    val searchQuery = BaseProvenanceRepository.QueryMap.get(queryIdentifier)
     if(searchQuery == null)
       null
     else {
@@ -70,7 +66,7 @@ class SQLProvenanceRepository extends ProvenanceRepository with ManageRepository
         searchQuery.setMinFileSize(maxFileSize.toString)
       }
       val qr = new DbQueryResult(records, "", 1L, 100)
-      SQLProvenanceRepository.QueryMap.remove(queryIdentifier)
+      BaseProvenanceRepository.QueryMap.remove(queryIdentifier)
       new DbQuerySubmission(searchQuery, "nifi_user", startDate, qr)
     }
   }
@@ -113,7 +109,7 @@ class SQLProvenanceRepository extends ProvenanceRepository with ManageRepository
 
     val startDate = Date.from(Instant.now())
     val qr = new DbQueryResult(Nil, "", 1L, 0)
-    SQLProvenanceRepository.QueryMap.put(searchQuery.getIdentifier, searchQuery)
+    BaseProvenanceRepository.QueryMap.put(searchQuery.getIdentifier, searchQuery)
     new DbQuerySubmission(searchQuery, "nifi_user", startDate, qr)
   }
 
@@ -167,42 +163,42 @@ class SQLProvenanceRepository extends ProvenanceRepository with ManageRepository
 
   override def registerEvent(event: ProvenanceEventRecord): Unit = {
     import ctx._
-    val nextEventId = eventIdIncrementor.nextEventId()
-    val fdp: FlowDataProvenance = FlowProvenanceEventRecord.toFlowDataProvenance(event, Some(nextEventId))
 
-    val eventInsert = quote(query[FlowDataProvenance].insert(lift(fdp)))
+    val fdp: FlowDataProvenance = FlowProvenanceEventRecord.toFlowDataProvenance(event, Some(0))
+
+    val eventInsert = quote(query[FlowDataProvenance].insert(_.id -> lift(fdp.id),
+      _.eventTime -> lift(fdp.eventTime),
+      _.flowFileEntryDate -> lift(fdp.flowFileEntryDate),
+      _.lineageStartEntryDate -> lift(fdp.lineageStartEntryDate),
+      _.fileSize -> lift(fdp.fileSize),
+      _.previousFileSize -> lift(fdp.previousFileSize),
+      _.eventDuration -> lift(fdp.eventDuration),
+      _.eventType -> lift(fdp.eventType),
+      _.attributes -> lift(fdp.attributes),
+      _.previousAttributes -> lift(fdp.previousAttributes),
+      _.updatedAttributes -> lift(fdp.updatedAttributes),
+      _.componentId -> lift(fdp.componentId),
+      _.componentType -> lift(fdp.componentType),
+      _.transitUri -> lift(fdp.transitUri),
+      _.sourceSystemFlowFileIdentifier -> lift(fdp.sourceSystemFlowFileIdentifier),
+      _.flowFileUuid -> lift(fdp.flowFileUuid),
+      _.parentUuids -> lift(fdp.parentUuids),
+      _.childUuids -> lift(fdp.childUuids),
+      _.alternateIdentifierUri -> lift(fdp.alternateIdentifierUri),
+      _.details -> lift(fdp.details),
+      _.relationship -> lift(fdp.relationship),
+      _.sourceQueueIdentifier -> lift(fdp.sourceQueueIdentifier),
+      _.contentClaimIdentifier -> lift(fdp.contentClaimIdentifier),
+      _.previousContentClaimIdentifier -> lift(fdp.previousContentClaimIdentifier)))
     ctx.run(eventInsert)
   }
 
-
-
-  class EventIdIncrementor {
-    // FIXME: Not efficient, but since Nifi uses incremental ids this is required
-    def nextEventId(): Double = synchronized {
-      import ctx._
-
-      val nextEventIdUpdate = quote(query[FlowId].filter(_.name == lift(ProvenanceEventName)).update(fdp => fdp.latestId -> (fdp.latestId + 1)))
-      ctx.run(nextEventIdUpdate)
-      val latestEventIdQuery = quote(query[FlowId].filter(fid => fid.name == lift(ProvenanceEventName)))
-      val latestEventId = ctx.run(latestEventIdQuery).head.latestId
-      latestEventId
-    }
-  }
 
   override def registerEvents(events: Iterable[ProvenanceEventRecord]): Unit = {
     events.asScala.foreach(registerEvent)
   }
 
-  override def getMaxEventId: java.lang.Long = {
-    import ctx._
-
-    val latestEventIdQuery = quote(query[FlowId].filter(fid => fid.name == lift(ProvenanceEventName)))
-    val latestEventId = ctx.run(latestEventIdQuery)
-    if(latestEventId.isEmpty)
-      null
-    else
-      latestEventId.head.latestId.toLong
-  }
+  def getMaxEventId: java.lang.Long
 
   override def getEvents(firstRecordId: Long, maxRecords: Int): util.List[ProvenanceEventRecord] = getEvents(firstRecordId, maxRecords, null)
 
@@ -221,8 +217,6 @@ class SQLProvenanceRepository extends ProvenanceRepository with ManageRepository
     }
     ctx.run(provenancePurge)
 
-    val nextEventIdUpdate = quote(query[FlowId].filter(_.name == lift(ProvenanceEventName)).update(fdp => fdp.latestId -> 0))
-    ctx.run(nextEventIdUpdate)
   }
 }
 

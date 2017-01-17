@@ -15,7 +15,7 @@ import scala.collection.JavaConverters._
   * Created by cmathew on 05.12.16.
   */
 
-class SQLContentRepository extends ContentRepository {
+class BaseContentRepository extends ContentRepository {
 
   val ctx = new QuillContext
 

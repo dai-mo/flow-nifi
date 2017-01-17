@@ -20,7 +20,7 @@ class ContentRespositorySpec extends ContentRespositoryBehaviours {
 
 trait ContentRespositoryBehaviours extends RepoUnitSpec {
 
-  def validateContent(cr: SQLContentRepository) = {
+  def validateContent(cr: BaseContentRepository) = {
 
     val data = "Sample Flow Data Content".getBytes(StandardCharsets.UTF_8)
     val claim = cr.create(true)
