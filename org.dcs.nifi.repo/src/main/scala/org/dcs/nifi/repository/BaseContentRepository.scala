@@ -17,7 +17,7 @@ import scala.collection.JavaConverters._
 
 class BaseContentRepository extends ContentRepository {
 
-  val ctx = new QuillContext
+  val ctx = QuillContext
 
 
   def getContentRecord(contentClaim: ContentClaim): Option[FlowDataContent] = {

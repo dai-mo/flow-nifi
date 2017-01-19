@@ -21,6 +21,7 @@ object Dependencies {
   lazy val dataStaxDriverVersion  = "3.1.0"
   lazy val postgresDriverVersion  = "9.4.1208"
   lazy val mysqlConnectorVersion  = "5.1.38"
+  lazy val flywayVersion          = "4.0.3"
   lazy val apacheCommonsVersion   = "1.3.2"
 
 
@@ -57,6 +58,7 @@ object Dependencies {
   val datastaxDriver  = "com.datastax.cassandra"           % "cassandra-driver-core"              % dataStaxDriverVersion
   val postgresDriver  = "org.postgresql"                   % "postgresql"                         % postgresDriverVersion
   val mysqlDriver     = "mysql"                            % "mysql-connector-java"               % mysqlConnectorVersion
+  val flyway          = "org.flywaydb"                     % "flyway-core"                        % flywayVersion
 
   val playWs          = "com.typesafe.play"                %% "play-ws"                           % playVersion
   val mockitoCore     = "org.mockito"                      % "mockito-core"                       % mockitoVersion
@@ -131,6 +133,7 @@ object Dependencies {
     //quillJdbc,
     //datastaxDriver,
     //mysqlDriver,
+    flyway,
     apacheCommons,
     scalaLib,
 
