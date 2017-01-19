@@ -34,7 +34,7 @@ trait ManageRepository {
 abstract class BaseProvenanceRepository extends ProvenanceRepository with ManageRepository {
 
 
-  protected val ctx = new QuillContext
+  protected val ctx = QuillContext
 
   private val properties: NiFiProperties = NiFiProperties.getInstance()
 

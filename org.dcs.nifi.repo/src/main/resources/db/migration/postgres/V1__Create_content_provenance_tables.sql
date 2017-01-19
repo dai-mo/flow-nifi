@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS flow_data_content (
 );
 CREATE TABLE IF NOT EXISTS flow_data_provenance (
   id varchar PRIMARY KEY,
-  event_id double precision,
+  event_id bigserial,
   event_time double precision,
   flow_file_entry_date double precision,
   lineage_start_entry_date double precision,
@@ -32,15 +32,8 @@ CREATE TABLE IF NOT EXISTS flow_data_provenance (
   previous_content_claim_identifier varchar
 );
 
-CREATE INDEX IF NOT EXISTS event_id ON flow_data_provenance (event_id);
-CREATE INDEX IF NOT EXISTS event_type ON flow_data_provenance (event_type);
-CREATE INDEX IF NOT EXISTS component_id ON flow_data_provenance (component_id);
-CREATE INDEX IF NOT EXISTS flow_file_uuid ON flow_data_provenance (flow_file_uuid);
-CREATE INDEX IF NOT EXISTS relationship ON flow_data_provenance (relationship);
-
-CREATE TABLE IF NOT EXISTS flow_id (
-  name varchar PRIMARY KEY,
-  latest_id int
-);
-
-INSERT INTO flow_id VALUES('provenance_event_id', 0)
+CREATE INDEX event_id ON flow_data_provenance (event_id);
+CREATE INDEX event_type ON flow_data_provenance (event_type);
+CREATE INDEX component_id ON flow_data_provenance (component_id);
+CREATE INDEX flow_file_uuid ON flow_data_provenance (flow_file_uuid);
+CREATE INDEX relationship ON flow_data_provenance (relationship);
