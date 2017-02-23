@@ -7,7 +7,7 @@ import java.util
 import org.apache.nifi.controller.repository.ContentRepository
 import org.apache.nifi.controller.repository.claim.{ContentClaim, ResourceClaimManager}
 import org.apache.nifi.stream.io.StreamUtils
-import org.dcs.nifi.FlowDataContent
+import org.dcs.api.data.FlowDataContent
 
 import scala.collection.JavaConverters._
 
@@ -143,7 +143,10 @@ class BaseContentRepository extends ContentRepository {
     import ctx._
 
     val contentClone = quote(query[FlowDataContent]
-      .insert(lift(FlowDataContent(contentClaim, content.get.data))))
+      .insert(lift(FlowDataContent(contentClaim.getResourceClaim.getId,
+        0,
+        contentClaim.getTimestamp,
+        content.get.data))))
     ctx.run(contentClone)
 
     contentClaim.setLength(content.get.data.length)
@@ -197,7 +200,10 @@ class BaseContentRepository extends ContentRepository {
     import ctx._
 
     val contentCreate = quote(query[FlowDataContent]
-      .insert(lift(FlowDataContent(contentClaim, Array.empty[Byte]))))
+      .insert(lift(FlowDataContent(contentClaim.getResourceClaim.getId,
+        0,
+        contentClaim.getTimestamp,
+        Array.empty[Byte]))))
     ctx.run(contentCreate)
 
     contentClaim

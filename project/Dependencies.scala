@@ -133,6 +133,8 @@ object Dependencies {
     //quillJdbc,
     //datastaxDriver,
     //mysqlDriver,
+    dcsApi,
+    dcsCommons,
     flyway,
     apacheCommons,
     scalaLib,
