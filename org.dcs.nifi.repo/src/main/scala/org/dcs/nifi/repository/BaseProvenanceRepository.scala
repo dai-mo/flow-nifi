@@ -126,7 +126,7 @@ abstract class BaseProvenanceRepository extends ProvenanceRepository with Manage
 
     var records: List[ProvenanceEventRecord] = Nil
 
-    if(searchableIds.isEmpty()) {
+    if(searchableIds.isEmpty) {
       val allRecords = ctx.run(quote {
         query[FlowDataProvenance]
           .take(lift(searchQuery.getMaxResults))
