@@ -1,6 +1,6 @@
 package org.dcs.nifi.repository
 
-import org.dcs.nifi.FlowDataProvenance
+import org.dcs.api.data.FlowDataProvenance
 
 /**
   * Created by cmathew on 16.01.17.

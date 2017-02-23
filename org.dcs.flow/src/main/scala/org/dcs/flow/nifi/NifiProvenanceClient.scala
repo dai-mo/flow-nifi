@@ -79,18 +79,21 @@ trait NifiProvenanceClient extends ProvenanceApiService with JerseyRestClient {
       }
 
   def provenanceQueryResult(provenanceEntity: ProvenanceEntity): Future[ProvenanceEntity] =
-    provenanceQueryRepeat(provenanceEntity, ProvenanceQueryMaxTries)
-      .map { response =>
-        try {
-          if (!response.getProvenance.isFinished)
-            throw new RESTException(ErrorConstants.DCS301)
-          else
-            response
-        } finally {
-          deleteAsJson(path = ProvenancePath + "/" + provenanceEntity.getProvenance.getId)
-          logger.warn("Executing DELETE on " + ProvenancePath + "/" + provenanceEntity.getProvenance.getId)
+    if(provenanceEntity.getProvenance.isFinished)
+      Future(provenanceEntity)
+    else
+      provenanceQueryRepeat(provenanceEntity, ProvenanceQueryMaxTries)
+        .map { response =>
+          try {
+            if (!response.getProvenance.isFinished)
+              throw new RESTException(ErrorConstants.DCS301)
+            else
+              response
+          } finally {
+            deleteAsJson(path = ProvenancePath + "/" + provenanceEntity.getProvenance.getId)
+            logger.warn("Executing DELETE on " + ProvenancePath + "/" + provenanceEntity.getProvenance.getId)
+          }
         }
-      }
 
   def provenanceQueryRepeat(provenanceEntity: ProvenanceEntity, triesLeft: Int): Future[ProvenanceEntity] = triesLeft match {
     case 0 => Future.successful(provenanceEntity)
@@ -142,7 +145,10 @@ trait NifiProvenanceClient extends ProvenanceApiService with JerseyRestClient {
         Provenance(provenanceEvent.getId,
           provenanceResult.getProvenance.getId,
           provenanceEvent.getClusterNodeId,
-          content.deSerToJsonString(schema, schema))
+          Array[Byte](),
+          content.deSerToJsonString(schema, schema),
+          "",
+          provenanceEvent.getEventTime)
       }
       }
   }

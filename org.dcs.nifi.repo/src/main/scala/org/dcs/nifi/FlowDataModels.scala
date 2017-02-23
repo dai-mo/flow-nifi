@@ -6,83 +6,18 @@ package org.dcs.nifi
 
 
 import java.util
-import java.util.{Date, UUID}
+import java.util.UUID
 
 import org.apache.nifi.provenance.search.Query
 import org.apache.nifi.provenance.{ProvenanceEventRecord, ProvenanceEventType, SearchableFields}
-import org.dcs.nifi.repository.DcsContentClaim
+import org.dcs.api.data.FlowDataProvenance
 
 import scala.collection.JavaConverters._
 
-case class AutoIds(name: String, id: Double) {
-  override def equals(that: Any): Boolean = that match {
-    case AutoIds(thatName, thatId) =>
-      thatName == this.name
-    case _ => false
-  }
-}
 
-object FlowDataContent {
+object FlowProvenanceEventRecord  {
+  import org.dcs.api.data.FlowData._
 
-  def apply(claim: DcsContentClaim, data: Array[Byte]): FlowDataContent = {
-    new FlowDataContent(claim.getResourceClaim.getId, 0, claim.getTimestamp, data)
-  }
-}
-
-case class FlowDataContent(id: String, claimCount: Int, timestamp: Date, data: Array[Byte]) {
-  override def equals(that: Any): Boolean = that match {
-    case FlowDataContent(thatId, thatClaimCount, thatTimestamp, thatData) =>
-      thatId == this.id &&
-        thatClaimCount == this.claimCount &&
-        thatTimestamp == this.timestamp &&
-        thatData.deep == this.data.deep
-    case _ => false
-  }
-}
-
-
-case class FlowDataProvenance(id: String,
-                              eventId: Double,
-                              eventTime: Double,
-                              flowFileEntryDate: Double,
-                              lineageStartEntryDate: Double,
-                              fileSize: Double,
-                              previousFileSize: Double,
-                              eventDuration: Double,
-                              eventType: String,
-                              attributes: String,
-                              previousAttributes:String,
-                              updatedAttributes: String,
-                              componentId: String,
-                              componentType: String,
-                              transitUri: String,
-                              sourceSystemFlowFileIdentifier: String,
-                              flowFileUuid: String,
-                              parentUuids: String,
-                              childUuids: String,
-                              alternateIdentifierUri: String,
-                              details: String,
-                              relationship: String,
-                              sourceQueueIdentifier: String,
-                              contentClaimIdentifier: String,
-                              previousContentClaimIdentifier: String) {
-  override def equals(that: Any): Boolean = {
-    if(that == null)
-      false
-    else if(that.isInstanceOf[FlowDataProvenance]) {
-      val thatFdp = that.asInstanceOf[FlowDataProvenance]
-      this.eventId == thatFdp.eventId
-    } else
-      false
-  }
-
-  def toProvenanceEventRecord(): ProvenanceEventRecord = {
-    new FlowProvenanceEventRecord(this)
-  }
-
-}
-
-object FlowProvenanceEventRecord {
   def toFlowDataProvenance(per: ProvenanceEventRecord, eventId: Option[Double]): FlowDataProvenance = {
     val eid = eventId.getOrElse(per.getEventId.toDouble)
     val previousFileSize = if(per.getPreviousFileSize == null) 0 else per.getPreviousFileSize.toDouble
@@ -95,16 +30,16 @@ object FlowProvenanceEventRecord {
       previousFileSize,
       per.getEventDuration,
       per.getEventType.name(),
-      mapToString(per.getAttributes),
-      mapToString(per.getPreviousAttributes),
-      mapToString(per.getUpdatedAttributes),
+      mapToString(per.getAttributes.asScala.toMap),
+      mapToString(per.getPreviousAttributes.asScala.toMap),
+      mapToString(per.getUpdatedAttributes.asScala.toMap),
       per.getComponentId,
       per.getComponentType,
       Option(per.getTransitUri).getOrElse(""),
       Option(per.getSourceSystemFlowFileIdentifier).getOrElse(""),
       per.getFlowFileUuid,
-      listToString(per.getParentUuids),
-      listToString(per.getChildUuids),
+      listToString(per.getParentUuids.asScala.toList),
+      listToString(per.getChildUuids.asScala.toList),
       Option(per.getAlternateIdentifierUri).getOrElse(""),
       Option(per.getDetails).getOrElse(""),
       Option(per.getRelationship).getOrElse(""),
@@ -113,51 +48,31 @@ object FlowProvenanceEventRecord {
       Option(per.getPreviousContentClaimIdentifier).getOrElse(""))
   }
 
-  def mapToString[K, V](map: util.Map[K, V]): String = {
-    if(map == null || map.isEmpty)
-      ""
-    else
-      map.asScala.toList.map(x => x._1 + ":" + x._2).mkString(",")
-  }
 
-  def listToString[T](list: util.List[T]): String = {
-    if(list == null || list.isEmpty)
-      ""
-    else
-      list.asScala.mkString(",")
-  }
+  def apply(fdp: FlowDataProvenance): ProvenanceEventRecord =
+    new FlowProvenanceEventRecord(fdp)
 }
 
 class FlowProvenanceEventRecord(flowDataProvenance: FlowDataProvenance) extends ProvenanceEventRecord {
+  import org.dcs.api.data.FlowData._
+
   override def getRelationship: String = flowDataProvenance.relationship
 
   override def getDetails: String = flowDataProvenance.details
 
   override def getAttributes: util.Map[String, String] =
-    if(flowDataProvenance.attributes.isEmpty)
-      new util.HashMap[String, String]
-    else
-      flowDataProvenance.attributes.split(",").map(a => {
-        val attr = a.split(":")
-        attr.head -> attr.tail.head
-      }).toMap.asJava
-
+    stringToMap(flowDataProvenance.attributes).asJava
 
   override def getParentUuids: util.List[String] =
-    if(flowDataProvenance.parentUuids.isEmpty)
-      new util.ArrayList[String]
-    else
-      flowDataProvenance.parentUuids.split(",").toList.asJava
+    stringToList(flowDataProvenance.parentUuids).asJava
+
 
   override def getFlowFileEntryDate: Long = flowDataProvenance.flowFileEntryDate.toLong
 
   override def getAlternateIdentifierUri: String = flowDataProvenance.alternateIdentifierUri
 
   override def getChildUuids: util.List[String] =
-    if(flowDataProvenance.childUuids.isEmpty)
-      new util.ArrayList[String]
-    else
-      flowDataProvenance.childUuids.split(",").toList.asJava
+    stringToList(flowDataProvenance.childUuids).asJava
 
   override def getContentClaimContainer: String = ""
 
@@ -196,13 +111,7 @@ class FlowProvenanceEventRecord(flowDataProvenance: FlowDataProvenance) extends 
   override def getPreviousFileSize: java.lang.Long = flowDataProvenance.previousFileSize.toLong
 
   override def getPreviousAttributes: util.Map[String, String] =
-    if(flowDataProvenance.previousAttributes.isEmpty)
-      new util.HashMap[String, String]
-    else
-      flowDataProvenance.previousAttributes.split(",").map(a => {
-        val attr = a.split(":")
-        attr.head -> attr.tail.head
-      }).toMap.asJava
+    stringToMap(flowDataProvenance.previousAttributes).asJava
 
   override def getSourceSystemFlowFileIdentifier: String = flowDataProvenance.sourceSystemFlowFileIdentifier
 
@@ -217,13 +126,7 @@ class FlowProvenanceEventRecord(flowDataProvenance: FlowDataProvenance) extends 
   override def getPreviousContentClaimOffset: java.lang.Long = 0L
 
   override def getUpdatedAttributes: util.Map[String, String] =
-    if(flowDataProvenance.updatedAttributes.isEmpty)
-      new util.HashMap[String, String]
-    else
-      flowDataProvenance.updatedAttributes.split(",").map(a => {
-        val attr = a.split(":")
-        attr.head -> attr.tail.head
-      }).toMap.asJava
+    stringToMap(flowDataProvenance.updatedAttributes).asJava
 
   override def getPreviousContentClaimContainer: String = ""
 
@@ -262,5 +165,5 @@ case class SearchableIds(var eventType: Option[String] = None,
                          var flowFileUuid: Option[String] = None,
                          var componentId: Option[String] = None,
                          var relationship: Option[String] = None) {
-  def isEmpty(): Boolean = eventType.isEmpty && flowFileUuid.isEmpty && componentId.isEmpty && relationship.isEmpty
+  def isEmpty: Boolean = eventType.isEmpty && flowFileUuid.isEmpty && componentId.isEmpty && relationship.isEmpty
 }

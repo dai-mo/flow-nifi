@@ -14,6 +14,7 @@ import org.apache.nifi.provenance._
 import org.apache.nifi.provenance.lineage.ComputeLineageSubmission
 import org.apache.nifi.provenance.search.{Query, QueryResult, QuerySubmission, SearchableField}
 import org.apache.nifi.util.NiFiProperties
+import org.dcs.api.data.FlowDataProvenance
 import org.dcs.nifi._
 
 import scala.collection.JavaConverters._
@@ -92,7 +93,7 @@ abstract class BaseProvenanceRepository extends ProvenanceRepository with Manage
       fdp.eventId >= lift(firstRecordId.toDouble) && fdp.eventId < lift(firstRecordId.toDouble + maxRecords)
     ))
 
-    ctx.run(provQuery).map(_.toProvenanceEventRecord()).sortBy(_.getEventId).asJava
+    ctx.run(provQuery).map(FlowProvenanceEventRecord(_)).sortBy(_.getEventId).asJava
   }
 
   override def submitExpandChildren(eventId: Long, user: NiFiUser): ComputeLineageSubmission =
@@ -102,7 +103,7 @@ abstract class BaseProvenanceRepository extends ProvenanceRepository with Manage
     import ctx._
 
     val provQuery = quote(query[FlowDataProvenance].filter(fdp => fdp.eventId == lift(id.toDouble)))
-    ctx.run(provQuery).map(_.toProvenanceEventRecord()).head
+    ctx.run(provQuery).map(FlowProvenanceEventRecord(_)).head
   }
 
   override def submitQuery(searchQuery: Query, user: NiFiUser): QuerySubmission = {
@@ -125,36 +126,36 @@ abstract class BaseProvenanceRepository extends ProvenanceRepository with Manage
 
     var records: List[ProvenanceEventRecord] = Nil
 
-    if(searchableIds.isEmpty()) {
+    if(searchableIds.isEmpty) {
       val allRecords = ctx.run(quote {
         query[FlowDataProvenance]
           .take(lift(searchQuery.getMaxResults))
       })
-      records = allRecords.map(_.toProvenanceEventRecord()) ++ records
+      records = allRecords.map(FlowProvenanceEventRecord(_)) ++ records
     } else {
       if (searchableIds.eventType.isDefined)
         records = ctx.run(quote {
           withFilter((fdp: FlowDataProvenance) => fdp.eventType == lift(searchableIds.eventType.get))
             .take(lift(searchQuery.getMaxResults))
-        }).map(_.toProvenanceEventRecord()) ++ records
+        }).map(FlowProvenanceEventRecord(_)) ++ records
 
       if (searchableIds.flowFileUuid.isDefined)
         records = ctx.run(quote {
           withFilter((fdp: FlowDataProvenance) => fdp.flowFileUuid == lift(searchableIds.flowFileUuid.get))
             .take(lift(searchQuery.getMaxResults))
-        }).map(_.toProvenanceEventRecord()) ++ records
+        }).map(FlowProvenanceEventRecord(_)) ++ records
 
       if (searchableIds.componentId.isDefined)
         records = ctx.run(quote {
           withFilter((fdp: FlowDataProvenance) => fdp.componentId == lift(searchableIds.componentId.get))
             .take(lift(searchQuery.getMaxResults))
-        }).map(_.toProvenanceEventRecord()) ++ records
+        }).map(FlowProvenanceEventRecord(_)) ++ records
 
       if (searchableIds.relationship.isDefined)
         records = ctx.run(quote {
           withFilter((fdp: FlowDataProvenance) => fdp.relationship == lift(searchableIds.relationship.get))
             .take(lift(searchQuery.getMaxResults))
-        }).map(_.toProvenanceEventRecord()) ++ records
+        }).map(FlowProvenanceEventRecord(_)) ++ records
     }
     records.groupBy(_.getEventId).map(_._2.head).toList.sortBy(_.getEventId).take(searchQuery.getMaxResults)
   }

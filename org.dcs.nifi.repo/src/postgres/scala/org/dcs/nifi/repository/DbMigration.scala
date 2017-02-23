@@ -1,5 +1,6 @@
 package org.dcs.nifi.repository
 
+import org.dcs.commons.config.DbConfig
 import org.flywaydb.core.Flyway
 import org.postgresql.jdbc3.Jdbc3PoolingDataSource
 
@@ -7,7 +8,7 @@ import org.postgresql.jdbc3.Jdbc3PoolingDataSource
   * Created by cmathew on 19.01.17.
   */
 object DbMigration {
-  import DbConfig._
+  import org.dcs.commons.config.DbConfig._
 
   def migratePostgres(): Unit = {
     // Create the Flyway instance
