@@ -69,11 +69,6 @@ lazy val processors =
     libraryDependencies ++= (Seq(dcsNifiServices % version.value % "provided") ++ processorsDependencies)
   )
 
-val defaultDatabase = "postgres"
-// The target database can be provided when building the 'repo' project
-// by using the system property option '-Ddatabase=<target>'.
-// Possible targets include postgres, cassandra
-lazy val database = sys.props.getOrElse("database", default = defaultDatabase)
 
 lazy val repoProjectName = "org.dcs.nifi.repo"
 lazy val repoProjectID   = "repo"
@@ -83,12 +78,8 @@ lazy val repo =
     settings(commonSettings: _*).
     settings(
       name := repoProjectName,
-      moduleName := repoProjectName + "." + database,
-      libraryDependencies ++= repoDependencies(database),
-      unmanagedSourceDirectories in Compile ++= Seq(baseDirectory.value / "src" / database / "scala"),
-      artifactName := { (sv: ScalaVersion, module: ModuleID, artifact: Artifact) =>
-        artifact.name + "." + database + "-" + module.revision + "." + artifact.extension
-      }
+      moduleName := repoProjectName,
+      libraryDependencies ++= repoDependencies
     )
 
 

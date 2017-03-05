@@ -9,6 +9,7 @@ object Dependencies {
   lazy val dcsApiVersion          = "0.3.0-SNAPSHOT"
   lazy val dcsRemoteVersion       = "0.3.0-SNAPSHOT"
   lazy val dcsCoreVersion         = "0.2.0-SNAPSHOT"
+  lazy val dcsDataVersion         = "0.2.0-SNAPSHOT"
   lazy val playVersion			      = "2.5.3"
   lazy val nifiVersion			      = "1.0.0-BETA"
   lazy val slf4jVersion			      = "1.7.12"
@@ -37,6 +38,8 @@ object Dependencies {
   val dcsCommons      = "org.dcs"                          % "org.dcs.commons"                    % dcsCommonsVersion
   val dcsApi          = "org.dcs"                          % "org.dcs.api"                        % dcsApiVersion
   val dcsRemote    		= "org.dcs"                          % "org.dcs.remote"                     % dcsRemoteVersion
+  val dcsCore         = "org.dcs"                          % "org.dcs.core"                       % dcsCoreVersion
+  val dcsData         = "org.dcs"                          % "org.dcs.data"                       % dcsDataVersion
 
   val apacheCommons   = "org.apache.commons"               % "commons-io"                         % apacheCommonsVersion
   val nifiApi         = "org.apache.nifi"                  % "nifi-api"                    				% nifiVersion
@@ -52,7 +55,7 @@ object Dependencies {
   val slf4jSimple     = "org.slf4j"                  			 % "slf4j-simple"                				% slf4jVersion
   val logbackCore     = "ch.qos.logback"                   % "logback-core"                       % logbackVersion
   val logbackClassic  =	"ch.qos.logback"                   % "logback-classic"                    % logbackVersion
-  val dcsCore         = "org.dcs"                          % "org.dcs.core"                       % dcsCoreVersion
+
   val quillCassandra  = "io.getquill"                      %% "quill-cassandra"                   % quillVersion
   val quillJdbc       = "io.getquill"                      %% "quill-jdbc"                        % quillJdbcVersion
   val datastaxDriver  = "com.datastax.cassandra"           % "cassandra-driver-core"              % dataStaxDriverVersion
@@ -128,13 +131,10 @@ object Dependencies {
   )
 
   // Collect Repo Dependencies
-  def repoDependencies(database: String) = Seq(
-    //quillCassandra,
-    //quillJdbc,
-    //datastaxDriver,
-    //mysqlDriver,
+  val repoDependencies = Seq(
     dcsApi,
     dcsCommons,
+    dcsData,
     flyway,
     apacheCommons,
     scalaLib,
@@ -149,11 +149,6 @@ object Dependencies {
     mockitoAll       % "test",
     scalaTest        % "test",
     junitInterface   % "test"
-  ) ++ quillDependecies(database)
+  )
 
-  def quillDependecies(database: String) = database match {
-    case "cassandra" => Seq(quillCassandra, datastaxDriver)
-    case "postgres" => Seq(quillJdbc, postgresDriver)
-    case _ => throw new IllegalStateException("Target DB " + database + " is not recognised. Should be one of postgres or cassandra")
-  }
 }

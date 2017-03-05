@@ -2,34 +2,30 @@ package org.dcs.nifi.repository
 
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream, InputStream, OutputStream}
 import java.nio.file.Path
+import java.sql.Timestamp
 import java.util
 
 import org.apache.nifi.controller.repository.ContentRepository
 import org.apache.nifi.controller.repository.claim.{ContentClaim, ResourceClaimManager}
 import org.apache.nifi.stream.io.StreamUtils
-import org.dcs.api.data.FlowDataContent
+//import org.dcs.api.data.FlowDataContent
+import org.dcs.data.IntermediateResultsAdapter
+import org.dcs.data.slick.Tables
 
 import scala.collection.JavaConverters._
+import scala.concurrent.Await
+import scala.concurrent.duration._
 
 /**
   * Created by cmathew on 05.12.16.
   */
 
-class BaseContentRepository extends ContentRepository {
+class BaseContentRepository(ira: IntermediateResultsAdapter) extends ContentRepository {
 
-  val ctx = QuillContext
+  private val timeout = 60 seconds
 
-
-  def getContentRecord(contentClaim: ContentClaim): Option[FlowDataContent] = {
-    import ctx._
-
-    val dataQuery = quote(query[FlowDataContent].filter(p => p.id == lift(contentClaim.getResourceClaim.getId)))
-    val result = ctx.run(dataQuery)
-
-    if(result.size > 1)
-      throw new IllegalStateException("More than one content record for given id " + contentClaim.getResourceClaim.getId)
-    result.headOption
-
+  def getContentRecord(contentClaim: ContentClaim): Option[Tables.FlowDataContentRow] = {
+    Await.result(ira.getContent(contentClaim.getResourceClaim.getId), timeout)
   }
 
 
@@ -49,7 +45,7 @@ class BaseContentRepository extends ContentRepository {
   override def exportTo(claim: ContentClaim, destination: OutputStream, offset: Long, length: Long): Long = throw new UnsupportedOperationException()
 
   override def shutdown(): Unit = {
-    ctx.close()
+    // FIXME: Add code to close connection
   }
 
   override def importFrom(content: Path, claim: ContentClaim): Long = throw new UnsupportedOperationException()
@@ -61,39 +57,11 @@ class BaseContentRepository extends ContentRepository {
   override def getContainerUsableSpace(containerName: String): Long = 0
 
   override def incrementClaimaintCount(claim: ContentClaim): Int = {
-    import ctx._
-
-    val content = getContentRecord(claim)
-    if (content.isDefined) {
-      val count = content.get.claimCount + 1
-
-      val claimCountUpdate = quote {
-        query[FlowDataContent]
-          .filter(p => p.id == lift(claim.getResourceClaim.getId))
-          .update(_.claimCount -> lift(count))
-      }
-      ctx.run(claimCountUpdate)
-      count
-    } else
-      0
+    Await.result(ira.incrementClaimaintCount(claim.getResourceClaim.getId), timeout).getOrElse(-1)
   }
 
   override def decrementClaimantCount(claim: ContentClaim): Int = {
-    import ctx._
-
-    val content = getContentRecord(claim)
-    if (content.isDefined) {
-      val count = content.get.claimCount - 1
-
-      val claimCountUpdate = quote {
-        query[FlowDataContent]
-          .filter(p => p.id == lift(claim.getResourceClaim.getId))
-          .update(_.claimCount -> lift(count))
-      }
-      ctx.run(claimCountUpdate)
-      count
-    } else
-      0
+    Await.result(ira.decrementClaimaintCount(claim.getResourceClaim.getId), timeout).getOrElse(-1)
   }
 
 
@@ -133,6 +101,7 @@ class BaseContentRepository extends ContentRepository {
 
   override def clone(original: ContentClaim, lossTolerant: Boolean): ContentClaim = {
     val content = getContentRecord(original)
+    val data = content.get.data.getOrElse(Array.empty[Byte])
 
     if(content.isEmpty)
       throw new IllegalStateException("Cannot clone content claim with no claim")
@@ -140,31 +109,24 @@ class BaseContentRepository extends ContentRepository {
     val resourceClaim = new DcsResourceClaim(lossTolerant)
     val contentClaim = new DcsContentClaim(resourceClaim)
 
-    import ctx._
+    Await.result(ira.createContent(Tables.FlowDataContentRow(contentClaim.getResourceClaim.getId,
+      Some(0),
+      Some(new Timestamp(contentClaim.getTimestamp.getTime)),
+      Some(data))),
+      timeout)
 
-    val contentClone = quote(query[FlowDataContent]
-      .insert(lift(FlowDataContent(contentClaim.getResourceClaim.getId,
-        0,
-        contentClaim.getTimestamp,
-        content.get.data))))
-    ctx.run(contentClone)
 
-    contentClaim.setLength(content.get.data.length)
+    contentClaim.setLength(data.length)
     contentClaim
   }
 
   override def initialize(claimManager: ResourceClaimManager): Unit = {}
 
   override def remove(claim: ContentClaim): Boolean = {
-    import ctx._
-
-    val contentDelete = quote {
-      query[FlowDataContent]
-        .filter(p => p.id == lift(claim.getResourceClaim.getId))
-        .delete
+    Await.result(ira.deleteContent(claim.getResourceClaim.getId), timeout) match {
+      case 0 => false
+      case 1 => true
     }
-    ctx.run(contentDelete)
-    true
   }
 
   override def write(claim: ContentClaim): OutputStream = {
@@ -177,14 +139,14 @@ class BaseContentRepository extends ContentRepository {
   }
 
   override def getClaimantCount(claim: ContentClaim): Int =
-    getContentRecord(claim).map(fdc => fdc.claimCount).getOrElse(0)
+    Await.result(ira.getClaimantCount(claim.getResourceClaim.getId), timeout).getOrElse(-1)
 
   override def read(claim: ContentClaim): InputStream = {
     val flowDataContent = getContentRecord(claim)
     if(flowDataContent.isEmpty)
       return new ByteArrayInputStream(Array.empty[Byte])
     else {
-      new ByteArrayInputStream(flowDataContent.get.data)
+      new ByteArrayInputStream(flowDataContent.get.data.getOrElse(Array.empty[Byte]))
     }
   }
 
@@ -197,26 +159,17 @@ class BaseContentRepository extends ContentRepository {
     val resourceClaim = new DcsResourceClaim(lossTolerant)
     val contentClaim = new DcsContentClaim(resourceClaim)
 
-    import ctx._
-
-    val contentCreate = quote(query[FlowDataContent]
-      .insert(lift(FlowDataContent(contentClaim.getResourceClaim.getId,
-        0,
-        contentClaim.getTimestamp,
-        Array.empty[Byte]))))
-    ctx.run(contentCreate)
+    Await.result(ira.createContent(Tables.FlowDataContentRow(contentClaim.getResourceClaim.getId,
+      Some(0),
+      Some(new Timestamp(contentClaim.getTimestamp.getTime)),
+      Some(Array.empty[Byte]))),
+      timeout)
 
     contentClaim
   }
 
   override def purge(): Unit = {
-    import ctx._
-
-    val contentPurge = quote {
-      query[FlowDataContent]
-        .delete
-    }
-    ctx.run(contentPurge)
+    Await.result(ira.purgeContent(), timeout)
   }
 
   class QuillOutputStream(claim: ContentClaim) extends OutputStream {
@@ -228,17 +181,8 @@ class BaseContentRepository extends ContentRepository {
 
     override def flush(): Unit = {
       out.flush()
-
-      import ctx._
-
       val bytes = out.toByteArray
-      val dataUpdate = quote {
-        query[FlowDataContent]
-          .filter(p => p.id == lift(claim.getResourceClaim.getId))
-          .update(_.data -> lift(bytes), _.claimCount -> 0)
-      }
-      ctx.run(dataUpdate)
-
+      Await.result(ira.updateDataContent(claim.getResourceClaim.getId, bytes), timeout)
       claim.asInstanceOf[DcsContentClaim].setLength(bytes.length)
     }
 
