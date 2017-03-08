@@ -1,1 +1,1 @@
-org.dcs.nifi.repository.DCSProvenanceRepository
+org.dcs.nifi.repository.SlickPostgresProvenanceRepository

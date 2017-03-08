@@ -14,10 +14,14 @@ import org.apache.nifi.provenance._
 import org.apache.nifi.provenance.lineage.ComputeLineageSubmission
 import org.apache.nifi.provenance.search.{Query, QueryResult, QuerySubmission, SearchableField}
 import org.apache.nifi.util.NiFiProperties
-import org.dcs.api.data.FlowDataProvenance
+import org.dcs.data.IntermediateResultsAdapter
+import org.dcs.data.slick.BigTables
 import org.dcs.nifi._
 
 import scala.collection.JavaConverters._
+import scala.concurrent.Await
+import scala.concurrent.duration._
+
 
 
 /**
@@ -32,10 +36,9 @@ trait ManageRepository {
   def purge(): Unit
 }
 
-abstract class BaseProvenanceRepository extends ProvenanceRepository with ManageRepository {
+class BaseProvenanceRepository(ira: IntermediateResultsAdapter) extends ProvenanceRepository with ManageRepository {
 
-
-  protected val ctx = QuillContext
+  private val timeout = 60 seconds
 
   private val properties: NiFiProperties = NiFiProperties.getInstance()
 
@@ -87,23 +90,16 @@ abstract class BaseProvenanceRepository extends ProvenanceRepository with Manage
   override def initialize(eventReporter: EventReporter, authorizer: Authorizer, resourceFactory: ProvenanceAuthorizableFactory): Unit = {}
 
   override def getEvents(firstRecordId: Long, maxRecords: Int, user: NiFiUser): util.List[ProvenanceEventRecord] = {
-    import ctx._
-
-    val provQuery = quote(query[FlowDataProvenance].filter(fdp =>
-      fdp.eventId >= lift(firstRecordId.toDouble) && fdp.eventId < lift(firstRecordId.toDouble + maxRecords)
-    ))
-
-    ctx.run(provQuery).map(FlowProvenanceEventRecord(_)).sortBy(_.getEventId).asJava
+    Await.result(ira.getProvenanceEventsByEventId(firstRecordId, maxRecords), timeout).
+      map(FlowProvenanceEventRecord(_)).asJava
   }
 
   override def submitExpandChildren(eventId: Long, user: NiFiUser): ComputeLineageSubmission =
     throw new UnsupportedOperationException()
 
   override def getEvent(id: Long, user: NiFiUser): ProvenanceEventRecord = {
-    import ctx._
-
-    val provQuery = quote(query[FlowDataProvenance].filter(fdp => fdp.eventId == lift(id.toDouble)))
-    ctx.run(provQuery).map(FlowProvenanceEventRecord(_)).head
+    Await.result(ira.getProvenanceEventByEventId(id), timeout).
+      map(FlowProvenanceEventRecord(_)).orNull
   }
 
   override def submitQuery(searchQuery: Query, user: NiFiUser): QuerySubmission = {
@@ -115,110 +111,74 @@ abstract class BaseProvenanceRepository extends ProvenanceRepository with Manage
   }
 
   private def searchTermQuery(searchQuery: Query): List[ProvenanceEventRecord] = {
-    import ctx._
 
-    val withFilter = quote {
-      (g: FlowDataProvenance => Boolean) =>
-        query[FlowDataProvenance].withFilter(g(_))
-    }
 
     val searchableIds = SearchableIds(searchQuery)
 
-    var records: List[ProvenanceEventRecord] = Nil
+    var records: List[BigTables.BigFlowDataProvenanceRow] = Nil
 
     if(searchableIds.isEmpty) {
-      val allRecords = ctx.run(quote {
-        query[FlowDataProvenance]
-          .take(lift(searchQuery.getMaxResults))
-      })
-      records = allRecords.map(FlowProvenanceEventRecord(_)) ++ records
+      records = Await.result(ira.getProvenanceEvents(searchQuery.getMaxResults), timeout)
     } else {
+
       if (searchableIds.eventType.isDefined)
-        records = ctx.run(quote {
-          withFilter((fdp: FlowDataProvenance) => fdp.eventType == lift(searchableIds.eventType.get))
-            .take(lift(searchQuery.getMaxResults))
-        }).map(FlowProvenanceEventRecord(_)) ++ records
+        records =
+          Await.result(
+            ira.getProvenanceEventsByEventType(searchableIds.eventType.get,
+              searchQuery.getMaxResults),
+            timeout) ++ records
 
       if (searchableIds.flowFileUuid.isDefined)
-        records = ctx.run(quote {
-          withFilter((fdp: FlowDataProvenance) => fdp.flowFileUuid == lift(searchableIds.flowFileUuid.get))
-            .take(lift(searchQuery.getMaxResults))
-        }).map(FlowProvenanceEventRecord(_)) ++ records
+        records =
+          Await.result(
+            ira.getProvenanceEventsByFlowFileUuid(searchableIds.flowFileUuid.get,
+              searchQuery.getMaxResults),
+            timeout) ++ records
 
       if (searchableIds.componentId.isDefined)
-        records = ctx.run(quote {
-          withFilter((fdp: FlowDataProvenance) => fdp.componentId == lift(searchableIds.componentId.get))
-            .take(lift(searchQuery.getMaxResults))
-        }).map(FlowProvenanceEventRecord(_)) ++ records
+        records =
+          Await.result(
+            ira.getProvenanceEventsByComponentId(searchableIds.componentId.get,
+              searchQuery.getMaxResults),
+            timeout) ++ records
 
       if (searchableIds.relationship.isDefined)
-        records = ctx.run(quote {
-          withFilter((fdp: FlowDataProvenance) => fdp.relationship == lift(searchableIds.relationship.get))
-            .take(lift(searchQuery.getMaxResults))
-        }).map(FlowProvenanceEventRecord(_)) ++ records
+        records =
+          Await.result(
+            ira.getProvenanceEventsByRelationship(searchableIds.relationship.get,
+              searchQuery.getMaxResults),
+            timeout) ++ records
     }
-    records.groupBy(_.getEventId).map(_._2.head).toList.sortBy(_.getEventId).take(searchQuery.getMaxResults)
+    records.
+      groupBy(_.eventId).
+      map(_._2.head).toList.
+      sortBy(_.eventTime).
+      take(searchQuery.getMaxResults).
+      map(FlowProvenanceEventRecord(_))
   }
 
   override def getSearchableAttributes: util.List[SearchableField] = searchableAttributes
 
-  override def registerEvent(event: ProvenanceEventRecord): Unit = {
-    import ctx._
+  override def registerEvent(event: ProvenanceEventRecord): Unit =
+    Await.result(ira.createProvenance(FlowProvenanceEventRecord.toFlowDataProvenanceRow(event, Some(0))), timeout)
 
-    val fdp: FlowDataProvenance = FlowProvenanceEventRecord.toFlowDataProvenance(event, Some(0))
-
-    val eventInsert = quote(query[FlowDataProvenance].insert(_.id -> lift(fdp.id),
-      _.eventTime -> lift(fdp.eventTime),
-      _.flowFileEntryDate -> lift(fdp.flowFileEntryDate),
-      _.lineageStartEntryDate -> lift(fdp.lineageStartEntryDate),
-      _.fileSize -> lift(fdp.fileSize),
-      _.previousFileSize -> lift(fdp.previousFileSize),
-      _.eventDuration -> lift(fdp.eventDuration),
-      _.eventType -> lift(fdp.eventType),
-      _.attributes -> lift(fdp.attributes),
-      _.previousAttributes -> lift(fdp.previousAttributes),
-      _.updatedAttributes -> lift(fdp.updatedAttributes),
-      _.componentId -> lift(fdp.componentId),
-      _.componentType -> lift(fdp.componentType),
-      _.transitUri -> lift(fdp.transitUri),
-      _.sourceSystemFlowFileIdentifier -> lift(fdp.sourceSystemFlowFileIdentifier),
-      _.flowFileUuid -> lift(fdp.flowFileUuid),
-      _.parentUuids -> lift(fdp.parentUuids),
-      _.childUuids -> lift(fdp.childUuids),
-      _.alternateIdentifierUri -> lift(fdp.alternateIdentifierUri),
-      _.details -> lift(fdp.details),
-      _.relationship -> lift(fdp.relationship),
-      _.sourceQueueIdentifier -> lift(fdp.sourceQueueIdentifier),
-      _.contentClaimIdentifier -> lift(fdp.contentClaimIdentifier),
-      _.previousContentClaimIdentifier -> lift(fdp.previousContentClaimIdentifier)))
-    ctx.run(eventInsert)
-  }
 
 
   override def registerEvents(events: Iterable[ProvenanceEventRecord]): Unit = {
     events.asScala.foreach(registerEvent)
   }
 
-  def getMaxEventId: java.lang.Long
+  def getMaxEventId: java.lang.Long = Await.result(ira.getProvenanceMaxEventId(), timeout).get
 
   override def getEvents(firstRecordId: Long, maxRecords: Int): util.List[ProvenanceEventRecord] = getEvents(firstRecordId, maxRecords, null)
 
   override def eventBuilder(): ProvenanceEventBuilder = new Builder
 
-  override def close(): Unit = ctx.close()
+  override def close(): Unit = {}
 
   override def getEvent(id: Long): ProvenanceEventRecord = getEvent(id, null)
 
-  override def purge(): Unit = {
-    import ctx._
-
-    val provenancePurge = quote {
-      query[FlowDataProvenance]
-        .delete
-    }
-    ctx.run(provenancePurge)
-
-  }
+  override def purge(): Unit = Await.result(ira.purgeProvenance(), timeout)
 }
 
 class DbQuerySubmission(query: Query,

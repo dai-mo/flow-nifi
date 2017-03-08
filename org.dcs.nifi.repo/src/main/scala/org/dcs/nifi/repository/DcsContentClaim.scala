@@ -32,5 +32,5 @@ class DcsContentClaim(drc: DcsResourceClaim) extends ContentClaim {
 
   override def hashCode(): Int = drc.hashCode()
 
-  override def toString: String = "QuillContentClaim[rc_id=" + drc.getId + ", createTimestamp=" + drc.createTimestamp.toString + ", length=" + length + "]"
+  override def toString: String = "ContentClaim[rc_id=" + drc.getId + ", createTimestamp=" + drc.createTimestamp.toString + ", length=" + length + "]"
 }

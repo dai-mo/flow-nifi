@@ -8,7 +8,7 @@ import org.scalatest.mock.MockitoSugar
 /**
   * Created by cmathew on 08.12.16.
   */
-abstract class RepoUnitSpec extends FlatSpec
+class RepoUnitSpec extends FlatSpec
   with Matchers
   with OptionValues
   with Inside

@@ -41,5 +41,5 @@ class DcsResourceClaim(lossTolerant: Boolean) extends ResourceClaim {
 
   override def hashCode(): Int = uuid.hashCode
 
-  override def toString: String = "QuillResourceClaim[id=" + uuid.toString + ", createTimestamp=" + createTimestamp.toString + "]"
+  override def toString: String = "ResourceClaim[id=" + uuid.toString + ", createTimestamp=" + createTimestamp.toString + "]"
 }
