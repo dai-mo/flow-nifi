@@ -14,7 +14,6 @@ import org.apache.nifi.provenance._
 import org.apache.nifi.provenance.lineage.ComputeLineageSubmission
 import org.apache.nifi.provenance.search.{Query, QueryResult, QuerySubmission, SearchableField}
 import org.apache.nifi.util.NiFiProperties
-import org.dcs.api.data.FlowDataProvenance
 import org.dcs.data.IntermediateResultsAdapter
 import org.dcs.data.slick.BigTables
 import org.dcs.nifi._
@@ -169,7 +168,7 @@ class BaseProvenanceRepository(ira: IntermediateResultsAdapter) extends Provenan
     events.asScala.foreach(registerEvent)
   }
 
-  def getMaxEventId: java.lang.Long = Await.result(ira.getProvenanceMaxEventId(), timeout).getOrElse(-1)
+  def getMaxEventId: java.lang.Long = Await.result(ira.getProvenanceMaxEventId(), timeout).get
 
   override def getEvents(firstRecordId: Long, maxRecords: Int): util.List[ProvenanceEventRecord] = getEvents(firstRecordId, maxRecords, null)
 

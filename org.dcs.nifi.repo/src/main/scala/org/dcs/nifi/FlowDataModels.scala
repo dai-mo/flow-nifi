@@ -98,7 +98,7 @@ class FlowProvenanceEventRecord(flowDataProvenance: BigTables.BigFlowDataProvena
     stringToList(flowDataProvenance.parentUuids.getOrElse("")).asJava
 
 
-  override def getFlowFileEntryDate: Long = flowDataProvenance.flowFileEntryDate.getOrElse(-1).toLong
+  override def getFlowFileEntryDate: Long = flowDataProvenance.flowFileEntryDate.getOrElse(-1.toDouble).toLong
 
   override def getAlternateIdentifierUri: String = flowDataProvenance.alternateIdentifierUri.getOrElse("")
 
@@ -135,11 +135,13 @@ class FlowProvenanceEventRecord(flowDataProvenance: BigTables.BigFlowDataProvena
     }
   }
 
+
+
   override def getEventId: Long = flowDataProvenance.eventId.toLong
 
-  override def getEventDuration: Long = flowDataProvenance.eventDuration.getOrElse(-1)toLong
+  override def getEventDuration: Long = flowDataProvenance.eventDuration.getOrElse(-1.toDouble).toLong
 
-  override def getPreviousFileSize: java.lang.Long = flowDataProvenance.previousFileSize.getOrElse(-1)toLong
+  override def getPreviousFileSize: java.lang.Long = flowDataProvenance.previousFileSize.getOrElse(-1.toDouble).toLong
 
   override def getPreviousAttributes: util.Map[String, String] =
     stringToMap(flowDataProvenance.previousAttributes.getOrElse("")).asJava
@@ -150,7 +152,7 @@ class FlowProvenanceEventRecord(flowDataProvenance: BigTables.BigFlowDataProvena
 
   override def getContentClaimOffset: java.lang.Long = 0L
 
-  override def getFileSize: Long = flowDataProvenance.fileSize.getOrElse(-1).toLong
+  override def getFileSize: Long = flowDataProvenance.fileSize.getOrElse(-1.toDouble).toLong
 
   override def getContentClaimIdentifier: String = flowDataProvenance.contentClaimIdentifier.getOrElse("")
 
@@ -167,9 +169,9 @@ class FlowProvenanceEventRecord(flowDataProvenance: BigTables.BigFlowDataProvena
 
   override def getTransitUri: String = flowDataProvenance.transitUri.getOrElse("")
 
-  override def getEventTime: Long = flowDataProvenance.eventTime.getOrElse(-1)toLong
+  override def getEventTime: Long = flowDataProvenance.eventTime.getOrElse(-1.toDouble).toLong
 
-  override def getLineageStartDate: Long = flowDataProvenance.lineageStartEntryDate.getOrElse(-1).toLong
+  override def getLineageStartDate: Long = flowDataProvenance.lineageStartEntryDate.getOrElse(-1.toDouble).toLong
 
   override def getSourceQueueIdentifier: String = flowDataProvenance.sourceQueueIdentifier.getOrElse("")
 

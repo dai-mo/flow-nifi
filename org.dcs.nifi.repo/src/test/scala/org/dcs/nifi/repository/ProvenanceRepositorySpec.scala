@@ -5,7 +5,8 @@ import java.util.{Date, UUID}
 
 import org.apache.nifi.provenance.search.{Query, SearchTerm, SearchableField}
 import org.apache.nifi.provenance.{ProvenanceEventRecord, ProvenanceEventType, ProvenanceRepository, SearchableFields}
-import org.dcs.nifi.{FlowDataProvenance, FlowProvenanceEventRecord}
+import org.dcs.data.slick.{BigTables, Tables}
+import org.dcs.nifi.FlowProvenanceEventRecord
 import org.scalatest.Ignore
 
 import scala.collection.JavaConverters._
@@ -29,7 +30,7 @@ class ProvenanceRepositorySpec extends ProvenanceRepositoryBehaviors {
 
 
   "Flow Data Provenance" should "should be registered / queried correctly" in {
-    val cpr: ProvenanceRepository = new DCSProvenanceRepository()
+    val cpr: ProvenanceRepository = new SlickPostgresProvenanceRepository
     cpr.asInstanceOf[ManageRepository].purge()
     validateProvenance(cpr)
     cpr.asInstanceOf[ManageRepository].purge()
@@ -44,32 +45,32 @@ trait ProvenanceRepositoryBehaviors extends RepoUnitSpec {
   def genFlowDataProvenance(eventType: ProvenanceEventType,
                             componentId: String,
                             flowFileUuid: String,
-                            relationship: String): FlowDataProvenance = {
-    FlowDataProvenance(UUID.randomUUID().toString,
+                            relationship: String): BigTables.BigFlowDataProvenanceRow = {
+    BigTables.BigFlowDataProvenanceRow(UUID.randomUUID().toString,
       0,
-      new Date().getTime,
-      new Date().getTime,
-      new Date().getTime,
-      1234,
-      1234,
-      15,
-      eventType.name(),
-      Attributes,
-      PreviousAttributes,
-      UpdatedAttributes,
-      componentId,
-      "org.dcs.nifi.processor.TestProcessor",
-      "",
-      "sourceSystemFlowFileIdentifier",
-      flowFileUuid,
-      UUID.randomUUID().toString + "," +  UUID.randomUUID().toString,
-      UUID.randomUUID().toString + "," +  UUID.randomUUID().toString,
-      "",
-      "details",
-      relationship,
-      UUID.randomUUID().toString,
-      UUID.randomUUID().toString,
-      UUID.randomUUID().toString
+      Option(new Date().getTime),
+      Option(new Date().getTime),
+      Option(new Date().getTime),
+      Option(1234),
+      Option(1234),
+      Option(15),
+      Option(eventType.name()),
+      Option(Attributes),
+      Option(PreviousAttributes),
+      Option(UpdatedAttributes),
+      Option(componentId),
+      Option("org.dcs.nifi.processor.TestProcessor"),
+      Option(""),
+      Option("sourceSystemFlowFileIdentifier"),
+      Option(flowFileUuid),
+      Option(UUID.randomUUID().toString + ")," +  UUID.randomUUID().toString),
+      Option(UUID.randomUUID().toString + ")," +  UUID.randomUUID().toString),
+      Option(""),
+      Option("details"),
+      Option(relationship),
+      Option(UUID.randomUUID().toString),
+      Option(UUID.randomUUID().toString),
+      Option(UUID.randomUUID().toString)
     )
   }
   def validateProvenance(proveRepo: ProvenanceRepository) = {
@@ -84,10 +85,10 @@ trait ProvenanceRepositoryBehaviors extends RepoUnitSpec {
       flowFileUuid,
       relationship)
 
-    var per: ProvenanceEventRecord = fdp.toProvenanceEventRecord()
+    var per: ProvenanceEventRecord = FlowProvenanceEventRecord(fdp)
     proveRepo.registerEvent(per)
 
-    val maxEventId = proveRepo.getMaxEventId()
+    val maxEventId = proveRepo.getMaxEventId
     val startEventId: Long = if(maxEventId == null) 0L else maxEventId
 
 
@@ -109,7 +110,7 @@ trait ProvenanceRepositoryBehaviors extends RepoUnitSpec {
       componentId,
       flowFileUuid,
       relationship)
-    per = fdp.toProvenanceEventRecord()
+    per = FlowProvenanceEventRecord(fdp)
     proveRepo.registerEvent(per)
 
     val eventId1 = proveRepo.getMaxEventId

@@ -8,6 +8,7 @@ import java.util
 import org.apache.nifi.controller.repository.ContentRepository
 import org.apache.nifi.controller.repository.claim.{ContentClaim, ResourceClaimManager}
 import org.apache.nifi.stream.io.StreamUtils
+import org.dcs.data.DbMigration
 //import org.dcs.api.data.FlowDataContent
 import org.dcs.data.IntermediateResultsAdapter
 import org.dcs.data.slick.Tables
@@ -45,7 +46,7 @@ class BaseContentRepository(ira: IntermediateResultsAdapter) extends ContentRepo
   override def exportTo(claim: ContentClaim, destination: OutputStream, offset: Long, length: Long): Long = throw new UnsupportedOperationException()
 
   override def shutdown(): Unit = {
-    // FIXME: Add code to close connection
+    ira.closeDbConnection()
   }
 
   override def importFrom(content: Path, claim: ContentClaim): Long = throw new UnsupportedOperationException()
