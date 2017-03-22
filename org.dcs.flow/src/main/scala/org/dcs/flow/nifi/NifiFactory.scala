@@ -129,8 +129,6 @@ object FlowInstance {
 
 object ProcessorInstance {
 
-
-
   def apply(processorDTO: ProcessorDTO): ProcessorInstance = {
     val processorInstance = new ProcessorInstance
 
@@ -142,6 +140,7 @@ object ProcessorInstance {
     })
     processorInstance.setProcessorType(getProcessorType(processorDTO.getConfig))
 
+    processorInstance.setProperties(valuesOrDefaults(processorDTO.getConfig))
     processorInstance
   }
 
@@ -164,6 +163,15 @@ object ProcessorInstance {
       RemoteProcessor.WorkerProcessorType
     else
       ptype.getDefaultValue
+  }
+
+  def valuesOrDefaults(config: ProcessorConfigDTO): Map[String, String] = {
+    def default(key: String): String = {
+      config.getDescriptors.asScala.toMap.get(key).map(pd => pd.getDefaultValue).getOrElse("")
+    }
+
+     config.getProperties.asScala.toMap.map(p => (p._1, if(p._2 == null || p._2.isEmpty) default(p._1) else p._2))
+
   }
 }
 

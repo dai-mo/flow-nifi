@@ -1,23 +1,23 @@
 package org.dcs.nifi.processors
 
-import java.io.OutputStream
-
 import org.apache.avro.generic.GenericData
-import org.apache.nifi.flowfile.FlowFile
-import org.apache.nifi.processor.io.OutputStreamCallback
 import org.apache.nifi.util.{MockFlowFile, TestRunner, TestRunners}
-import org.dcs.api.processor.{RelationshipType, RemoteProcessor}
-import org.dcs.remote.RemoteService
-import org.mockito.Mockito._
-import org.scalatest.FlatSpec
+import org.dcs.api.processor.CoreProperties._
+import org.dcs.api.processor.{Attributes, RelationshipType, RemoteProperty}
 import org.dcs.commons.serde.AvroImplicits._
 import org.dcs.commons.serde.AvroSchemaStore
+import org.dcs.remote.RemoteService
+import org.mockito.Mockito._
 
 import scala.collection.JavaConverters._
-import scala.collection.mutable
+
 
 object TestProcessorSpec {
   object MockRemoteService extends RemoteService with MockZookeeperServiceTracker
+
+  val TestRequestSchemaId = "org.dcs.core.processor.TestRequest"
+  val TestResponseSchemaId = "org.dcs.core.processor.TestResponse"
+
   val clientProcessor: TestProcessor = spy(new TestProcessor())
 
   doReturn(MockRemoteService).
@@ -39,14 +39,16 @@ object TestProcessorSpec {
 
 class TestProcessorSpec extends ProcessorsBaseUnitSpec with TestProcessorBehaviors {
 
-  import org.dcs.nifi.processors.TestProcessorSpec._
+  import TestProcessorSpec._
 
-  "Test Processor Response" must " be valid " in {
+  "Test Processor Response" should " be valid " in {
+
     validResponse(clientProcessor)
   }
 }
 
-trait TestProcessorBehaviors { this: FlatSpec =>
+trait TestProcessorBehaviors {
+  import TestProcessorSpec._
 
   def validResponse(testProcessor: TestProcessor) {
 
@@ -54,18 +56,16 @@ trait TestProcessorBehaviors { this: FlatSpec =>
     val runner: TestRunner = TestRunners.newTestRunner(testProcessor)
     val user = "Bob"
 
+    AvroSchemaStore.add(TestRequestSchemaId)
+    val testRequestSchema = AvroSchemaStore.get(TestRequestSchemaId)
 
     // Add properties
     runner.setProperty("user", user)
-    // Add file attributes
-    val attributes = new java.util.HashMap[String, String]()
-    val schemaId = "org.dcs.core.processor.TestRequestProcessor"
-    attributes.put(RemoteProcessor.SchemaIdKey, schemaId)
+    runner.setProperty(ReadSchemaIdKey, TestRequestSchemaId)
 
-    val schema = AvroSchemaStore.get("org.dcs.core.processor.TestRequestProcessor")
-    val record = new GenericData.Record(schema.get)
+    val record = new GenericData.Record(testRequestSchema.get)
     record.put("request", "Hello ")
-    runner.enqueue(record.serToBytes(schema), attributes)
+    runner.enqueue(record.serToBytes(testRequestSchema))
     // Run the enqueued content, it also takes an int = number of contents queued
     runner.run(1)
 
@@ -74,11 +74,15 @@ trait TestProcessorBehaviors { this: FlatSpec =>
     val results: java.util.List[MockFlowFile] = runner.getFlowFilesForRelationship(successRelationship.get)
     assert(results.size == 1)
     val result: MockFlowFile = results.get(0)
+    results.asScala.foreach(ff =>
+      assert(ff.getAttributes.get(Attributes.RelationshipAttributeKey) == RelationshipType.SucessRelationship))
 
-    val schemaResponse = AvroSchemaStore.get("org.dcs.core.processor.TestResponseProcessor")
-    val expectedRecord = new GenericData.Record(schemaResponse.get)
+
+    val testResponseSchema = AvroSchemaStore.get(TestResponseSchemaId)
+
+    val expectedRecord = new GenericData.Record(testResponseSchema.get)
     expectedRecord.put("response", "Hello " + user)
-    val actualRecord = runner.getContentAsByteArray(result).deSerToGenericRecord(schemaResponse, schemaResponse)
+    val actualRecord = runner.getContentAsByteArray(result).deSerToGenericRecord(testResponseSchema, testResponseSchema)
     assert(actualRecord == expectedRecord)
   }
 

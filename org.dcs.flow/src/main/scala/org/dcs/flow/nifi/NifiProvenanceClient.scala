@@ -6,7 +6,7 @@ import java.util.Date
 import org.apache.avro.Schema
 import org.apache.nifi.web.api.dto.provenance.ProvenanceEventDTO
 import org.apache.nifi.web.api.entity.ProvenanceEntity
-import org.dcs.api.processor.{RelationshipType, RemoteProcessor}
+import org.dcs.api.processor.{CoreProperties, RelationshipType, RemoteProcessor}
 import org.dcs.api.service.{Provenance, ProvenanceApiService}
 import org.dcs.commons.ClientRemoteProcessorStore
 import org.dcs.commons.error.{ErrorConstants, RESTException}
@@ -125,11 +125,11 @@ trait NifiProvenanceClient extends ProvenanceApiService with JerseyRestClient {
   def provenanceResult(pResult: ProvenanceEntity, pType: String): Future[List[Provenance]] =
     Future.sequence(pResult.getProvenance.getResults.getProvenanceEvents.asScala
       .filter { pevent =>
-        val schema = pevent.getAttributes.asScala.find(_.getName == RemoteProcessor.SchemaIdKey).map(_.getValue).flatMap(AvroSchemaStore.get)
+        val schema = pevent.getAttributes.asScala.find(_.getName == CoreProperties.WriteSchemaIdKey).map(_.getValue).flatMap(AvroSchemaStore.get)
         schema.isDefined
       }
       .map { pevent => {
-        val schema = pevent.getAttributes.asScala.find(_.getName == RemoteProcessor.SchemaIdKey).map(_.getValue).flatMap(AvroSchemaStore.get)
+        val schema = pevent.getAttributes.asScala.find(_.getName == CoreProperties.WriteSchemaIdKey).map(_.getValue).flatMap(AvroSchemaStore.get)
         provenanceContent(pevent, pResult, pType, schema)
       }}.toList)
 
@@ -147,8 +147,8 @@ trait NifiProvenanceClient extends ProvenanceApiService with JerseyRestClient {
           provenanceEvent.getClusterNodeId,
           Array[Byte](),
           content.deSerToJsonString(schema, schema),
-          "",
-          provenanceEvent.getEventTime)
+          provenanceEvent.getEventTime,
+          provenanceEvent.getRelationship)
       }
       }
   }

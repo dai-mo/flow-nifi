@@ -5,11 +5,11 @@ object Dependencies {
 
   // Versions
 
-  lazy val dcsCommonsVersion      = "0.2.0"
-  lazy val dcsApiVersion          = "0.3.0"
+  lazy val dcsCommonsVersion      = "0.3.0-SNAPSHOT"
+  lazy val dcsApiVersion          = "0.4.0-SNAPSHOT"
   lazy val dcsRemoteVersion       = "0.3.0"
-  lazy val dcsCoreVersion         = "0.2.0"
-  lazy val dcsDataVersion         = "0.2.0"
+  lazy val dcsCoreVersion         = "0.3.0-SNAPSHOT"
+  lazy val dcsDataVersion         = "0.3.0-SNAPSHOT"
   lazy val playVersion			      = "2.5.3"
   lazy val nifiVersion			      = "1.0.0-BETA"
   lazy val slf4jVersion			      = "1.7.12"
@@ -28,7 +28,7 @@ object Dependencies {
 
 
   lazy val mockitoVersion         = "1.10.19"
-  lazy val scalaTestVersion       = "2.2.6"
+  lazy val scalaTestVersion       = "3.0.0"
   lazy val juiVersion             = "0.11"
   lazy val paxCdiVersion          = "0.12.0"
 

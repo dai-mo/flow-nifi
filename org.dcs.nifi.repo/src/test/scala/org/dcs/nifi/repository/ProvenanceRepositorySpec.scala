@@ -11,15 +11,17 @@ import org.scalatest.Ignore
 
 import scala.collection.JavaConverters._
 
+import org.dcs.api.processor.Attributes
+
 /**
   * Created by cmathew on 11.01.17.
   */
 
 
 object ProvenanceRepositorySpec {
-  val Attributes = "attr1:value1,attr2:value2"
-  val PreviousAttributes = "prevattr1:value1,prevattr2:value2"
-  val UpdatedAttributes = "updatedvattr1:value1,updatedattr2:value2"
+  val TestAttributes = "attr1:value1,attr2:value2"
+  val TestPreviousAttributes = "prevattr1:value1,prevattr2:value2"
+  val TestUpdatedAttributes = "updatedvattr1:value1,updatedattr2:value2"
 }
 
 @Ignore // set to ignore until integration environment is setup
@@ -55,9 +57,9 @@ trait ProvenanceRepositoryBehaviors extends RepoUnitSpec {
       Option(1234),
       Option(15),
       Option(eventType.name()),
-      Option(Attributes),
-      Option(PreviousAttributes),
-      Option(UpdatedAttributes),
+      Option(TestAttributes),
+      Option(TestPreviousAttributes),
+      Option(Attributes.RelationshipAttributeKey + ":" + relationship + "," + TestUpdatedAttributes),
       Option(componentId),
       Option("org.dcs.nifi.processor.TestProcessor"),
       Option(""),
@@ -67,7 +69,7 @@ trait ProvenanceRepositoryBehaviors extends RepoUnitSpec {
       Option(UUID.randomUUID().toString + ")," +  UUID.randomUUID().toString),
       Option(""),
       Option("details"),
-      Option(relationship),
+      Option(null),
       Option(UUID.randomUUID().toString),
       Option(UUID.randomUUID().toString),
       Option(UUID.randomUUID().toString)
@@ -95,9 +97,9 @@ trait ProvenanceRepositoryBehaviors extends RepoUnitSpec {
     val registerdPer = proveRepo.getEvent(startEventId)
     val registeredFdp = FlowProvenanceEventRecord.toFlowDataProvenance(registerdPer, None)
     assert(registeredFdp.eventId == startEventId)
-    assert(registeredFdp.attributes == Attributes)
-    assert(registeredFdp.previousAttributes == PreviousAttributes)
-    assert(registeredFdp.updatedAttributes == UpdatedAttributes)
+    assert(registeredFdp.attributes == TestAttributes)
+    assert(registeredFdp.previousAttributes == TestPreviousAttributes)
+    assert(registeredFdp.updatedAttributes == TestUpdatedAttributes)
     assert(registeredFdp.componentId == componentId)
     assert(registeredFdp.flowFileUuid == flowFileUuid)
     assert(registeredFdp.relationship == relationship)
