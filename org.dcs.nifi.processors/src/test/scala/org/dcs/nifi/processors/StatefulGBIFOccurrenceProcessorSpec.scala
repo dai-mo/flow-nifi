@@ -15,12 +15,15 @@ import org.dcs.commons.serde.AvroSchemaStore
 object StatefulGBIFOccurrenceProcessorSpec {
   object MockRemoteService extends RemoteService with MockZookeeperServiceTracker
 
+
   val clientProcessor: StatefulGBIFOccurrenceProcessor = spy(new StatefulGBIFOccurrenceProcessor())
   doReturn(MockRemoteService).
     when(clientProcessor).
     remoteService
 
   val remoteProcessor: org.dcs.core.processor.StatefulTestProcessor = new org.dcs.core.processor.StatefulTestProcessor()
+
+  val TestResponseSchemaId: String = remoteProcessor.schemaId
 
   val response: Array[Array[Byte]] = Array("".getBytes())
   MockZookeeperServiceTracker.addProcessor(
@@ -43,6 +46,7 @@ class StatefulGBIFOccurrenceProcessorSpec extends ProcessorsBaseUnitSpec with St
 
 trait StatefulGBIFOccurrenceProcessorBehaviors {
   this: FlatSpec =>
+  import StatefulGBIFOccurrenceProcessorSpec._
 
   def validResponse(testProcessor: StatefulGBIFOccurrenceProcessor) =  {
 
@@ -54,17 +58,17 @@ trait StatefulGBIFOccurrenceProcessorBehaviors {
     // Add properties
     runner.setProperty("species-name", "Loxodonta africana")
 
-    //runner.enqueue("Hello ".getBytes)
     // Run the enqueued content, it also takes an int = number of contents queued
     runner.run(1)
 
     val successRelationship = testProcessor.getRelationships().asScala.find(r => r.getName == RelationshipType.SucessRelationship)
 
     val results: java.util.List[MockFlowFile] = runner.getFlowFilesForRelationship(successRelationship.get)
-    assert(results.size == 10)
-    val schema = AvroSchemaStore.get("org.dcs.core.processor.GBIFOccurrenceProcessor")
+    assert(results.size == 200)
+    AvroSchemaStore.add(TestResponseSchemaId)
+    val schema = AvroSchemaStore.get(TestResponseSchemaId)
     results.asScala.foreach(result => {
-      assert(runner.getContentAsByteArray(result).deSerToGenericRecord(schema, schema).get("genus").toString == "Loxodonta")
+      val gbifRecord = runner.getContentAsByteArray(result).deSerToGenericRecord(schema, schema)
     })
 
 

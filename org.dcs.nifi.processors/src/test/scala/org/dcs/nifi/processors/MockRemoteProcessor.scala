@@ -35,6 +35,8 @@ class MockRemoteProcessorService(processor: RemoteProcessor, response: Array[Arr
   override def getDef(processor: RemoteProcessor): ProcessorDefinition = processor
 
   override def initialise(): RemoteProcessor = processor
+
+  override def schemaId: String = processor.schemaId
 }
 
 

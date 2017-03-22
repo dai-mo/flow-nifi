@@ -21,8 +21,11 @@ object NifiProcessorClient  {
 
   val States = Set(StateRunning, StateStopped)
 
-  def processorsPath(processorId: String) =
+  def processorsPath(processorId: String): String =
     "/processors/" + processorId
+
+  def processorDescriptorsPath(processorId: String): String =
+    "/processors/" + processorId + "/descriptors"
 }
 
 trait NifiProcessorClient extends ProcessorApiService with JerseyRestClient {

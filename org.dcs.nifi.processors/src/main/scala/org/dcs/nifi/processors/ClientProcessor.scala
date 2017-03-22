@@ -17,6 +17,7 @@ import scala.collection.JavaConversions._
 import scala.collection.JavaConverters._
 import scala.collection.mutable
 import scala.collection.mutable.{Map => MutableMap}
+import org.dcs.api.processor.Attributes
 
 
 trait ClientProcessor extends AbstractProcessor with Write with Read {
@@ -75,48 +76,22 @@ trait ClientProcessor extends AbstractProcessor with Write with Read {
       if (canRead)
         readCallback(flowFile, session, in)
 
-      val out = output(Option(in.get()),
-        updateProperties(valueProperties, flowFile))
+      val out = output(Option(in.get()), valueProperties)
 
       if (out == null || out.isEmpty) {
         context.`yield`()
         endOfStream = true
       } else {
-
         if (canWrite) {
-          if (out.length == 3){
+          if (out.length == 2){
             val relationship = new String(out(0))
-            val schemaId = Option(new String(out(1)))
-            route(
-              writeCallback(
-                updateFlowFileAttributes(flowFile,
-                  session,
-                  schemaId,
-                  relationship),
-                session,
-                out(2)
-              ),
-              session,
-              relationship
-            )
+            route(writeCallback(flowFile, session,out(1)), session, relationship)
           } else {
-            out.grouped(3).foreach { resGrp =>
+            out.grouped(2).foreach { resGrp =>
               val newFlowFile = if (flowFile == null) session.create() else session.create(flowFile)
               val relationship = new String(resGrp(0))
-              val schemaId = Option(new String(resGrp(1)))
-              route(
-                writeCallback(
-                  updateFlowFileAttributes(newFlowFile,
-                    session,
-                    schemaId,
-                    relationship),
-                  session,
-                  resGrp(2)),
-                session,
-                relationship
-              )
+              route(writeCallback(newFlowFile, session, resGrp(1)), session,relationship)
             }
-
           }
         }
       }
@@ -133,37 +108,14 @@ trait ClientProcessor extends AbstractProcessor with Write with Read {
 
   def route(flowFile: FlowFile,
             session: ProcessSession,
-            relationship: String) = {
+            relationship: String): Unit = {
     val rel: Option[Relationship] =
       relationships.asScala.find(r => r.getName == relationship)
-    if (rel.isDefined) {
-      session.transfer(flowFile, rel.get)
-    }
-  }
-
-  def updateFlowFileAttributes(flowFile: FlowFile,
-                               session: ProcessSession,
-                               schemaId: Option[String],
-                               relationship: String): FlowFile = {
-    val attributes = mutable.Map[String, String]()
-    attributes(CoreAttributes.MIME_TYPE.key()) = configuration.outputMimeType
-    var updatedFlowFile = flowFile
-
-    if(schemaId.isDefined && relationship != RelationshipType.FailureRelationship)
-      attributes(RemoteProcessor.SchemaIdKey) = schemaId.get
-    else
-      updatedFlowFile = session.removeAttribute(updatedFlowFile, RemoteProcessor.SchemaIdKey)
-    session.putAllAttributes(updatedFlowFile, attributes.asJava)
-  }
-
-  def updateProperties(properties: mutable.Map[String, String],
-                       flowFile: FlowFile): mutable.Map[String, String] = {
-    if(flowFile != null) {
-      val schemaId = flowFile.getAttribute(RemoteProcessor.SchemaIdKey)
-      if (schemaId != null)
-        properties.put(RemoteProcessor.SchemaIdKey, schemaId)
-    }
-    properties
+    rel.foreach(rel => {
+      val ff = session.putAttribute(flowFile, Attributes.RelationshipAttributeKey,rel.getName)
+      session.transfer(ff, rel)
+    })
+    if(rel.isEmpty) logger.warn("Ignore transfer of flowfile with id " + flowFile.getId + " to relationship " + relationship + ", as it is not registered")
   }
 
   def canRead: Boolean

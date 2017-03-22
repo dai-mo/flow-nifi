@@ -4,6 +4,7 @@ import java.util.UUID
 
 import org.apache.avro.generic.GenericData
 import org.apache.nifi.util.{MockFlowFile, TestRunner, TestRunners}
+import org.dcs.api.processor.CoreProperties.ReadSchemaIdKey
 import org.dcs.api.processor.{RelationshipType, RemoteProcessor}
 import org.dcs.commons.serde.AvroSchemaStore
 import org.dcs.remote.RemoteService
@@ -50,18 +51,17 @@ trait StatefulTestProcessorBehaviors {
     val runner: TestRunner = TestRunners.newTestRunner(testProcessor)
     val user = "Bob"
 
+    val testRequestSchemaId = "org.dcs.core.processor.TestRequest"
+    AvroSchemaStore.add(testRequestSchemaId)
+    val testRequestSchema = AvroSchemaStore.get(testRequestSchemaId)
 
     // Add properties
     runner.setProperty("user", user)
-    // Add file attributes
-    val attributes = new java.util.HashMap[String, String]()
-    val schemaId = "org.dcs.core.processor.TestRequestProcessor"
-    attributes.put(RemoteProcessor.SchemaIdKey, schemaId)
+    runner.setProperty(ReadSchemaIdKey, testRequestSchemaId)
 
-    val schema = AvroSchemaStore.get("org.dcs.core.processor.TestRequestProcessor")
-    val record = new GenericData.Record(schema.get)
+    val record = new GenericData.Record(testRequestSchema.get)
     record.put("request", "Hello ")
-    runner.enqueue(record.serToBytes(schema), attributes)
+    runner.enqueue(record.serToBytes(testRequestSchema))
 
     // Run the enqueued content, it also takes an int = number of contents queued
     runner.run(1)
@@ -73,7 +73,7 @@ trait StatefulTestProcessorBehaviors {
     val result1: MockFlowFile = results1.get(0)
     val resultValue1: String = new String(runner.getContentAsByteArray(result1))
 
-    runner.enqueue(record.serToBytes(schema), attributes)
+    runner.enqueue(record.serToBytes(testRequestSchema))
     // Run the enqueued content, it also takes an int = number of contents queued
     runner.run(1)
 

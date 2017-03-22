@@ -1,11 +1,9 @@
 package org.dcs.nifi.processors
 
 import org.scalatest._
-import org.scalatest.mock.MockitoSugar
-import org.scalatest.junit.JUnitRunner
-import org.mockito.runners.MockitoJUnitRunner
 import org.scalatest.junit.JUnitSuite
 import org.scalatest.FlatSpec
+import org.scalatest.mockito.MockitoSugar
 
 abstract class ProcessorsBaseUnitSpec extends FlatSpec
   with Matchers

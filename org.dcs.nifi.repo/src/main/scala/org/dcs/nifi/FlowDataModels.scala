@@ -10,7 +10,8 @@ import java.util.UUID
 
 import org.apache.nifi.provenance.search.Query
 import org.apache.nifi.provenance.{ProvenanceEventRecord, ProvenanceEventType, SearchableFields}
-import org.dcs.api.data.FlowDataProvenance
+import org.dcs.api.data.{FlowData, FlowDataProvenance}
+import org.dcs.api.processor.Attributes
 import org.dcs.data.slick.BigTables
 
 import scala.collection.JavaConverters._
@@ -22,6 +23,8 @@ object FlowProvenanceEventRecord  {
   def toFlowDataProvenance(per: ProvenanceEventRecord, eventId: Option[Double]): FlowDataProvenance = {
     val eid = eventId.getOrElse(per.getEventId.toDouble)
     val previousFileSize = if(per.getPreviousFileSize == null) 0 else per.getPreviousFileSize.toDouble
+    val scUpdatedAttributes = per.getUpdatedAttributes.asScala.toMap
+
     FlowDataProvenance(UUID.randomUUID().toString,
       eid,
       per.getEventTime,
@@ -43,7 +46,7 @@ object FlowProvenanceEventRecord  {
       listToString(per.getChildUuids.asScala.toList),
       Option(per.getAlternateIdentifierUri).getOrElse(""),
       Option(per.getDetails).getOrElse(""),
-      Option(per.getRelationship).getOrElse(""),
+      Option(per.getRelationship).fold(scUpdatedAttributes.get(Attributes.RelationshipAttributeKey))(Option(_)).getOrElse(""),
       Option(per.getSourceQueueIdentifier).getOrElse(""),
       per.getContentClaimIdentifier,
       Option(per.getPreviousContentClaimIdentifier).getOrElse(""))
@@ -52,6 +55,23 @@ object FlowProvenanceEventRecord  {
   def toFlowDataProvenanceRow(per: ProvenanceEventRecord, eventId: Option[Double]): BigTables.BigFlowDataProvenanceRow = {
     val eid = eventId.getOrElse(per.getEventId.toDouble)
     val previousFileSize = if(per.getPreviousFileSize == null) 0 else per.getPreviousFileSize.toDouble
+
+    val updatedAttributes = per.getUpdatedAttributes.asScala.toMap
+    val updatedAttributesWithoutRel: Option[String] = Option(mapToString(updatedAttributes - Attributes.RelationshipAttributeKey))
+
+    var relationship = Option(per.getRelationship)
+
+    if(relationship.isEmpty) {
+      relationship = updatedAttributes.get(Attributes.RelationshipAttributeKey)
+    }
+
+    val attributes = per.getAttributes.asScala.toMap
+    val attributesWithoutRel: Option[String] = Option(mapToString(attributes - Attributes.RelationshipAttributeKey))
+
+    if(relationship.isEmpty) {
+      relationship = attributes.get(Attributes.RelationshipAttributeKey)
+    }
+
     BigTables.BigFlowDataProvenanceRow(UUID.randomUUID().toString,
       eid.toLong,
       Option(per.getEventTime),
@@ -61,9 +81,9 @@ object FlowProvenanceEventRecord  {
       Option(previousFileSize),
       Option(per.getEventDuration),
       Option(per.getEventType.name()),
-      Option(mapToString(per.getAttributes.asScala.toMap)),
+      attributesWithoutRel,
       Option(mapToString(per.getPreviousAttributes.asScala.toMap)),
-      Option(mapToString(per.getUpdatedAttributes.asScala.toMap)),
+      updatedAttributesWithoutRel,
       Option(per.getComponentId),
       Option(per.getComponentType),
       Option(per.getTransitUri),
@@ -73,7 +93,7 @@ object FlowProvenanceEventRecord  {
       Option(listToString(per.getChildUuids.asScala.toList)),
       Option(per.getAlternateIdentifierUri),
       Option(per.getDetails),
-      Option(per.getRelationship),
+      relationship,
       Option(per.getSourceQueueIdentifier),
       Option(per.getContentClaimIdentifier),
       Option(per.getPreviousContentClaimIdentifier))
@@ -87,34 +107,34 @@ object FlowProvenanceEventRecord  {
 class FlowProvenanceEventRecord(flowDataProvenance: BigTables.BigFlowDataProvenanceRow) extends ProvenanceEventRecord {
   import org.dcs.api.data.FlowData._
 
-  override def getRelationship: String = flowDataProvenance.relationship.getOrElse("")
+  override def getRelationship: String = flowDataProvenance.relationship.orNull
 
-  override def getDetails: String = flowDataProvenance.details.getOrElse("")
+  override def getDetails: String = flowDataProvenance.details.orNull
 
   override def getAttributes: util.Map[String, String] =
-    stringToMap(flowDataProvenance.attributes.getOrElse("")).asJava
+    stringToMap(flowDataProvenance.attributes.get).asJava
 
   override def getParentUuids: util.List[String] =
-    stringToList(flowDataProvenance.parentUuids.getOrElse("")).asJava
+    stringToList(flowDataProvenance.parentUuids.get).asJava
 
 
   override def getFlowFileEntryDate: Long = flowDataProvenance.flowFileEntryDate.getOrElse(-1.toDouble).toLong
 
-  override def getAlternateIdentifierUri: String = flowDataProvenance.alternateIdentifierUri.getOrElse("")
+  override def getAlternateIdentifierUri: String = flowDataProvenance.alternateIdentifierUri.orNull
 
   override def getChildUuids: util.List[String] =
-    stringToList(flowDataProvenance.childUuids.getOrElse("")).asJava
+    stringToList(flowDataProvenance.childUuids.get).asJava
 
   override def getContentClaimContainer: String = ""
 
-  override def getFlowFileUuid: String = flowDataProvenance.flowFileUuid.getOrElse("")
+  override def getFlowFileUuid: String = flowDataProvenance.flowFileUuid.orNull
 
-  override def getComponentId: String = flowDataProvenance.componentId.getOrElse("")
+  override def getComponentId: String = flowDataProvenance.componentId.orNull
 
-  override def getPreviousContentClaimIdentifier: String = flowDataProvenance.previousContentClaimIdentifier.getOrElse("")
+  override def getPreviousContentClaimIdentifier: String = flowDataProvenance.previousContentClaimIdentifier.orNull
 
   override def getEventType: ProvenanceEventType = {
-    flowDataProvenance.eventType.getOrElse("") match {
+    flowDataProvenance.eventType.get match {
       case "ADDINFO" => ProvenanceEventType.ADDINFO
       case "ATTRIBUTES_MODIFIED" => ProvenanceEventType.ATTRIBUTES_MODIFIED
       case "CLONE" => ProvenanceEventType.CLONE
@@ -144,36 +164,36 @@ class FlowProvenanceEventRecord(flowDataProvenance: BigTables.BigFlowDataProvena
   override def getPreviousFileSize: java.lang.Long = flowDataProvenance.previousFileSize.getOrElse(-1.toDouble).toLong
 
   override def getPreviousAttributes: util.Map[String, String] =
-    stringToMap(flowDataProvenance.previousAttributes.getOrElse("")).asJava
+    stringToMap(flowDataProvenance.previousAttributes.get).asJava
 
-  override def getSourceSystemFlowFileIdentifier: String = flowDataProvenance.sourceSystemFlowFileIdentifier.getOrElse("")
+  override def getSourceSystemFlowFileIdentifier: String = flowDataProvenance.sourceSystemFlowFileIdentifier.orNull
 
   override def getContentClaimSection: String = ""
 
   override def getContentClaimOffset: java.lang.Long = 0L
 
-  override def getFileSize: Long = flowDataProvenance.fileSize.getOrElse(-1.toDouble).toLong
+  override def getFileSize: Long = flowDataProvenance.fileSize.get.toLong
 
-  override def getContentClaimIdentifier: String = flowDataProvenance.contentClaimIdentifier.getOrElse("")
+  override def getContentClaimIdentifier: String = flowDataProvenance.contentClaimIdentifier.orNull
 
   override def getPreviousContentClaimOffset: java.lang.Long = 0L
 
   override def getUpdatedAttributes: util.Map[String, String] =
-    stringToMap(flowDataProvenance.updatedAttributes.getOrElse("")).asJava
+    stringToMap(flowDataProvenance.updatedAttributes.get).asJava
 
   override def getPreviousContentClaimContainer: String = ""
 
   override def getPreviousContentClaimSection: String = ""
 
-  override def getComponentType: String = flowDataProvenance.componentType.getOrElse("")
+  override def getComponentType: String = flowDataProvenance.componentType.orNull
 
-  override def getTransitUri: String = flowDataProvenance.transitUri.getOrElse("")
+  override def getTransitUri: String = flowDataProvenance.transitUri.orNull
 
   override def getEventTime: Long = flowDataProvenance.eventTime.getOrElse(-1.toDouble).toLong
 
   override def getLineageStartDate: Long = flowDataProvenance.lineageStartEntryDate.getOrElse(-1.toDouble).toLong
 
-  override def getSourceQueueIdentifier: String = flowDataProvenance.sourceQueueIdentifier.getOrElse("")
+  override def getSourceQueueIdentifier: String = flowDataProvenance.sourceQueueIdentifier.orNull
 
 }
 
