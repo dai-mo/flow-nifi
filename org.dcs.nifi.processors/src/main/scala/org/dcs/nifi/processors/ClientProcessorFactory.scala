@@ -4,7 +4,7 @@ import org.apache.nifi.components.PropertyDescriptor.{Builder => PropertyDescrip
 import org.apache.nifi.components.{AllowableValue, PropertyDescriptor, Validator}
 import org.apache.nifi.processor.Relationship
 import org.apache.nifi.processor.Relationship.{Builder => RelationshipBuilder}
-import org.dcs.api.processor.{PossibleValue, PropertyType, RemoteProperty, RemoteRelationship}
+import org.dcs.api.processor.{PossibleValue, PropertyLevel, PropertyType, RemoteProperty, RemoteRelationship}
 
 import scala.collection.JavaConverters._
 
@@ -63,7 +63,8 @@ object RemoteProperty {
       propertyDescriptor.isSensitive,
       propertyDescriptor.isDynamic,
       propertyDescriptor.getValidators.asScala.map(v => v.getClass.getName).asJava,
-      PropertyType.String)
+      PropertyType.String,
+      PropertyLevel.Open)
 
 
   }
