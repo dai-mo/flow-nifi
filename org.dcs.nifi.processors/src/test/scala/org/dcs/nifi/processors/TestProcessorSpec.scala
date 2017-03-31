@@ -69,14 +69,13 @@ trait TestProcessorBehaviors {
     // Run the enqueued content, it also takes an int = number of contents queued
     runner.run(1)
 
-    val successRelationship = testProcessor.getRelationships().asScala.find(r => r.getName == RelationshipType.SucessRelationship)
+    val successRelationship = testProcessor.getRelationships().asScala.find(r => r.getName == RelationshipType.Success.id)
 
     val results: java.util.List[MockFlowFile] = runner.getFlowFilesForRelationship(successRelationship.get)
     assert(results.size == 1)
     val result: MockFlowFile = results.get(0)
     results.asScala.foreach(ff =>
-      assert(ff.getAttributes.get(Attributes.RelationshipAttributeKey) == RelationshipType.SucessRelationship))
-
+      assert(ff.getAttributes.get(Attributes.RelationshipAttributeKey) == RelationshipType.Success.id))
 
     val testResponseSchema = AvroSchemaStore.get(TestResponseSchemaId)
 

@@ -66,7 +66,7 @@ trait StatefulTestProcessorBehaviors {
     // Run the enqueued content, it also takes an int = number of contents queued
     runner.run(1)
 
-    var successRelationship = testProcessor.getRelationships().asScala.find(r => r.getName == RelationshipType.SucessRelationship)
+    var successRelationship = testProcessor.getRelationships().asScala.find(r => r.getName == RelationshipType.Success.id)
 
     val results1: java.util.List[MockFlowFile] = runner.getFlowFilesForRelationship(successRelationship.get)
     assert(results1.size == 1)
@@ -77,7 +77,7 @@ trait StatefulTestProcessorBehaviors {
     // Run the enqueued content, it also takes an int = number of contents queued
     runner.run(1)
 
-    successRelationship = testProcessor.getRelationships().asScala.find(r => r.getName == RelationshipType.SucessRelationship)
+    successRelationship = testProcessor.getRelationships().asScala.find(r => r.getName == RelationshipType.Success.id)
 
     val results2: java.util.List[MockFlowFile] = runner.getFlowFilesForRelationship(successRelationship.get)
     assert(results2.size == 2)
