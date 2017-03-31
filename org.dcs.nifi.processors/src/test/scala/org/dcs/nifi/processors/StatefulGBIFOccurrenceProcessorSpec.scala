@@ -61,7 +61,7 @@ trait StatefulGBIFOccurrenceProcessorBehaviors {
     // Run the enqueued content, it also takes an int = number of contents queued
     runner.run(1)
 
-    val successRelationship = testProcessor.getRelationships().asScala.find(r => r.getName == RelationshipType.SucessRelationship)
+    val successRelationship = testProcessor.getRelationships().asScala.find(r => r.getName == RelationshipType.Success.id)
 
     val results: java.util.List[MockFlowFile] = runner.getFlowFilesForRelationship(successRelationship.get)
     assert(results.size == 200)

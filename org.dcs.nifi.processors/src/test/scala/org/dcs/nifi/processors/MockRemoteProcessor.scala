@@ -17,7 +17,7 @@ import scala.collection.JavaConverters._
 class MockRemoteProcessorService(processor: RemoteProcessor, response: Array[Array[Byte]])
   extends RemoteProcessorService {
 
-  override def execute(record: Option[GenericRecord], properties: util.Map[String, String]): List[Either[ErrorResponse, AnyRef]] =
+  override def execute(record: Option[GenericRecord], properties: util.Map[String, String]): List[Either[ErrorResponse, (String, AnyRef)]] =
     processor.execute(record, properties)
 
   override def trigger(input: Array[Byte], properties: util.Map[String, String]): Array[Array[Byte]] = {
