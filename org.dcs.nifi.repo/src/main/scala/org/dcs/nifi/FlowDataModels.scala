@@ -52,25 +52,43 @@ object FlowProvenanceEventRecord  {
       Option(per.getPreviousContentClaimIdentifier).getOrElse(""))
   }
 
+
+
   def toFlowDataProvenanceRow(per: ProvenanceEventRecord, eventId: Option[Double]): BigTables.BigFlowDataProvenanceRow = {
+    def cleanAttributes(attributes: Map[String, String]): String = {
+      mapToString(attributes - Attributes.RelationshipAttributeKey - Attributes.ComponentTypeAttributeKey)
+    }
+
     val eid = eventId.getOrElse(per.getEventId.toDouble)
     val previousFileSize = if(per.getPreviousFileSize == null) 0 else per.getPreviousFileSize.toDouble
 
     val updatedAttributes = per.getUpdatedAttributes.asScala.toMap
-    val updatedAttributesWithoutRel: Option[String] = Option(mapToString(updatedAttributes - Attributes.RelationshipAttributeKey))
+    val updatedAttributesStr: Option[String] = Option(cleanAttributes(updatedAttributes))
 
     var relationship = Option(per.getRelationship)
+    var componentType = updatedAttributes.get(Attributes.ComponentTypeAttributeKey)
 
     if(relationship.isEmpty) {
       relationship = updatedAttributes.get(Attributes.RelationshipAttributeKey)
     }
 
     val attributes = per.getAttributes.asScala.toMap
-    val attributesWithoutRel: Option[String] = Option(mapToString(attributes - Attributes.RelationshipAttributeKey))
+    val attributesStr: Option[String] = Option(cleanAttributes(attributes))
 
     if(relationship.isEmpty) {
       relationship = attributes.get(Attributes.RelationshipAttributeKey)
     }
+
+    if(componentType.isEmpty) {
+      componentType = attributes.get(Attributes.ComponentTypeAttributeKey)
+    }
+
+    if(componentType.isEmpty) {
+      componentType = Option(per.getComponentType)
+    }
+
+    val previousAttributes = per.getPreviousAttributes.asScala.toMap
+    val previousAttributesStr: Option[String] = Option(cleanAttributes(previousAttributes))
 
     BigTables.BigFlowDataProvenanceRow(UUID.randomUUID().toString,
       eid.toLong,
@@ -81,11 +99,11 @@ object FlowProvenanceEventRecord  {
       Option(previousFileSize),
       Option(per.getEventDuration),
       Option(per.getEventType.name()),
-      attributesWithoutRel,
-      Option(mapToString(per.getPreviousAttributes.asScala.toMap)),
-      updatedAttributesWithoutRel,
+      attributesStr,
+      previousAttributesStr,
+      updatedAttributesStr,
       Option(per.getComponentId),
-      Option(per.getComponentType),
+      componentType,
       Option(per.getTransitUri),
       Option(per.getSourceSystemFlowFileIdentifier),
       Option(per.getFlowFileUuid),

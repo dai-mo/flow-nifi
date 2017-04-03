@@ -4,6 +4,7 @@ import org.apache.nifi.components.PropertyDescriptor.{Builder => PropertyDescrip
 import org.apache.nifi.components.{AllowableValue, PropertyDescriptor, Validator}
 import org.apache.nifi.processor.Relationship
 import org.apache.nifi.processor.Relationship.{Builder => RelationshipBuilder}
+import org.apache.nifi.processor.util.StandardValidators
 import org.dcs.api.processor.{PossibleValue, PropertyLevel, PropertyType, RemoteProperty, RemoteRelationship}
 
 import scala.collection.JavaConverters._
@@ -12,6 +13,8 @@ import scala.collection.JavaConverters._
   * Created by cmathew on 30/08/16.
   */
 object PropertyDescriptor {
+  val RemoteProcessorClassKey = "_PROCESSOR_CLASS"
+
   def apply(remoteProperty: RemoteProperty): PropertyDescriptor = {
 
     val propDescBuilder: PropertyDescriptorBuilder = new PropertyDescriptorBuilder()
@@ -29,6 +32,20 @@ object PropertyDescriptor {
     propDescBuilder.dynamic(remoteProperty.dynamic)
     remoteProperty.validators.asScala.map(v => propDescBuilder.addValidator(Class.forName(v).asInstanceOf[Validator]) )
 
+    if(remoteProperty.required)
+      propDescBuilder.addValidator(StandardValidators.NON_EMPTY_VALIDATOR)
+    else
+      propDescBuilder.addValidator(Validator.VALID)
+    propDescBuilder.build()
+  }
+
+  def processorClassPd(): PropertyDescriptor = {
+    val propDescBuilder: PropertyDescriptorBuilder = new PropertyDescriptorBuilder()
+    propDescBuilder.displayName(RemoteProcessorClassKey)
+    propDescBuilder.name(RemoteProcessorClassKey)
+    propDescBuilder.description("Remote Processor class")
+    propDescBuilder.defaultValue("")
+    propDescBuilder.required(true)
     propDescBuilder.addValidator(Validator.VALID)
     propDescBuilder.build()
   }

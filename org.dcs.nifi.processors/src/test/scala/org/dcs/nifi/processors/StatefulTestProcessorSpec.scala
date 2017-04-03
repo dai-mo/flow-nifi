@@ -15,22 +15,9 @@ import org.dcs.commons.serde.AvroImplicits._
 import scala.collection.JavaConverters._
 
 object StatefulTestProcessorSpec {
-  object MockRemoteService extends RemoteService with MockZookeeperServiceTracker
-  val clientProcessor: StatefulTestProcessor = spy(new StatefulTestProcessor())
-  doReturn(MockRemoteService).
-    when(clientProcessor).
-    remoteService
-
-  val remoteProcessor: org.dcs.core.processor.StatefulTestProcessor = new org.dcs.core.processor.StatefulTestProcessor()
-
-  val response: Array[Array[Byte]] =
-    Array(("{\"id\":" + UUID.randomUUID().toString +  "\"response\":\"Hello Bob\"}").getBytes())
-  MockZookeeperServiceTracker.addProcessor(
-    clientProcessor.processorClassName(),
-    new MockStatefulRemoteProcessorService(remoteProcessor, response)
-  )
-
-
+  val ProcessorServiceClassName = "org.dcs.core.service.StatefulTestProcessorService"
+  val TestRequestSchemaId = "org.dcs.core.processor.TestRequest"
+  val TestResponseSchemaId = "org.dcs.core.processor.TestResponse"
 }
 
 class StatefulTestProcessorSpec extends ProcessorsBaseUnitSpec with StatefulTestProcessorBehaviors {
@@ -38,14 +25,19 @@ class StatefulTestProcessorSpec extends ProcessorsBaseUnitSpec with StatefulTest
   import org.dcs.nifi.processors.StatefulTestProcessorSpec._
 
   "Stateful Test Processor Response" must " be valid " in {
+    val clientProcessor = mockClientProcessor(new org.dcs.core.processor.StatefulTestProcessor,
+      Array(("{\"id\":" + UUID.randomUUID().toString +  "\"response\":\"Hello Bob\"}").getBytes()))
+    clientProcessor.onPropertyModified(PropertyDescriptor.processorClassPd(), "", processorServiceClassName)
     validResponse(clientProcessor)
   }
+
+  override def processorServiceClassName: String = ProcessorServiceClassName
 }
 
 trait StatefulTestProcessorBehaviors {
   this: FlatSpec =>
 
-  def validResponse(testProcessor: StatefulTestProcessor): String =  {
+  def validResponse(testProcessor: ClientProcessor): String =  {
 
     // Generate a test runner to mock a processor in a flow
     val runner: TestRunner = TestRunners.newTestRunner(testProcessor)

@@ -1,5 +1,8 @@
 package org.dcs.nifi.processors
 
+import org.dcs.api.processor.RemoteProcessor
+import org.dcs.remote.RemoteService
+import org.mockito.Mockito.{doReturn, spy}
 import org.scalatest._
 import org.scalatest.junit.JUnitSuite
 import org.scalatest.FlatSpec
@@ -12,7 +15,27 @@ abstract class ProcessorsBaseUnitSpec extends FlatSpec
   with Inspectors
   with BeforeAndAfterEach
   with BeforeAndAfter
-  with MockitoSugar
+  with MockitoSugar {
+
+  def processorServiceClassName: String
+
+  def mockClientProcessor(remoteProcessor: RemoteProcessor, response: Array[Array[Byte]]): ClientProcessor = {
+
+    object MockRemoteService extends RemoteService with MockZookeeperServiceTracker
+
+    val clientProcessor: WorkerProcessor = spy(new WorkerProcessor())
+
+    doReturn(MockRemoteService).
+      when(clientProcessor).
+      remoteService
+
+    MockZookeeperServiceTracker.addProcessor(
+      processorServiceClassName,
+      new MockRemoteProcessorService(remoteProcessor, response)
+    )
+    clientProcessor
+  }
+}
 
 // FIXME: Currently the only way to use the mockito
 // inject mock mechanism to test the CDI

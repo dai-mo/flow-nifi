@@ -13,42 +13,29 @@ import org.dcs.commons.serde.AvroImplicits._
 import org.dcs.commons.serde.AvroSchemaStore
 
 object StatefulGBIFOccurrenceProcessorSpec {
-  object MockRemoteService extends RemoteService with MockZookeeperServiceTracker
-
-
-  val clientProcessor: StatefulGBIFOccurrenceProcessor = spy(new StatefulGBIFOccurrenceProcessor())
-  doReturn(MockRemoteService).
-    when(clientProcessor).
-    remoteService
-
-  val remoteProcessor: org.dcs.core.processor.StatefulTestProcessor = new org.dcs.core.processor.StatefulTestProcessor()
-
-  val TestResponseSchemaId: String = remoteProcessor.schemaId
-
-  val response: Array[Array[Byte]] = Array("".getBytes())
-  MockZookeeperServiceTracker.addProcessor(
-    clientProcessor.processorClassName(),
-    new MockStatefulRemoteProcessorService(remoteProcessor, response)
-  )
-
-
+  val ProcessorServiceClassName = "org.dcs.core.service.StatefulGBIFOccurrenceProcessorService"
 }
 
 class StatefulGBIFOccurrenceProcessorSpec extends ProcessorsBaseUnitSpec with StatefulGBIFOccurrenceProcessorBehaviors {
 
   import org.dcs.nifi.processors.StatefulGBIFOccurrenceProcessorSpec._
 
+  override def processorServiceClassName: String = ProcessorServiceClassName
+
   // FIXME: Setup sample GBIF output to run unit test
-//  "Stateful GBIF Occurrence Processor Response" must " be valid " in {
-//    validResponse(clientProcessor)
-//  }
+  //  "Stateful GBIF Occurrence Processor Response" must " be valid " in {
+  // val clientProcessor = mockClientProcessor(new org.dcs.core.processor.GBIFOccurrenceProcessor(),
+  // Array("".getBytes()))
+  // clientProcessor.onPropertyModified(PropertyDescriptor.processorClassPd(), "", processorServiceClassName)
+  //    validResponse(clientProcessor)
+  //  }
 }
 
 trait StatefulGBIFOccurrenceProcessorBehaviors {
   this: FlatSpec =>
-  import StatefulGBIFOccurrenceProcessorSpec._
+  import StatefulTestProcessorSpec._
 
-  def validResponse(testProcessor: StatefulGBIFOccurrenceProcessor) =  {
+  def validResponse(testProcessor: IngestionStatefulProcessor) =  {
 
     // Generate a test runner to mock a processor in a flow
     val runner: TestRunner = TestRunners.newTestRunner(testProcessor)

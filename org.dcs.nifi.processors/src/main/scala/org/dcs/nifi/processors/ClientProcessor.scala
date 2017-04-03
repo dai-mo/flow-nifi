@@ -1,6 +1,7 @@
 package org.dcs.nifi.processors
 
 
+import java.util
 import java.util.concurrent.atomic.AtomicReference
 import java.util.{List => JavaList, Map => JavaMap, Set => JavaSet}
 
@@ -8,7 +9,7 @@ import org.apache.nifi.components.PropertyDescriptor
 import org.apache.nifi.flowfile.FlowFile
 import org.apache.nifi.flowfile.attributes.CoreAttributes
 import org.apache.nifi.processor._
-import org.dcs.api.processor.{Configuration, MetaData, RelationshipType, RemoteProcessor}
+import org.dcs.api.processor._
 import org.dcs.api.service.RemoteProcessorService
 import org.dcs.remote.{RemoteService, ZkRemoteService}
 import org.slf4j.{Logger, LoggerFactory}
@@ -17,7 +18,6 @@ import scala.collection.JavaConversions._
 import scala.collection.JavaConverters._
 import scala.collection.mutable
 import scala.collection.mutable.{Map => MutableMap}
-import org.dcs.api.processor.Attributes
 
 
 trait ClientProcessor extends AbstractProcessor with Write with Read {
@@ -25,25 +25,32 @@ trait ClientProcessor extends AbstractProcessor with Write with Read {
   val logger: Logger = LoggerFactory.getLogger(classOf[ClientProcessor])
 
   var remoteProcessorService: RemoteProcessorService = _
-
+  var processorServiceClassName: String = _
   var propertyDescriptors: JavaList[PropertyDescriptor] = _
-  var relationships: JavaSet[Relationship] = _
+  var relationships: JavaSet[Relationship] = new util.HashSet[Relationship]()
   var metaData:MetaData = _
   var configuration: Configuration = _
   var schemaId: Option[String] = None
 
   var endOfStream = false
 
-  def processorClassName(): String
+  val processorClassPd: PropertyDescriptor = PropertyDescriptor.processorClassPd()
+  propertyDescriptors = new util.ArrayList[PropertyDescriptor]()
+  propertyDescriptors.add(processorClassPd)
 
   def remoteService: RemoteService = ZkRemoteService
 
-  def processorService(): RemoteProcessorService = {
-    remoteService.loadService[RemoteProcessorService](processorClassName())
+  def processorService(processorServiceClassName: String): Unit = {
+    this.processorServiceClassName = processorServiceClassName
+    remoteProcessorService = remoteService.loadService[RemoteProcessorService](processorServiceClassName)
   }
 
   override def init(context: ProcessorInitializationContext) {
-    remoteProcessorService = processorService()
+
+  }
+
+  protected def initStub(processorServiceClassName: String): Unit = {
+    processorService(processorServiceClassName)
 
     propertyDescriptors = remoteProcessorService.properties.map(ps => PropertyDescriptor(ps)).asJava
 
@@ -56,6 +63,11 @@ trait ClientProcessor extends AbstractProcessor with Write with Read {
     schemaId = Option(remoteProcessorService.schemaId)
   }
 
+  override def onPropertyModified(descriptor: PropertyDescriptor, oldValue: String, newValue: String): Unit = {
+    if(descriptor.getDisplayName == PropertyDescriptor.RemoteProcessorClassKey) initStub(newValue)
+
+    super.onPropertyModified(descriptor, oldValue, newValue)
+  }
 
   def output(in: Option[Array[Byte]],
              valueProperties: JavaMap[String, String]): Array[Array[Byte]] = in match {
@@ -73,7 +85,7 @@ trait ClientProcessor extends AbstractProcessor with Write with Read {
       val flowFile: FlowFile = session.get()
 
 
-      if (canRead)
+      if (canRead && flowFile != null)
         readCallback(flowFile, session, in)
 
       val out = output(Option(in.get()), valueProperties)
@@ -83,14 +95,15 @@ trait ClientProcessor extends AbstractProcessor with Write with Read {
         endOfStream = true
       } else {
         if (canWrite) {
-          if (out.length == 2){
+          if (out.length == 2) {
+            val ff = if (flowFile == null) session.create() else flowFile
             val relationship = new String(out(0))
-            route(writeCallback(flowFile, session,out(1)), session, relationship)
+            route(writeCallback(ff, session,out(1)), session, relationship)
           } else {
             out.grouped(2).foreach { resGrp =>
-              val newFlowFile = if (flowFile == null) session.create() else session.create(flowFile)
+              val ff = if (flowFile == null) session.create() else session.create(flowFile)
               val relationship = new String(resGrp(0))
-              route(writeCallback(newFlowFile, session, resGrp(1)), session,relationship)
+              route(writeCallback(ff, session, resGrp(1)), session, relationship)
             }
           }
         }
@@ -111,9 +124,12 @@ trait ClientProcessor extends AbstractProcessor with Write with Read {
             relationship: String): Unit = {
     val rel: Option[Relationship] =
       relationships.asScala.find(r => r.getName == relationship)
-    rel.foreach(rel => {
-      val ff = session.putAttribute(flowFile, Attributes.RelationshipAttributeKey,rel.getName)
-      session.transfer(ff, rel)
+    rel.foreach(relo => {
+      val attributes: util.Map[String, String] = new util.HashMap()
+      attributes.put(Attributes.RelationshipAttributeKey, relo.getName)
+      attributes.put(Attributes.ComponentTypeAttributeKey, processorServiceClassName)
+      val ff = session.putAllAttributes(flowFile, attributes)
+      session.transfer(ff, relo)
     })
     if(rel.isEmpty) logger.warn("Ignore transfer of flowfile with id " + flowFile.getId + " to relationship " + relationship + ", as it is not registered")
   }

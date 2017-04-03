@@ -17,17 +17,18 @@ abstract class StatefulClientProcessor extends ClientProcessor {
   var processorStateId: String = _
 
 
-  override def processorService(): RemoteProcessorService = {
-    statefulRemoteProcessorService
+  override def processorService(processorClassName: String): Unit = {
+    statefulRemoteProcessorService =
+      remoteService.loadService[StatefulRemoteProcessorService](processorClassName)
+    remoteProcessorService = statefulRemoteProcessorService
   }
 
   override def init(context: ProcessorInitializationContext): Unit = {
-    // FIXME: This remote service load does not work due to a null type in the
-    //        StatefulRemoteProcessorService declaration
-    //        Maybe due to the AnyRef return object of the execute method
-    statefulRemoteProcessorService =
-      remoteService.loadService[StatefulRemoteProcessorService](processorClassName())
     super.init(context)
+  }
+
+  override def initStub(processorClassName: String): Unit = {
+    super.initStub(processorClassName)
     processorStateId = statefulRemoteProcessorService.init()
   }
 
@@ -48,46 +49,47 @@ abstract class StatefulClientProcessor extends ClientProcessor {
 
   @OnConfigurationRestored
   def onConfigurationRestore(): Unit = {
-    statefulRemoteProcessorService.onInstanceConfigurationRestore(processorStateId)
+    Option(statefulRemoteProcessorService).map(_.onInstanceConfigurationRestore(processorStateId))
   }
 
   override def onPropertyModified(descriptor: PropertyDescriptor, oldValue: String, newValue: String): Unit = {
-    statefulRemoteProcessorService.onInstancePropertyChanged(processorStateId,
-      RemoteProperty(descriptor))
+    super.onPropertyModified(descriptor, oldValue, newValue)
+    Option(statefulRemoteProcessorService).map(_.onInstancePropertyChanged(processorStateId,
+      RemoteProperty(descriptor)))
   }
 
   @OnAdded
   def onAdd(): Unit = {
-    statefulRemoteProcessorService.onInstanceAdd(processorStateId)
+    Option(statefulRemoteProcessorService).map(_.onInstanceAdd(processorStateId))
   }
 
   @OnScheduled
   def onSchedule(processContext: ProcessContext): Unit = {
-    statefulRemoteProcessorService.onInstanceSchedule(processorStateId,
-      processContext.getProperties.asScala.keys.map(pd => RemoteProperty(pd)).toList.asJava)
+    Option(statefulRemoteProcessorService).map(_.onInstanceSchedule(processorStateId,
+      processContext.getProperties.asScala.keys.map(pd => RemoteProperty(pd)).toList.asJava))
   }
 
   @OnUnscheduled
   def onUnschedule(processContext: ProcessContext) = {
-    statefulRemoteProcessorService.onInstanceUnschedule(processorStateId,
-      processContext.getProperties.asScala.keys.map(pd => RemoteProperty(pd)).toList.asJava)
+    Option(statefulRemoteProcessorService).map(_.onInstanceUnschedule(processorStateId,
+      processContext.getProperties.asScala.keys.map(pd => RemoteProperty(pd)).toList.asJava))
   }
 
   @OnStopped
   def onStop(processContext: ProcessContext) = {
-    statefulRemoteProcessorService.onInstanceStop(processorStateId,
-      processContext.getProperties.asScala.keys.map(pd => RemoteProperty(pd)).toList.asJava)
+    Option(statefulRemoteProcessorService).map(_.onInstanceStop(processorStateId,
+      processContext.getProperties.asScala.keys.map(pd => RemoteProperty(pd)).toList.asJava))
   }
 
   @OnShutdown
   def onShutdown(processContext: ProcessContext) = {
-    statefulRemoteProcessorService.onInstanceShutdown(processorStateId,
-      processContext.getProperties.asScala.keys.map(pd => RemoteProperty(pd)).toList.asJava)
+    Option(statefulRemoteProcessorService).map(_.onInstanceShutdown(processorStateId,
+      processContext.getProperties.asScala.keys.map(pd => RemoteProperty(pd)).toList.asJava))
   }
 
   @OnRemoved
   def onRemove(processContext: ProcessContext) = {
-    statefulRemoteProcessorService.onInstanceRemove(processorStateId,
-      processContext.getProperties.asScala.keys.map(pd => RemoteProperty(pd)).toList.asJava)
+    Option(statefulRemoteProcessorService).map(_.onInstanceRemove(processorStateId,
+      processContext.getProperties.asScala.keys.map(pd => RemoteProperty(pd)).toList.asJava))
   }
 }
