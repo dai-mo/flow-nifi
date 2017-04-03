@@ -2,7 +2,7 @@ package org.dcs.flow.nifi
 
 import org.apache.nifi.web.api.dto._
 import org.apache.nifi.web.api.entity._
-import org.dcs.api.processor.RemoteProcessor
+import org.dcs.api.processor.{CoreProperties, RemoteProcessor}
 import org.dcs.api.service.{Connection, ConnectionPort, FlowInstance, FlowTemplate, ProcessorInstance, ProcessorType}
 import org.dcs.flow.nifi.internal.{ProcessGroup, ProcessGroupHelper}
 
@@ -158,7 +158,7 @@ object ProcessorInstance {
   }
 
   def getProcessorType(config: ProcessorConfigDTO): String = {
-    val ptype = config.getDescriptors.get(RemoteProcessor.ProcessorTypeKey)
+    val ptype = config.getDescriptors.get(CoreProperties.ProcessorTypeKey)
     if(ptype == null)
       RemoteProcessor.WorkerProcessorType
     else

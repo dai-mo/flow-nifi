@@ -13,44 +13,30 @@ import scala.collection.JavaConverters._
 
 
 object TestProcessorSpec {
-  object MockRemoteService extends RemoteService with MockZookeeperServiceTracker
+  val ProcessorServiceClassName = "org.dcs.core.service.TestProcessorService"
 
   val TestRequestSchemaId = "org.dcs.core.processor.TestRequest"
   val TestResponseSchemaId = "org.dcs.core.processor.TestResponse"
 
-  val clientProcessor: TestProcessor = spy(new TestProcessor())
-
-  doReturn(MockRemoteService).
-    when(clientProcessor).
-    remoteService
-
-  val remoteProcessor: org.dcs.core.processor.TestProcessor = new org.dcs.core.processor.TestProcessor()
-
-  val response: Array[Array[Byte]] = Array("{\"response\":\"Hello Bob\"}".getBytes)
-
-  MockZookeeperServiceTracker.addProcessor(
-    clientProcessor.processorClassName(),
-    new MockRemoteProcessorService(remoteProcessor, response)
-  )
-
-
-
 }
 
 class TestProcessorSpec extends ProcessorsBaseUnitSpec with TestProcessorBehaviors {
-
   import TestProcessorSpec._
 
   "Test Processor Response" should " be valid " in {
-
+    val clientProcessor = mockClientProcessor(new org.dcs.core.processor.TestProcessor(),
+      Array("{\"response\":\"Hello Bob\"}".getBytes))
+    clientProcessor.onPropertyModified(PropertyDescriptor.processorClassPd(), "", processorServiceClassName)
     validResponse(clientProcessor)
   }
+
+  override def processorServiceClassName: String = ProcessorServiceClassName
 }
 
 trait TestProcessorBehaviors {
   import TestProcessorSpec._
 
-  def validResponse(testProcessor: TestProcessor) {
+  def validResponse(testProcessor: ClientProcessor) {
 
     // Generate a test runner to mock a processor in a flow
     val runner: TestRunner = TestRunners.newTestRunner(testProcessor)
