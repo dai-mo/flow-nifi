@@ -1,5 +1,7 @@
 package org.dcs.nifi.processors
 
+import org.apache.nifi.annotation.behavior.InputRequirement
+import org.apache.nifi.annotation.behavior.InputRequirement.Requirement
 import org.apache.nifi.annotation.documentation.{CapabilityDescription, Tags}
 
 /**
@@ -8,4 +10,5 @@ import org.apache.nifi.annotation.documentation.{CapabilityDescription, Tags}
 
 @Tags(Array("worker", "stateful"))
 @CapabilityDescription("Stub for a remote stateful worker processor")
+@InputRequirement(Requirement.INPUT_REQUIRED)
 class WorkerStatefulProcessor extends InputOutputStatefulClientProcessor

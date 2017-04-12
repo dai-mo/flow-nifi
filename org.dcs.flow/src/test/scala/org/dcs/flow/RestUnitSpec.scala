@@ -1,6 +1,7 @@
 package org.dcs.flow
 
-import java.io.File
+import java.io.{File, IOException}
+import javax.ws.rs.client.{ClientRequestContext, ClientRequestFilter}
 
 import org.scalatest._
 import org.scalatest.mockito.MockitoSugar
@@ -9,6 +10,7 @@ import org.scalatest.FlatSpec
 import org.scalatest.concurrent.PatienceConfiguration.Timeout
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.time.{Millis, Seconds, Span}
+import org.slf4j.LoggerFactory
 
 
 trait FlowTestUtil {
@@ -16,6 +18,19 @@ trait FlowTestUtil {
   def jsonFromFile(jsonFile: File): String = {
     val source = scala.io.Source.fromFile(jsonFile)
     try source.mkString finally source.close()
+  }
+}
+
+object DetailedLoggingFilter {
+  private val LOG = LoggerFactory.getLogger(classOf[DetailedLoggingFilter].getName)
+}
+
+class DetailedLoggingFilter extends ClientRequestFilter {
+
+  @throws[IOException]
+  override def filter(requestContext: ClientRequestContext): Unit = {
+    if(requestContext != null && requestContext.getEntity != null)
+      DetailedLoggingFilter.LOG.info(requestContext.getEntity.toString)
   }
 }
 
@@ -40,11 +55,13 @@ abstract class FlowUnitSpec  extends FlatSpec
   with FlowBaseUnitSpec
   with BeforeAndAfterEach
   with BeforeAndAfter
+  with BeforeAndAfterAll
 
 abstract class AsyncFlowUnitSpec extends AsyncFlatSpec
   with FlowBaseUnitSpec
   with BeforeAndAfterEach
   with BeforeAndAfter
+  with BeforeAndAfterAll
 
 // FIXME: Currently the only way to use the mockito
 // inject mock mechanism to test the CDI
@@ -61,6 +78,6 @@ abstract class JUnitSpec extends JUnitSuite
   with Inspectors
   with MockitoSugar
   with FlowTestUtil
-  
+
 object IT extends Tag("IT")
 

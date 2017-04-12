@@ -34,6 +34,12 @@ object Revision {
 
     rev
   }
+
+  def params(version: Long, clientId: String): List[(String, String)] =
+    List(("version", version.toString), ("clientId", clientId))
+
+  def params(clientId: String): List[(String, String)] =
+    List(("clientId", clientId))
 }
 
 object FlowInstanceContainerRequest {
@@ -64,7 +70,7 @@ object FlowProcessorRequest {
     })
   }
 
-  def apply(psd: ProcessorServiceDefinition): ProcessorEntity = {
+  def apply(psd: ProcessorServiceDefinition, clientId: String): ProcessorEntity = {
     val processorEntity = new ProcessorEntity
     val processorDTO = new ProcessorDTO
 
@@ -73,8 +79,9 @@ object FlowProcessorRequest {
     processorDTO.setType(clientProcessorType(psd))
     processorEntity.setComponent(processorDTO)
 
-    processorEntity.setRevision(Revision(0.0.toLong, ProcessGroupHelper.DefaultClientId))
+    processorEntity.setRevision(Revision(0.0.toLong, clientId))
     processorEntity.setPosition(Position())
+
     processorEntity
   }
 }

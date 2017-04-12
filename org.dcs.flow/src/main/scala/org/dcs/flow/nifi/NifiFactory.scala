@@ -1,8 +1,11 @@
 package org.dcs.flow.nifi
 
+import java.util
+
+import org.apache.nifi.web.api.dto.PropertyDescriptorDTO.AllowableValueDTO
 import org.apache.nifi.web.api.dto._
 import org.apache.nifi.web.api.entity._
-import org.dcs.api.processor.{CoreProperties, RemoteProcessor}
+import org.dcs.api.processor.{CoreProperties, PossibleValue, RemoteProcessor, RemoteProperty}
 import org.dcs.api.service.{Connection, ConnectionPort, FlowInstance, FlowTemplate, ProcessorInstance, ProcessorType}
 import org.dcs.flow.nifi.internal.{ProcessGroup, ProcessGroupHelper}
 
@@ -139,7 +142,29 @@ object FlowInstance {
   }
 }
 
+
+
 object ProcessorInstance {
+
+  def toPossibleValues(allowableValues: util.List[AllowableValueDTO]): util.Set[PossibleValue] =
+    if(allowableValues == null || allowableValues.isEmpty)
+      null
+    else
+      allowableValues.asScala.to[Set].map(av => PossibleValue(av.getValue, av.getDisplayName, av.getDescription)).asJava
+
+
+  def toRemoteProperty(processorDescriptorDTO: PropertyDescriptorDTO): RemoteProperty = {
+    val remoteProperty = new RemoteProperty()
+    remoteProperty.setName(processorDescriptorDTO.getName)
+    remoteProperty.setDisplayName(processorDescriptorDTO.getDisplayName)
+    remoteProperty.setDescription(processorDescriptorDTO.getDescription)
+    remoteProperty.setDefaultValue(processorDescriptorDTO.getDefaultValue)
+    remoteProperty.setPossibleValues(toPossibleValues(processorDescriptorDTO.getAllowableValues))
+    remoteProperty.setRequired(processorDescriptorDTO.isRequired)
+    remoteProperty.setSensitive(processorDescriptorDTO.isSensitive)
+    remoteProperty.setDynamic(processorDescriptorDTO.isDynamic)
+    remoteProperty
+  }
 
   def apply(processorDTO: ProcessorDTO): ProcessorInstance = {
     val processorInstance = new ProcessorInstance
@@ -154,6 +179,8 @@ object ProcessorInstance {
     processorInstance.setProcessorType(getProcessorType(processorDTO.getConfig))
 
     processorInstance.setProperties(valuesOrDefaults(processorDTO.getConfig))
+    processorInstance.setPropertyDefinitions(Option(processorDTO.getConfig.getDescriptors).map(_.asScala.map(pd => toRemoteProperty(pd._2)).toList).getOrElse(Nil))
+    processorInstance.setValidationErrors(Option(processorDTO.getValidationErrors).map(_.asScala.toList).getOrElse(Nil))
     processorInstance
   }
 

@@ -6,6 +6,7 @@ import org.dcs.api.service.{ProcessorApiService, ProcessorInstance, ProcessorSer
 import org.dcs.commons.error.{ErrorConstants, RESTException}
 import org.dcs.commons.serde.JsonSerializerImplicits._
 import org.dcs.commons.ws.JerseyRestClient
+import org.dcs.flow.nifi.internal.ProcessGroupHelper
 
 import scala.collection.JavaConverters._
 import scala.concurrent.ExecutionContext.Implicits._
@@ -36,23 +37,25 @@ trait NifiProcessorClient extends ProcessorApiService with JerseyRestClient {
 
   import NifiProcessorClient._
 
-  override def types(userId: String): Future[List[ProcessorType]] =
+  override def types(): Future[List[ProcessorType]] =
     getAsJson(path = TypesPath)
       .map { response =>
         response.toObject[ProcessorTypesEntity]
           .getProcessorTypes.asScala.map(dt => ProcessorType(dt)).toList
       }
 
-  def typesSearchTags(str:String, clientToken: String): Future[List[ProcessorType]] =
-    types(clientToken)
+  def typesSearchTags(str:String): Future[List[ProcessorType]] =
+    types()
       .map { response =>
         response.filter( dtype => dtype.tags.exists(tag => tag.contains(str)))
       }
 
   def createBaseProcessor(processorServiceDefinition: ProcessorServiceDefinition,
-                          processGroupId: String): Future[ProcessorEntity] =
+                          processGroupId: String,
+                          clientId: String): Future[ProcessorEntity] =
     postAsJson(path = processorsProcessGroupPath(processGroupId),
-      body = FlowProcessorRequest(processorServiceDefinition))
+      body = FlowProcessorRequest(processorServiceDefinition, clientId),
+      queryParams = Revision.params(clientId))
       .map { response =>
         response.toObject[ProcessorEntity]
       }
@@ -72,14 +75,15 @@ trait NifiProcessorClient extends ProcessorApiService with JerseyRestClient {
       }
 
   override def create(processorServiceDefinition: ProcessorServiceDefinition,
-                      processGroupId: String): Future[ProcessorInstance] =
+                      processGroupId: String,
+                      clientId: String): Future[ProcessorInstance] =
     for {
-      baseProcessor <- createBaseProcessor(processorServiceDefinition, processGroupId)
+      baseProcessor <- createBaseProcessor(processorServiceDefinition, processGroupId, clientId)
       stubProcessor <- updateProcessorClass(processorServiceDefinition.processorServiceClassName, baseProcessor)
       finalisedProcessor <- autoTerminateAllRelationships(stubProcessor)
     } yield ProcessorInstance(finalisedProcessor)
 
-  override def instance(processorId: String, userId: String): Future[ProcessorInstance] =
+  override def instance(processorId: String): Future[ProcessorInstance] =
     getAsJson(processorsPath(processorId))
       .map { response =>
         ProcessorInstance(response.toObject[ProcessorEntity])
@@ -87,7 +91,7 @@ trait NifiProcessorClient extends ProcessorApiService with JerseyRestClient {
 
   override def start(processorId: String, userId: String): Future[ProcessorInstance] =
     for {
-      instance <- instance(processorId, userId)
+      instance <- instance(processorId)
       startedInstance <- start(processorId, instance.version, userId)
     } yield startedInstance
 
@@ -97,7 +101,7 @@ trait NifiProcessorClient extends ProcessorApiService with JerseyRestClient {
 
   override def stop(processorId: String, userId: String): Future[ProcessorInstance] =
     for {
-      instance <- instance(processorId, userId)
+      instance <- instance(processorId)
       stoppedInstance <- stop(processorId, instance.version, userId)
     } yield stoppedInstance
 
@@ -107,8 +111,9 @@ trait NifiProcessorClient extends ProcessorApiService with JerseyRestClient {
   }
 
 
-  override def remove(processorId: String, userId: String): Future[Boolean] =
-    deleteAsJson(path = processorsPath(userId) + "/" + processorId)
+  override def remove(processorId: String, version: Long, clientId: String): Future[Boolean] =
+    deleteAsJson(path = processorsPath(processorId),
+      queryParams = Revision.params(version, clientId))
       .map { response =>
         response.toObject[ProcessorEntity] != null
       }

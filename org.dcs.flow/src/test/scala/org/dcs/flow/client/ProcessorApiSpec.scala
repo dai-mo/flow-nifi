@@ -123,7 +123,7 @@ trait ProcessorApiBehaviors extends FlowUnitSpec {
 
 
   def validateProcessorTypes(processorApi: NifiProcessorApi) {
-    val types = processorApi.types(ClientToken).futureValue
+    val types = processorApi.types().futureValue
     assert(types.size == 135)
   }
 
