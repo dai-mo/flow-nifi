@@ -71,7 +71,7 @@ trait FlowCreationBehaviours extends FlowUnitSpec {
   import FlowCreationSpec._
 
   def validateFlowCreation(flowApi: FlowApiService): FlowInstance = {
-    val flowInstance = flowApi.create(FlowInstanceName).futureValue(timeout(5))
+    val flowInstance = flowApi.create(FlowInstanceName).futureValue
     assert(flowInstance.name == FlowInstanceName)
     assert(UUID.fromString(flowInstance.nameId) != null)
     assert(UUID.fromString(flowInstance.id) != null)
@@ -81,7 +81,7 @@ trait FlowCreationBehaviours extends FlowUnitSpec {
   def validateProcessorCreation(processorApi: ProcessorApiService,
                                 psd: ProcessorServiceDefinition,
                                 pgId: String): ProcessorInstance = {
-    val processorInstance = processorApi.create(psd, pgId).futureValue(timeout(5))
+    val processorInstance = processorApi.create(psd, pgId).futureValue
     assert(processorInstance.name == psd.processorServiceClassName.split("\\.").last)
     assert(processorInstance.`type` == FlowProcessorRequest.clientProcessorType(psd))
     assert(processorInstance.processorType == psd.processorType)
