@@ -110,6 +110,18 @@ object FlowInstance {
     f
   }
 
+  def apply(id: String, name: String): FlowInstance  = {
+    val f = new FlowInstance
+    val nameId = ProcessGroupHelper.extractFromName(name)
+    f.setId(id)
+    f.setName(nameId._1)
+    f.setNameId(nameId._2)
+    f.setState(NifiProcessorClient.StateNotStarted)
+    f.setProcessors(Nil)
+    f.setConnections(Nil)
+    f
+  }
+
 
 
   def apply(processGroupDTO: ProcessGroupDTO): FlowInstance  = {
@@ -133,6 +145,7 @@ object ProcessorInstance {
     val processorInstance = new ProcessorInstance
 
     processorInstance.setId(processorDTO.getId)
+    processorInstance.setName(processorDTO.getName)
     processorInstance.setType(processorDTO.getType)
     processorInstance.setStatus({
       val state = processorDTO.getState

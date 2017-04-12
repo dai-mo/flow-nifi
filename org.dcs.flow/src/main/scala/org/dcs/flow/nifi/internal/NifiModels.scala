@@ -13,6 +13,8 @@ case class ProcessGroup(@BeanProperty var id: String,
 object ProcessGroupHelper {
 
   val NameIdDelimiter = ";"
+  val RootProcessGroup = "root"
+  val DefaultClientId = "root"
 
   def extractFromName(comments: String): (String, String) = {
     val idName = comments.split(NameIdDelimiter)

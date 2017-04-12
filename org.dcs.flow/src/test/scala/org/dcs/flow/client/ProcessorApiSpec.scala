@@ -4,7 +4,7 @@ import java.nio.file.{Path, Paths}
 import javax.ws.rs.core.MediaType
 
 import org.dcs.commons.error.RESTException
-import org.dcs.flow.RestBaseUnitSpec
+import org.dcs.flow.{FlowBaseUnitSpec, FlowUnitSpec}
 import org.dcs.flow.nifi.{NifiProcessorApi, NifiProcessorClient}
 import org.mockito.Mockito._
 import org.mockito.{Matchers, Mockito}
@@ -115,7 +115,7 @@ class ProcessorApiSpec extends ProcessorApiBehaviors {
   //  }
 }
 
-trait ProcessorApiBehaviors extends RestBaseUnitSpec {
+trait ProcessorApiBehaviors extends FlowUnitSpec {
   this: FlatSpec =>
 
 

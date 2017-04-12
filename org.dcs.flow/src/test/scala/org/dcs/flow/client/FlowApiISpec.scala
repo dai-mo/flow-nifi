@@ -4,13 +4,13 @@ package org.dcs.flow.client
 import org.dcs.api.service.ProcessorInstance
 import org.dcs.commons.error.RESTException
 import org.dcs.flow.nifi.{NifiFlowApi, NifiProcessorApi, NifiProvenanceApi}
-import org.dcs.flow.{IT, RestBaseUnitSpec}
+import org.dcs.flow.{FlowBaseUnitSpec, FlowUnitSpec, IT}
 
 
 /**
   * Created by cmathew on 31/05/16.
   */
-class FlowApiISpec extends RestBaseUnitSpec
+class FlowApiISpec extends FlowUnitSpec
   with FlowApiBehaviors
   with ProcessorApiBehaviors
   with ProvenanceApiBehaviours {
@@ -22,7 +22,7 @@ class FlowApiISpec extends RestBaseUnitSpec
   val provenanceClient = new NifiProvenanceApi
 
   "Flow Instantiation" must "be valid  for existing template id" taggedAs IT in {
-    val templateId = flowClient.templates(FlowApiSpec.ClientToken).futureValue.find(t => t.name == "DateConversion").get.getId
+    val templateId = flowClient.templates().futureValue.find(t => t.name == "DateConversion").get.getId
     val fi = validateFlowInstantiation(flowClient, "DateConversion", templateId)
     validateFlowRetrieval(flowClient, fi.getId)
     validateFlowInstance(fi)
@@ -34,9 +34,9 @@ class FlowApiISpec extends RestBaseUnitSpec
   }
 
   "Flow Instance State Change" must "result in valid state" taggedAs IT in {
-    val templateId = flowClient.templates(FlowApiSpec.ClientToken).futureValue.find(t => t.name == "DateConversion").get.getId
+    val templateId = flowClient.templates().futureValue.find(t => t.name == "DateConversion").get.getId
     // Instantiate a flow instance from an existing flow template
-    val flowInstance = flowClient.instantiate(templateId, FlowApiSpec.UserId, FlowApiSpec.ClientToken).futureValue
+    val flowInstance = flowClient.instantiate(templateId).futureValue
     // Start the flow i.e. start all the processors of the flow
     val processors: List[ProcessorInstance] = validateStart(flowClient, flowInstance.id)
     // Wait a bit to allow processors to generate output

@@ -1,7 +1,8 @@
 package org.dcs.flow.nifi
 
 import org.apache.nifi.web.api.entity.{ProcessorEntity, ProcessorTypesEntity}
-import org.dcs.api.service.{ProcessorApiService, ProcessorInstance, ProcessorType}
+import org.dcs.api.processor.RemoteProcessor
+import org.dcs.api.service.{ProcessorApiService, ProcessorInstance, ProcessorServiceDefinition, ProcessorType}
 import org.dcs.commons.error.{ErrorConstants, RESTException}
 import org.dcs.commons.serde.JsonSerializerImplicits._
 import org.dcs.commons.ws.JerseyRestClient
@@ -20,6 +21,9 @@ object NifiProcessorClient  {
   val StateStopped = "STOPPED"
 
   val States = Set(StateRunning, StateStopped)
+
+  def processorsProcessGroupPath(processGroup: String): String =
+    "/process-groups/" + processGroup + "/processors"
 
   def processorsPath(processorId: String): String =
     "/processors/" + processorId
@@ -45,11 +49,35 @@ trait NifiProcessorClient extends ProcessorApiService with JerseyRestClient {
         response.filter( dtype => dtype.tags.exists(tag => tag.contains(str)))
       }
 
-  override def create(name: String, ptype: String, userId: String): Future[ProcessorInstance] =
-    postAsJson(path = processorsPath(userId))
+  def createBaseProcessor(processorServiceDefinition: ProcessorServiceDefinition,
+                          processGroupId: String): Future[ProcessorEntity] =
+    postAsJson(path = processorsProcessGroupPath(processGroupId),
+      body = FlowProcessorRequest(processorServiceDefinition))
       .map { response =>
-        ProcessorInstance(response.toObject[ProcessorEntity])
+        response.toObject[ProcessorEntity]
       }
+
+  def updateProcessorClass(processorServiceClassName: String, processorEntity: ProcessorEntity): Future[ProcessorEntity] =
+    putAsJson(path = processorsPath(processorEntity.getId),
+      body = FlowProcessorUpdateRequest(Map(RemoteProcessor.RemoteProcessorClassKey -> processorServiceClassName), processorEntity))
+      .map { response =>
+        response.toObject[ProcessorEntity]
+      }
+
+  def autoTerminateAllRelationships(processorEntity: ProcessorEntity): Future[ProcessorEntity] =
+    putAsJson(path = processorsPath(processorEntity.getId),
+      body = FlowProcessorUpdateRequest(processorEntity.getComponent.getRelationships.asScala.map(_.getName).toSet, processorEntity))
+      .map { response =>
+        response.toObject[ProcessorEntity]
+      }
+
+  override def create(processorServiceDefinition: ProcessorServiceDefinition,
+                      processGroupId: String): Future[ProcessorInstance] =
+    for {
+      baseProcessor <- createBaseProcessor(processorServiceDefinition, processGroupId)
+      stubProcessor <- updateProcessorClass(processorServiceDefinition.processorServiceClassName, baseProcessor)
+      finalisedProcessor <- autoTerminateAllRelationships(stubProcessor)
+    } yield ProcessorInstance(finalisedProcessor)
 
   override def instance(processorId: String, userId: String): Future[ProcessorInstance] =
     getAsJson(processorsPath(processorId))

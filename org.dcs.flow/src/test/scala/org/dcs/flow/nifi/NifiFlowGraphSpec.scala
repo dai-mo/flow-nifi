@@ -2,7 +2,7 @@ package org.dcs.flow.nifi
 
 import java.nio.file.{Path, Paths}
 
-import org.dcs.flow.RestBaseUnitSpec
+import org.dcs.flow.{FlowBaseUnitSpec, FlowUnitSpec}
 import org.dcs.flow.client.FlowApiSpec
 import org.dcs.flow.nifi.NifiFlowGraph.FlowGraphNode
 import org.mockito.Matchers
@@ -16,7 +16,7 @@ import scala.concurrent.Future
   */
 
 
-class NifiFlowGraphSpec extends RestBaseUnitSpec with NifiFlowGraphBehaviors {
+class NifiFlowGraphSpec extends FlowUnitSpec with NifiFlowGraphBehaviors {
   import FlowApiSpec._
 
   "Flow Graph Construction" must "generate valid graph" in {
@@ -37,13 +37,13 @@ class NifiFlowGraphSpec extends RestBaseUnitSpec with NifiFlowGraphBehaviors {
   }
 }
 
-trait NifiFlowGraphBehaviors extends RestBaseUnitSpec {
+trait NifiFlowGraphBehaviors extends FlowBaseUnitSpec {
   this: FlatSpec =>
 
   import FlowApiSpec._
 
   def validateFlowGraphConstruction(flowClient: NifiFlowClient, flowInstanceId: String) {
-    val flowInstance = flowClient.instance(flowInstanceId, UserId, ClientToken).futureValue
+    val flowInstance = flowClient.instance(flowInstanceId).futureValue
     val graphNodes = NifiFlowGraph.buildFlowGraph(flowInstance)
     assert(graphNodes.count(n => n.parents.isEmpty) == 1)
     assert(graphNodes.count(n => n.children.isEmpty) == 1)

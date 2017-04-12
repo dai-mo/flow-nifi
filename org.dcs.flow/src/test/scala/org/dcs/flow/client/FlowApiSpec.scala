@@ -5,7 +5,7 @@ import javax.ws.rs.core.MediaType
 
 import org.dcs.api.service.{FlowInstance, FlowTemplate, ProcessorInstance}
 import org.dcs.commons.error.RESTException
-import org.dcs.flow.RestBaseUnitSpec
+import org.dcs.flow.{FlowBaseUnitSpec, FlowUnitSpec}
 import org.dcs.flow.nifi.{NifiFlowApi, NifiFlowClient, NifiProcessorClient}
 import org.mockito.Matchers
 import org.mockito.Mockito._
@@ -29,7 +29,7 @@ object FlowApiSpec {
 
 }
 
-class FlowApiSpec extends RestBaseUnitSpec with FlowApiBehaviors {
+class FlowApiSpec extends FlowUnitSpec with FlowApiBehaviors {
   import FlowApiSpec._
 
   "Templates Retrieval" must "be valid" in {
@@ -134,10 +134,8 @@ class FlowApiSpec extends RestBaseUnitSpec with FlowApiBehaviors {
   }
 }
 
-trait FlowApiBehaviors extends RestBaseUnitSpec {
+trait FlowApiBehaviors extends FlowBaseUnitSpec {
   this: FlatSpec =>
-
-  import FlowApiSpec._
 
 
   val invalidTemplateId = "invalid-template-id"
@@ -146,13 +144,13 @@ trait FlowApiBehaviors extends RestBaseUnitSpec {
 
 
   def validateTemplatesRetrieval(flowClient: NifiFlowClient): List[FlowTemplate] = {
-    val templates = flowClient.templates(ClientToken).futureValue
+    val templates = flowClient.templates().futureValue
     assert (templates.size == 2)
     templates
   }
 
   def validateFlowInstantiation(flowClient: NifiFlowClient, name: String, templateId: String): FlowInstance = {
-    val flow = flowClient.instantiate(templateId, UserId , ClientToken).futureValue
+    val flow = flowClient.instantiate(templateId).futureValue
     assert(flow.processors.size == 5)
     assert(flow.connections.size == 4)
     assert(flow.name == name)
@@ -166,13 +164,13 @@ trait FlowApiBehaviors extends RestBaseUnitSpec {
 
   def validateNonExistingFlowInstantiation(flowClient: NifiFlowClient) {
     val thrown = intercept[RESTException] {
-      flowClient.instantiate(invalidTemplateId, UserId, ClientToken)
+      flowClient.instantiate(invalidTemplateId)
     }
     assert(thrown.errorResponse.httpStatusCode == 400)
   }
 
   def validateFlowRetrieval(flowClient: NifiFlowClient, flowInstanceId: String) {
-    val flowInstance = flowClient.instance(flowInstanceId, UserId, ClientToken).futureValue
+    val flowInstance = flowClient.instance(flowInstanceId).futureValue
     assert(flowInstance.processors.size == 5)
     assert(flowInstance.connections.size == 4)
   }
@@ -183,19 +181,19 @@ trait FlowApiBehaviors extends RestBaseUnitSpec {
   }
 
   def validateFlowDeletion(flowClient: NifiFlowClient, flowInstanceId: String) {
-    assert(flowClient.remove(flowInstanceId, UserId, ClientToken).futureValue)
+    assert(flowClient.remove(flowInstanceId).futureValue)
   }
 
   def validateStart(flowClient: NifiFlowClient, flowInstanceId: String): List[ProcessorInstance] = {
-    assert(flowClient.start(flowInstanceId, UserId, ClientToken).futureValue)
-    val processors = flowClient.instance(flowInstanceId, UserId, ClientToken).futureValue.processors
+    assert(flowClient.start(flowInstanceId).futureValue)
+    val processors = flowClient.instance(flowInstanceId).futureValue.processors
     processors.foreach(p => p.status == NifiProcessorClient.StateRunning)
     processors
   }
 
   def validateStop(flowClient: NifiFlowClient, flowInstanceId: String): List[ProcessorInstance] = {
-    assert(flowClient.stop(flowInstanceId, UserId, ClientToken).futureValue)
-    val processors = flowClient.instance(flowInstanceId, UserId, ClientToken).futureValue.processors
+    assert(flowClient.stop(flowInstanceId).futureValue)
+    val processors = flowClient.instance(flowInstanceId).futureValue.processors
     processors.foreach(p => p.status == NifiProcessorClient.StateStopped)
     processors
   }

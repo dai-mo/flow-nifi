@@ -13,7 +13,6 @@ import scala.collection.JavaConverters._
   * Created by cmathew on 30/08/16.
   */
 object PropertyDescriptor {
-  val RemoteProcessorClassKey = "_PROCESSOR_CLASS"
 
   def apply(remoteProperty: RemoteProperty): PropertyDescriptor = {
 

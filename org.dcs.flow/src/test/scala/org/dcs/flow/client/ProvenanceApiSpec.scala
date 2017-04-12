@@ -4,7 +4,7 @@ import java.nio.file.{Path, Paths}
 import javax.ws.rs.core.MediaType
 
 import org.dcs.api.service.Provenance
-import org.dcs.flow.RestBaseUnitSpec
+import org.dcs.flow.{FlowBaseUnitSpec, FlowUnitSpec}
 import org.dcs.flow.nifi.{NifiProvenanceApi, NifiProvenanceClient}
 import org.mockito.Matchers
 import org.mockito.Mockito._
@@ -74,7 +74,7 @@ class ProvenanceApiSpec extends ProvenanceApiBehaviours {
 }
 
 
-trait ProvenanceApiBehaviours extends RestBaseUnitSpec {
+trait ProvenanceApiBehaviours extends FlowUnitSpec {
   this: FlatSpec =>
 
   // FIXME: This test needs to be adapted to the avro serde

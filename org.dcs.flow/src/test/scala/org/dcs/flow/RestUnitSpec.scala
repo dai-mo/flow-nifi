@@ -3,9 +3,10 @@ package org.dcs.flow
 import java.io.File
 
 import org.scalatest._
-import org.scalatest.mock.MockitoSugar
+import org.scalatest.mockito.MockitoSugar
 import org.scalatest.junit.JUnitSuite
 import org.scalatest.FlatSpec
+import org.scalatest.concurrent.PatienceConfiguration.Timeout
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.time.{Millis, Seconds, Span}
 
@@ -18,13 +19,10 @@ trait FlowTestUtil {
   }
 }
 
-abstract class RestBaseUnitSpec extends FlatSpec
-  with Matchers
+trait FlowBaseUnitSpec extends Matchers
   with OptionValues
   with Inside
   with Inspectors
-  with BeforeAndAfterEach
-  with BeforeAndAfter
   with MockitoSugar
   with FlowTestUtil
   with ScalaFutures {
@@ -32,7 +30,21 @@ abstract class RestBaseUnitSpec extends FlatSpec
   implicit val defaultPatience =
     PatienceConfig(timeout = Span(2, Seconds), interval = Span(100, Millis))
 
+  // creates timeout in seconds for futures
+  def timeout(secs: Int) =
+    Timeout(Span(secs, Seconds))
+
 }
+
+abstract class FlowUnitSpec  extends FlatSpec
+  with FlowBaseUnitSpec
+  with BeforeAndAfterEach
+  with BeforeAndAfter
+
+abstract class AsyncFlowUnitSpec extends AsyncFlatSpec
+  with FlowBaseUnitSpec
+  with BeforeAndAfterEach
+  with BeforeAndAfter
 
 // FIXME: Currently the only way to use the mockito
 // inject mock mechanism to test the CDI

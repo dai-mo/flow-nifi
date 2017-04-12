@@ -3,8 +3,11 @@ package org.dcs.flow.nifi
 import java.util.Date
 
 import org.apache.nifi.web.api.dto.provenance.{ProvenanceDTO, ProvenanceRequestDTO}
-import org.apache.nifi.web.api.dto.{PositionDTO, ProcessGroupDTO, ProcessorDTO, RevisionDTO}
+import org.apache.nifi.web.api.dto._
 import org.apache.nifi.web.api.entity.{InstantiateTemplateRequestEntity, ProcessGroupEntity, ProcessorEntity, ProvenanceEntity}
+import org.dcs.api.processor.RemoteProcessor
+import org.dcs.api.service.ProcessorServiceDefinition
+import org.dcs.flow.nifi.internal.ProcessGroupHelper
 
 import scala.beans.BeanProperty
 import scala.collection.JavaConverters._
@@ -44,6 +47,47 @@ object FlowInstanceContainerRequest {
     pge.setRevision(Revision(0.0.toLong, clientId))
     pge.setComponent(pg)
     pge
+  }
+}
+
+object FlowProcessorRequest {
+
+  def clientProcessorType(psd: ProcessorServiceDefinition): String = {
+    "org.dcs.nifi.processors." + (psd.processorType match {
+      case RemoteProcessor.IngestionProcessorType =>
+        if(psd.stateful) "IngestionStatefulProcessor" else "IngestionProcessor"
+      case RemoteProcessor.WorkerProcessorType =>
+        if(psd.stateful) "WorkerStatefulProcessor" else "WorkerProcessor"
+      case RemoteProcessor.SinkProcessorType =>
+        if(psd.stateful) "SinkStatefulProcessor" else "SinkProcessor"
+      case _ => throw new IllegalArgumentException("Unknown Processor Type : " + psd.processorType)
+    })
+  }
+
+  def apply(psd: ProcessorServiceDefinition): ProcessorEntity = {
+    val processorEntity = new ProcessorEntity
+    val processorDTO = new ProcessorDTO
+
+    processorDTO.setName(psd.processorServiceClassName.split("\\.").last)
+
+    processorDTO.setType(clientProcessorType(psd))
+    processorEntity.setComponent(processorDTO)
+
+    processorEntity.setRevision(Revision(0.0.toLong, ProcessGroupHelper.DefaultClientId))
+    processorEntity.setPosition(Position())
+    processorEntity
+  }
+}
+
+object FlowProcessorUpdateRequest {
+  def apply(properties: Map[String, String], processorEntity: ProcessorEntity): ProcessorEntity = {
+    processorEntity.getComponent.getConfig.setProperties(properties.asJava)
+    processorEntity
+  }
+
+  def apply(autoTerminateRelationships: Set[String], processorEntity: ProcessorEntity): ProcessorEntity = {
+    processorEntity.getComponent.getConfig.setAutoTerminatedRelationships(autoTerminateRelationships.asJava)
+    processorEntity
   }
 }
 
