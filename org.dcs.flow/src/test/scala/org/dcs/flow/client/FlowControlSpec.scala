@@ -7,7 +7,7 @@ import org.dcs.api.processor.RemoteProcessor
 import org.dcs.api.service._
 import org.dcs.commons.error.{ErrorConstants, ErrorResponse, RESTException}
 import org.dcs.flow.{DetailedLoggingFilter, FlowUnitSpec, IT}
-import org.dcs.flow.nifi.{FlowProcessorRequest, NifiFlowApi, NifiProcessorApi}
+import org.dcs.flow.nifi.{FlowProcessorRequest, NifiFlowApi, NifiProcessorApi, NifiProcessorClient}
 import org.glassfish.jersey.filter.LoggingFilter
 import org.slf4j.{Logger, LoggerFactory}
 
@@ -39,8 +39,8 @@ class FlowControlISpec extends FlowCreationBehaviours {
   import FlowControlSpec._
 
   val clientId = UUID.randomUUID().toString
-  val flowApiService = new NifiFlowApi()
-  val processorApiService = new NifiProcessorApi()
+  val flowApi = new NifiFlowApi()
+  val processorApi = new NifiProcessorApi()
 
   var flowInstance: FlowInstance = _
 
@@ -49,30 +49,30 @@ class FlowControlISpec extends FlowCreationBehaviours {
   var filterP: ProcessorInstance = _
   var csvP: ProcessorInstance = _
 
+
+
   override def beforeAll(): Unit = {
-    flowApiService.requestFilter(new LoggingFilter)
-    flowApiService.requestFilter(new DetailedLoggingFilter)
+    flowApi.requestFilter(new LoggingFilter)
+    flowApi.requestFilter(new DetailedLoggingFilter)
 
-    processorApiService.requestFilter(new LoggingFilter)
-    processorApiService.requestFilter(new DetailedLoggingFilter)
+    processorApi.requestFilter(new LoggingFilter)
+    processorApi.requestFilter(new DetailedLoggingFilter)
 
-    flowInstance = validateFlowCreation(flowApiService)
+    flowInstance = validateFlowCreation(flowApi)
   }
-  //
-  //  override def afterAll(): Unit = {
-  //
-  //  }
 
-  "Processor Creation" should "execute sucessfully" taggedAs IT in {
+    override def afterAll(): Unit = {
+      flowApi.remove(flowInstance.id, flowInstance.version, clientId)
+    }
 
-    val flowInstance = validateFlowCreation(flowApiService)
+  "Processor Lifecycle" should "execute sucessfully" taggedAs IT in {
 
     val gbifPsd = ProcessorServiceDefinition(
       ServiceClassPrefix + StatefulGBIFOccurrenceProcessorService,
       RemoteProcessor.IngestionProcessorType,
       true)
 
-    gbifP = validateProcessorCreation(processorApiService,
+    gbifP = validateProcessorCreation(processorApi,
       gbifPsd,
       flowInstance.id,
       clientId)
@@ -82,7 +82,7 @@ class FlowControlISpec extends FlowCreationBehaviours {
       RemoteProcessor.WorkerProcessorType,
       false)
 
-    latlongP = validateProcessorCreation(processorApiService,
+    latlongP = validateProcessorCreation(processorApi,
       latLongPsd,
       flowInstance.id,
       clientId)
@@ -93,7 +93,7 @@ class FlowControlISpec extends FlowCreationBehaviours {
       RemoteProcessor.WorkerProcessorType,
       false)
 
-    filterP = validateProcessorCreation(processorApiService,
+    filterP = validateProcessorCreation(processorApi,
       filterPsd,
       flowInstance.id,
       clientId)
@@ -103,18 +103,41 @@ class FlowControlISpec extends FlowCreationBehaviours {
       RemoteProcessor.SinkProcessorType,
       true)
 
-    csvP = validateProcessorCreation(processorApiService,
+    csvP = validateProcessorCreation(processorApi,
       csvPsd,
       flowInstance.id,
       clientId)
+
+    // Start processors
+    latlongP = validateProcessorStart(processorApi,
+      latlongP.id,
+      latlongP.version,
+      clientId)
+
+    filterP = validateProcessorStart(processorApi,
+      filterP.id,
+      filterP.version,
+      clientId)
+
+    latlongP = validateProcessorStop(processorApi,
+      latlongP.id,
+      latlongP.version,
+      clientId)
+
+    // Stop processors
+    filterP = validateProcessorStop(processorApi,
+      filterP.id,
+      filterP.version,
+      clientId)
+
+    // Remove processors
+    validateProcessorRemoval(processorApi, gbifP.id, gbifP.version, clientId)
+    validateProcessorRemoval(processorApi, latlongP.id, latlongP.version, clientId)
+    validateProcessorRemoval(processorApi, filterP.id, filterP.version, clientId)
+    validateProcessorRemoval(processorApi, csvP.id, csvP.version, clientId)
   }
 
-//  "Processor Removal" should "execute sucessfully" taggedAs IT in {
-//    validateProcessorRemoval(processorApiService, gbifP.id, gbifP.version, clientId)
-//    validateProcessorRemoval(processorApiService, latlongP.id, latlongP.version, clientId)
-//    validateProcessorRemoval(processorApiService, filterP.id, filterP.version, clientId)
-//    validateProcessorRemoval(processorApiService, csvP.id, csvP.version, clientId)
-//  }
+
 }
 
 trait FlowCreationBehaviours extends FlowUnitSpec {
@@ -132,11 +155,29 @@ trait FlowCreationBehaviours extends FlowUnitSpec {
   def validateProcessorCreation(processorApi: ProcessorApiService,
                                 psd: ProcessorServiceDefinition,
                                 pgId: String,
-                                clientid: String): ProcessorInstance = {
-    val processorInstance = processorApi.create(psd, pgId, clientid).futureValue(timeout(5))
+                                clientId: String): ProcessorInstance = {
+    val processorInstance = processorApi.create(psd, pgId, clientId).futureValue(timeout(5))
     assert(processorInstance.name == psd.processorServiceClassName.split("\\.").last)
     assert(processorInstance.`type` == FlowProcessorRequest.clientProcessorType(psd))
     assert(processorInstance.processorType == psd.processorType)
+    processorInstance
+  }
+
+  def validateProcessorStart(processorApi: ProcessorApiService,
+                            processorId: String,
+                            version: Long,
+                            clientId: String): ProcessorInstance = {
+    val processorInstance = processorApi.start(processorId, version, clientId).futureValue(timeout(5))
+    assert(processorInstance.status == NifiProcessorClient.StateRunning)
+    processorInstance
+  }
+
+  def validateProcessorStop(processorApi: ProcessorApiService,
+                             processorId: String,
+                             version: Long,
+                             clientId: String): ProcessorInstance = {
+    val processorInstance = processorApi.stop(processorId, version, clientId).futureValue(timeout(5))
+    assert(processorInstance.status == NifiProcessorClient.StateStopped)
     processorInstance
   }
 

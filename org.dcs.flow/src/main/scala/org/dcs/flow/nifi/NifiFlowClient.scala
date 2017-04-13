@@ -53,7 +53,7 @@ trait NifiFlowClient extends FlowApiService with JerseyRestClient {
 
   override def create(flowName: String): Future[FlowInstance] = {
     createProcessGroup(flowName, ProcessGroupHelper.RootProcessGroup)
-    .map(pg =>  FlowInstance(pg.id, pg.getName))
+      .map(pg =>  FlowInstance(pg.id, pg.getName, pg.version))
   }
 
   override def instantiate(flowTemplateId: String): Future[FlowInstance] = {
@@ -84,13 +84,16 @@ trait NifiFlowClient extends FlowApiService with JerseyRestClient {
   def instance(flowTemplateId: String, processGroup: ProcessGroup): Future[FlowInstance] =
     postAsJson[InstantiateTemplateRequestEntity](path = templateInstancePath(processGroup.id), body = FlowInstanceRequest(flowTemplateId))
       .map { response =>
-        FlowInstance(response.toObject[FlowEntity], processGroup.id, processGroup.getName)
+        FlowInstance(response.toObject[FlowEntity], processGroup.id, processGroup.getName, processGroup.version)
       }
 
   override def instance(flowInstanceId: String): Future[FlowInstance] = {
-    getAsJson(path = flowProcessGroupsPath(flowInstanceId))
-      .map { response =>
-        FlowInstance(response.toObject[ProcessGroupFlowEntity])
+    processGroupVersion(flowInstanceId)
+      .flatMap { version =>
+        getAsJson(path = flowProcessGroupsPath(flowInstanceId))
+          .map { response =>
+            FlowInstance(response.toObject[ProcessGroupFlowEntity], version.toLong)
+          }
       }
   }
 
@@ -134,13 +137,11 @@ trait NifiFlowClient extends FlowApiService with JerseyRestClient {
       }
   }
 
-  override def remove(flowInstanceId: String): Future[Boolean] = {
-    processGroupVersion(flowInstanceId)
-      .flatMap { version =>
-        deleteAsJson(path = processGroupsPath(flowInstanceId))
-          .map { response =>
-            response != null
-          }
+  override def remove(flowInstanceId: String, version: Long, clientId: String): Future[Boolean] = {
+    deleteAsJson(path = processGroupsPath(flowInstanceId),
+    queryParams = Revision.params(version, clientId))
+      .map { response =>
+        response != null
       }
   }
 

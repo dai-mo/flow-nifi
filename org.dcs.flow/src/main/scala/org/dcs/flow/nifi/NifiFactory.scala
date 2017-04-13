@@ -34,6 +34,7 @@ object ProcessGroup {
   def apply(processGroupEntity: ProcessGroupEntity): ProcessGroup = {
     val pg = new ProcessGroup
 
+    pg.setVersion(processGroupEntity.getRevision.getVersion)
     pg.setId(processGroupEntity.getComponent.getId)
     pg.setName(processGroupEntity.getComponent.getName)
     pg
@@ -51,6 +52,7 @@ object FlowInstance {
 
     f.setVersion(processGroupEntity.getRevision.getVersion)
     f.setId(processGroupEntity.getComponent.getId)
+    f.setVersion(processGroupEntity.getRevision.getVersion)
     f.setName(nameId._1)
     f.setNameId(nameId._2)
     f.setState(NifiProcessorClient.StateNotStarted)
@@ -62,7 +64,7 @@ object FlowInstance {
   }
 
 
-  def apply(processGroupFlowEntity: ProcessGroupFlowEntity): FlowInstance  = {
+  def apply(processGroupFlowEntity: ProcessGroupFlowEntity, version: Long): FlowInstance  = {
     val f = new FlowInstance
     val flow = processGroupFlowEntity.getProcessGroupFlow.getFlow
     val bc = processGroupFlowEntity.getProcessGroupFlow.getBreadcrumb.getBreadcrumb
@@ -70,6 +72,7 @@ object FlowInstance {
 
     val nameId = ProcessGroupHelper.extractFromName(bc.getName)
     f.setId(processGroupFlowEntity.getProcessGroupFlow.getId)
+    f.setVersion(version)
     f.setName(nameId._1)
     f.setNameId(nameId._2)
 
@@ -83,7 +86,7 @@ object FlowInstance {
     f
   }
 
-  def apply(flowSnippetEntity: FlowSnippetEntity, id: String, name: String): FlowInstance  = {
+  def apply(flowSnippetEntity: FlowSnippetEntity, id: String, name: String, version: Long): FlowInstance  = {
     val f = new FlowInstance
     val contents = flowSnippetEntity.getContents
 
@@ -98,12 +101,13 @@ object FlowInstance {
     f
   }
 
-  def apply(flowEntity: FlowEntity, id: String, name: String): FlowInstance  = {
+  def apply(flowEntity: FlowEntity, id: String, name: String, version: Long): FlowInstance  = {
     val f = new FlowInstance
     val flow = flowEntity.getFlow
 
 
     val nameId = ProcessGroupHelper.extractFromName(name)
+
     f.setId(id)
     f.setName(nameId._1)
     f.setNameId(nameId._2)
@@ -113,10 +117,11 @@ object FlowInstance {
     f
   }
 
-  def apply(id: String, name: String): FlowInstance  = {
+  def apply(id: String, name: String, version: Long): FlowInstance  = {
     val f = new FlowInstance
     val nameId = ProcessGroupHelper.extractFromName(name)
     f.setId(id)
+    f.setVersion(version)
     f.setName(nameId._1)
     f.setNameId(nameId._2)
     f.setState(NifiProcessorClient.StateNotStarted)

@@ -5,8 +5,9 @@ import javax.ws.rs.core.MediaType
 
 import org.dcs.api.service.{FlowInstance, FlowTemplate, ProcessorInstance}
 import org.dcs.commons.error.RESTException
-import org.dcs.flow.{FlowBaseUnitSpec, FlowUnitSpec}
+import org.dcs.flow.{DetailedLoggingFilter, FlowBaseUnitSpec, FlowUnitSpec}
 import org.dcs.flow.nifi.{NifiFlowApi, NifiFlowClient, NifiProcessorClient}
+import org.glassfish.jersey.filter.LoggingFilter
 import org.mockito.Matchers
 import org.mockito.Mockito._
 import org.scalatest.FlatSpec
@@ -22,8 +23,8 @@ object FlowApiSpec {
   val ClientToken = "29474d0f-3e21-4136-90fd-ad4e2c613afb"
   val UserId = "root"
 
-  val TemplateId = "bef4e1e9-efe3-45b0-8676-4d1833821be1"
-  val FlowInstanceId = "7a59e6f0-0156-1000-71b3-df1267a0cfd2"
+  val TemplateId = "a49eb70c-42e9-4736-86da-7193e1c892eb"
+  val FlowInstanceId = "67a976ee-015b-1000-a69b-9a30ef4b8adc"
 
   val logger: Logger = LoggerFactory.getLogger(classOf[FlowApiSpec])
 
@@ -51,8 +52,9 @@ class FlowApiSpec extends FlowUnitSpec with FlowApiBehaviors {
   "Flow Instantiation for existing template id" must "be valid" in {
 
     val flowTemplatesPath: Path = Paths.get(this.getClass.getResource("templates.json").toURI)
-    val templateInstancePath: Path = Paths.get(this.getClass.getResource("flow-template-instance.json").toURI())
     val createProcessGroupPath: Path = Paths.get(this.getClass.getResource("create-process-group.json").toURI())
+    val templateInstancePath: Path = Paths.get(this.getClass.getResource("flow-template-instance.json").toURI())
+
 
     val flowClient = spy(new NifiFlowApi())
 
@@ -84,15 +86,23 @@ class FlowApiSpec extends FlowUnitSpec with FlowApiBehaviors {
         Matchers.eq(MediaType.APPLICATION_JSON)
       )
 
-    validateFlowInstantiation(flowClient, "DateConversion", TemplateId)
+    validateFlowInstantiation(flowClient, "CleanGBIFData", TemplateId)
   }
 
   "Flow Retrieval" must "be valid" in {
 
-
+    val processGroupPath: Path = Paths.get(this.getClass.getResource("process-group.json").toURI)
     val flowInstancePath: Path = Paths.get(this.getClass.getResource("flow-instance.json").toURI)
     val flowClient = spy(new NifiFlowApi())
 
+
+    doReturn(Future.successful(jsonFromFile(processGroupPath.toFile)))
+      .when(flowClient)
+      .getAsJson(
+        Matchers.eq(NifiFlowClient.processGroupsPath(FlowInstanceId)),
+        Matchers.any[List[(String, String)]],
+        Matchers.any[List[(String, String)]]
+      )
 
     doReturn(Future.successful(jsonFromFile(flowInstancePath.toFile)))
       .when(flowClient)
@@ -130,7 +140,7 @@ class FlowApiSpec extends FlowUnitSpec with FlowApiBehaviors {
         Matchers.any[List[(String, String)]]
       )
 
-    validateFlowDeletion(flowClient, FlowInstanceId)
+    validateFlowDeletion(flowClient, FlowInstanceId, 1)
   }
 }
 
@@ -151,8 +161,8 @@ trait FlowApiBehaviors extends FlowBaseUnitSpec {
 
   def validateFlowInstantiation(flowClient: NifiFlowClient, name: String, templateId: String): FlowInstance = {
     val flow = flowClient.instantiate(templateId).futureValue
-    assert(flow.processors.size == 5)
-    assert(flow.connections.size == 4)
+    assert(flow.processors.size == 4)
+    assert(flow.connections.size == 3)
     assert(flow.name == name)
     flow.connections.foreach(c => {
       assert(c.source.`type` == "PROCESSOR")
@@ -171,17 +181,17 @@ trait FlowApiBehaviors extends FlowBaseUnitSpec {
 
   def validateFlowRetrieval(flowClient: NifiFlowClient, flowInstanceId: String) {
     val flowInstance = flowClient.instance(flowInstanceId).futureValue
-    assert(flowInstance.processors.size == 5)
-    assert(flowInstance.connections.size == 4)
+    assert(flowInstance.processors.size == 4)
+    assert(flowInstance.connections.size == 3)
   }
 
   def validateFlowInstance(flowInstance: FlowInstance) {
-    assert(flowInstance.processors.size == 5)
-    assert(flowInstance.connections.size == 4)
+    assert(flowInstance.processors.size == 4)
+    assert(flowInstance.connections.size == 3)
   }
 
-  def validateFlowDeletion(flowClient: NifiFlowClient, flowInstanceId: String) {
-    assert(flowClient.remove(flowInstanceId).futureValue)
+  def validateFlowDeletion(flowClient: NifiFlowClient, flowInstanceId: String, version: Long) {
+    assert(flowClient.remove(flowInstanceId, version, "root").futureValue)
   }
 
   def validateStart(flowClient: NifiFlowClient, flowInstanceId: String): List[ProcessorInstance] = {

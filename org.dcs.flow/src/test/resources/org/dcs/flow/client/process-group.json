@@ -1,79 +1,79 @@
 {
+  "revision":{
+    "clientId":"67a74577-015b-1000-6a7b-46986fd78a0b",
+    "version":1
+  },
+  "id":"67a976ee-015b-1000-a69b-9a30ef4b8adc",
+  "uri":"http://dcs-flow:8090/nifi-api/process-groups/67a976ee-015b-1000-a69b-9a30ef4b8adc",
+  "position":{
+    "x":325.0,
+    "y":47.0
+  },
+  "permissions":{
+    "canRead":true,
+    "canWrite":true
+  },
+  "bulletins":[
 
-  "revision": {
-    "clientId": "7b753c77-0156-1000-8aaa-4b0e45054052",
-    "version": 1
-  },
-  "id": "7b8b79c3-0156-1000-41d9-a4c6baa2fbf3",
-  "uri": "http://localhost:8888/nifi-api/process-groups/7b8b79c3-0156-1000-41d9-a4c6baa2fbf3",
-  "position": {
-    "x": 426.5,
-    "y": 122.5
-  },
-  "permissions": {
-    "canRead": true,
-    "canWrite": true
-  },
-  "bulletins": [ ],
-  "component": {
-    "id": "7b8b79c3-0156-1000-41d9-a4c6baa2fbf3",
-    "parentGroupId": "786d9950-0156-1000-dc9b-e000dd5de772",
-    "position": {
-      "x": 426.5,
-      "y": 122.5
+  ],
+  "component":{
+    "id":"67a976ee-015b-1000-a69b-9a30ef4b8adc",
+    "parentGroupId":"6692b380-015b-1000-7d6d-7b626845a824",
+    "position":{
+      "x":325.0,
+      "y":47.0
     },
-    "name": "DateConversion;2d2f31e8-5fdd-11e6-8b77-86f30ca893d3",
-    "comments": "",
-    "runningCount": 0,
-    "stoppedCount": 5,
-    "invalidCount": 0,
-    "disabledCount": 0,
-    "activeRemotePortCount": 0,
-    "inactiveRemotePortCount": 0,
-    "inputPortCount": 0,
-    "outputPortCount": 0
+    "name":"test",
+    "comments":"",
+    "runningCount":0,
+    "stoppedCount":4,
+    "invalidCount":0,
+    "disabledCount":0,
+    "activeRemotePortCount":0,
+    "inactiveRemotePortCount":0,
+    "inputPortCount":0,
+    "outputPortCount":0
   },
-  "status": {
-    "id": "7b8b79c3-0156-1000-41d9-a4c6baa2fbf3",
-    "name": "DateConversion;2d2f31e8-5fdd-11e6-8b77-86f30ca893d3",
-    "statsLastRefreshed": "23:40:01 CEST",
-    "aggregateSnapshot": {
-      "id": "7b8b79c3-0156-1000-41d9-a4c6baa2fbf3",
-      "name": "DateConversion;2d2f31e8-5fdd-11e6-8b77-86f30ca893d3",
-      "flowFilesIn": 0,
-      "bytesIn": 0,
-      "input": "0 (0 bytes)",
-      "flowFilesQueued": 0,
-      "bytesQueued": 0,
-      "queued": "0 (0 bytes)",
-      "queuedCount": "0",
-      "queuedSize": "0 bytes",
-      "bytesRead": 0,
-      "read": "0 bytes",
-      "bytesWritten": 0,
-      "written": "0 bytes",
-      "flowFilesOut": 0,
-      "bytesOut": 0,
-      "output": "0 (0 bytes)",
-      "flowFilesTransferred": 0,
-      "bytesTransferred": 0,
-      "transferred": "0 (0 bytes)",
-      "bytesReceived": 0,
-      "flowFilesReceived": 0,
-      "received": "0 (0 bytes)",
-      "bytesSent": 0,
-      "flowFilesSent": 0,
-      "sent": "0 (0 bytes)",
-      "activeThreadCount": 0
+  "status":{
+    "id":"67a976ee-015b-1000-a69b-9a30ef4b8adc",
+    "name":"test",
+    "statsLastRefreshed":"14:26:11 UTC",
+    "aggregateSnapshot":{
+      "id":"67a976ee-015b-1000-a69b-9a30ef4b8adc",
+      "name":"test",
+      "flowFilesIn":0,
+      "bytesIn":0,
+      "input":"0 (0 bytes)",
+      "flowFilesQueued":0,
+      "bytesQueued":0,
+      "queued":"0 (0 bytes)",
+      "queuedCount":"0",
+      "queuedSize":"0 bytes",
+      "bytesRead":0,
+      "read":"0 bytes",
+      "bytesWritten":0,
+      "written":"0 bytes",
+      "flowFilesOut":0,
+      "bytesOut":0,
+      "output":"0 (0 bytes)",
+      "flowFilesTransferred":0,
+      "bytesTransferred":0,
+      "transferred":"0 (0 bytes)",
+      "bytesReceived":0,
+      "flowFilesReceived":0,
+      "received":"0 (0 bytes)",
+      "bytesSent":0,
+      "flowFilesSent":0,
+      "sent":"0 (0 bytes)",
+      "activeThreadCount":0
     }
   },
-  "runningCount": 0,
-  "stoppedCount": 5,
-  "invalidCount": 0,
-  "disabledCount": 0,
-  "activeRemotePortCount": 0,
-  "inactiveRemotePortCount": 0,
-  "inputPortCount": 0,
-  "outputPortCount": 0
-
+  "runningCount":0,
+  "stoppedCount":4,
+  "invalidCount":0,
+  "disabledCount":0,
+  "activeRemotePortCount":0,
+  "inactiveRemotePortCount":0,
+  "inputPortCount":0,
+  "outputPortCount":0
 }

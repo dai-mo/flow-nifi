@@ -1,35 +1,37 @@
 {
-  "templates": [
+  "templates":[
     {
-      "id": "b8eba26f-55a6-441a-8c5c-a904bf92eed6",
-      "permissions": {
-        "canRead": true,
-        "canWrite": true
+      "id":"95c79dc2-c69f-3786-815a-a105daaeb1c0",
+      "permissions":{
+        "canRead":true,
+        "canWrite":true
       },
-      "template": {
-        "uri": "http://localhost:8888/nifi-api/templates/b8eba26f-55a6-441a-8c5c-a904bf92eed6",
-        "id": "b8eba26f-55a6-441a-8c5c-a904bf92eed6",
-        "groupId": "786d9950-0156-1000-dc9b-e000dd5de772",
-        "name": "CsvToJSON",
-        "description": "",
-        "timestamp": "08/11/2016 09:18:18 CEST"
+      "template":{
+        "uri":"http://dcs-flow:8090/nifi-api/templates/95c79dc2-c69f-3786-815a-a105daaeb1c0",
+        "id":"95c79dc2-c69f-3786-815a-a105daaeb1c0",
+        "groupId":"6692b380-015b-1000-7d6d-7b626845a824",
+        "name":"CleanGBIFDataWithSchema",
+        "description":"",
+        "timestamp":"03/20/2017 14:26:07 UTC",
+        "encoding-version":"1.0"
       }
     },
     {
-      "id": "bef4e1e9-efe3-45b0-8676-4d1833821be1",
-      "permissions": {
-        "canRead": true,
-        "canWrite": true
+      "id":"a49eb70c-42e9-4736-86da-7193e1c892eb",
+      "permissions":{
+        "canRead":true,
+        "canWrite":true
       },
-      "template": {
-        "uri": "http://localhost:8888/nifi-api/templates/bef4e1e9-efe3-45b0-8676-4d1833821be1",
-        "id": "bef4e1e9-efe3-45b0-8676-4d1833821be1",
-        "groupId": "786d9950-0156-1000-dc9b-e000dd5de772",
-        "name": "DateConversion",
-        "description": "",
-        "timestamp": "08/11/2016 10:08:23 CEST"
+      "template":{
+        "uri":"http://dcs-flow:8090/nifi-api/templates/a49eb70c-42e9-4736-86da-7193e1c892eb",
+        "id":"a49eb70c-42e9-4736-86da-7193e1c892eb",
+        "groupId":"6692b380-015b-1000-7d6d-7b626845a824",
+        "name":"CleanGBIFData",
+        "description":"",
+        "timestamp":"04/13/2017 13:57:35 UTC",
+        "encoding-version":"1.0"
       }
     }
   ],
-  "generated": "18:00:02 CEST"
+  "generated":"14:08:20 UTC"
 }

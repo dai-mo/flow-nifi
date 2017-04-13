@@ -4,7 +4,8 @@ package org.dcs.flow.client
 import org.dcs.api.service.ProcessorInstance
 import org.dcs.commons.error.RESTException
 import org.dcs.flow.nifi.{NifiFlowApi, NifiProcessorApi, NifiProvenanceApi}
-import org.dcs.flow.{FlowBaseUnitSpec, FlowUnitSpec, IT}
+import org.dcs.flow.{DetailedLoggingFilter, FlowBaseUnitSpec, FlowUnitSpec, IT}
+import org.glassfish.jersey.filter.LoggingFilter
 
 
 /**
@@ -16,17 +17,19 @@ class FlowApiISpec extends FlowUnitSpec
   with ProvenanceApiBehaviours {
 
   val flowClient = new NifiFlowApi
+  flowClient.requestFilter(new LoggingFilter)
+  flowClient.requestFilter(new DetailedLoggingFilter)
 
   val processorClient = new NifiProcessorApi
 
   val provenanceClient = new NifiProvenanceApi
 
   "Flow Instantiation" must "be valid  for existing template id" taggedAs IT in {
-    val templateId = flowClient.templates().futureValue.find(t => t.name == "DateConversion").get.getId
-    val fi = validateFlowInstantiation(flowClient, "DateConversion", templateId)
+    val templateId = flowClient.templates().futureValue.find(t => t.name == "CleanGBIFData").get.getId
+    val fi = validateFlowInstantiation(flowClient, "CleanGBIFData10", templateId)
     validateFlowRetrieval(flowClient, fi.getId)
     validateFlowInstance(fi)
-    validateFlowDeletion(flowClient, fi.getId)
+    validateFlowDeletion(flowClient, fi.getId, fi.version)
   }
 
   "Flow Instantiation" must "be invalid for non-existing template id" taggedAs IT in {
@@ -34,7 +37,7 @@ class FlowApiISpec extends FlowUnitSpec
   }
 
   "Flow Instance State Change" must "result in valid state" taggedAs IT in {
-    val templateId = flowClient.templates().futureValue.find(t => t.name == "DateConversion").get.getId
+    val templateId = flowClient.templates().futureValue.find(t => t.name == "CleanGBIFData").get.getId
     // Instantiate a flow instance from an existing flow template
     val flowInstance = flowClient.instantiate(templateId).futureValue
     // Start the flow i.e. start all the processors of the flow
@@ -56,7 +59,7 @@ class FlowApiISpec extends FlowUnitSpec
 //    })
     // Stop the flow i.e. stop all the processors of the flow
     validateStop(flowClient, flowInstance.id)
-    validateFlowDeletion(flowClient, flowInstance.getId)
+    validateFlowDeletion(flowClient, flowInstance.getId, flowInstance.version)
   }
 
 

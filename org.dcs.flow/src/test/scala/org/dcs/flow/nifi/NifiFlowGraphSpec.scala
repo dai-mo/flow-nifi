@@ -21,9 +21,18 @@ class NifiFlowGraphSpec extends FlowUnitSpec with NifiFlowGraphBehaviors {
 
   "Flow Graph Construction" must "generate valid graph" in {
 
+    val processGroupPath: Path = Paths.get(FlowApiSpec.getClass.getResource("process-group.json").toURI)
     val flowInstancePath: Path = Paths.get(FlowApiSpec.getClass.getResource("flow-instance.json").toURI())
     val flowClient = spy(new NifiFlowApi())
 
+
+    doReturn(Future.successful(jsonFromFile(processGroupPath.toFile)))
+      .when(flowClient)
+      .getAsJson(
+        Matchers.eq(NifiFlowClient.processGroupsPath(FlowInstanceId)),
+        Matchers.any[List[(String, String)]],
+        Matchers.any[List[(String, String)]]
+      )
 
     doReturn(Future.successful(jsonFromFile(flowInstancePath.toFile))).
       when(flowClient).
@@ -47,23 +56,21 @@ trait NifiFlowGraphBehaviors extends FlowBaseUnitSpec {
     val graphNodes = NifiFlowGraph.buildFlowGraph(flowInstance)
     assert(graphNodes.count(n => n.parents.isEmpty) == 1)
     assert(graphNodes.count(n => n.children.isEmpty) == 1)
-    assert(graphNodes.size == 5)
+    assert(graphNodes.size == 4)
 
     def identity(graphNode: FlowGraphNode): FlowGraphNode = graphNode
 
     val roots = NifiFlowGraph.roots(graphNodes.toList)
     assert(roots.size == 1)
-    assert(roots.head.processorInstance.id == "3fde726d-5cc1-4bb6-6428-3e26c236b45d")
+    assert(roots.head.processorInstance.id == "3310c81f-015b-1000-fd45-876024494d80")
     val breadthFirstNodes = NifiFlowGraph.executeBreadthFirst(flowInstance, identity)
     var node = breadthFirstNodes.head
     assert(node.processorInstance.id == roots.head.processorInstance.id)
     node = node.children.head
-    assert(node.processorInstance.id == "daf07177-3fe2-42a8-2570-ee13e230d491")
+    assert(node.processorInstance.id == "331261d7-015b-1000-7a65-9a90fda246f2")
     node = node.children.head
-    assert(node.processorInstance.id == "13613f8e-d402-4018-9e4d-c508c7948cfa")
+    assert(node.processorInstance.id == "3315b3a2-015b-1000-ef05-c53e7faa0351")
     node = node.children.head
-    assert(node.processorInstance.id == "55c734e3-9e8c-4d8e-ba40-3f2d1959fe33")
-    node = node.children.head
-    assert(node.processorInstance.id == "c8d56491-4d2e-4751-be71-672fa3b35516")
+    assert(node.processorInstance.id == "331ca006-015b-1000-f9bd-c9f02ecd5766")
   }
 }

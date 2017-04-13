@@ -89,27 +89,23 @@ trait NifiProcessorClient extends ProcessorApiService with JerseyRestClient {
         ProcessorInstance(response.toObject[ProcessorEntity])
       }
 
-  override def start(processorId: String, userId: String): Future[ProcessorInstance] =
-    for {
-      instance <- instance(processorId)
-      startedInstance <- start(processorId, instance.version, userId)
-    } yield startedInstance
+  override def start(processorId: String, version: Long, clientId: String): Future[ProcessorInstance] =
+    changeState(processorId, version, StateRunning, clientId)
 
-  def start(processorId: String, currentVersion: Long, userId: String): Future[ProcessorInstance] = {
-    changeState(processorId, currentVersion, StateRunning, userId)
+
+  override def stop(processorId: String, version: Long, clientId: String): Future[ProcessorInstance] =
+    changeState(processorId, version, StateStopped, clientId)
+
+
+  def changeState(processorId: String, currentVersion: Long, state: String, clientId: String): Future[ProcessorInstance] = {
+    if(!States.contains(state))
+      throw new RESTException(ErrorConstants.DCS305.withErrorMessage("State [" + state + "] not recognised"))
+
+    putAsJson(path = processorsPath(processorId), body = ProcessorStateUpdateRequest(processorId, state, currentVersion, clientId))
+      .map { response =>
+        ProcessorInstance(response.toObject[ProcessorEntity])
+      }
   }
-
-  override def stop(processorId: String, userId: String): Future[ProcessorInstance] =
-    for {
-      instance <- instance(processorId)
-      stoppedInstance <- stop(processorId, instance.version, userId)
-    } yield stoppedInstance
-
-
-  def stop(processorId: String, currentVersion: Long, userId: String): Future[ProcessorInstance] = {
-    changeState(processorId, currentVersion, StateStopped, userId)
-  }
-
 
   override def remove(processorId: String, version: Long, clientId: String): Future[Boolean] =
     deleteAsJson(path = processorsPath(processorId),
@@ -117,15 +113,4 @@ trait NifiProcessorClient extends ProcessorApiService with JerseyRestClient {
       .map { response =>
         response.toObject[ProcessorEntity] != null
       }
-
-
-  def changeState(processorId: String, currentVersion: Long, state: String, userId: String): Future[ProcessorInstance] = {
-    if(!States.contains(state))
-      throw new RESTException(ErrorConstants.DCS305.withErrorMessage("State [" + state + "] not recognised"))
-
-    putAsJson(path = processorsPath(processorId), body = ProcessorStateUpdateRequest(processorId, state, currentVersion, userId))
-      .map { response =>
-        ProcessorInstance(response.toObject[ProcessorEntity])
-      }
-  }
 }
