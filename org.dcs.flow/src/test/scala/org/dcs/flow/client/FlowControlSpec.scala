@@ -2,25 +2,17 @@ package org.dcs.flow.client
 
 import java.util.UUID
 
-import ch.qos.logback.classic.Level
-import org.dcs.api.processor.RemoteProcessor
+import org.dcs.api.processor.{CoreProperties, RemoteProcessor}
 import org.dcs.api.service._
-import org.dcs.commons.error.{ErrorConstants, ErrorResponse, RESTException}
-import org.dcs.flow.{DetailedLoggingFilter, FlowUnitSpec, IT}
+import org.dcs.commons.error.{ErrorConstants, RESTException}
 import org.dcs.flow.nifi.{FlowProcessorRequest, NifiFlowApi, NifiProcessorApi, NifiProcessorClient}
+import org.dcs.flow.{DetailedLoggingFilter, FlowUnitSpec, IT}
 import org.glassfish.jersey.filter.LoggingFilter
-import org.slf4j.{Logger, LoggerFactory}
 
 
 /**
   * Created by cmathew on 11.04.17.
   */
-
-import javax.ws.rs.client.ClientRequestContext
-import javax.ws.rs.client.ClientRequestFilter
-import java.io.IOException
-
-
 
 object FlowControlSpec {
   val FlowInstanceName = "test-flow"
@@ -44,12 +36,6 @@ class FlowControlISpec extends FlowCreationBehaviours {
 
   var flowInstance: FlowInstance = _
 
-  var gbifP: ProcessorInstance = _
-  var latlongP: ProcessorInstance = _
-  var filterP: ProcessorInstance = _
-  var csvP: ProcessorInstance = _
-
-
 
   override def beforeAll(): Unit = {
     flowApi.requestFilter(new LoggingFilter)
@@ -61,9 +47,9 @@ class FlowControlISpec extends FlowCreationBehaviours {
     flowInstance = validateFlowCreation(flowApi)
   }
 
-    override def afterAll(): Unit = {
-      flowApi.remove(flowInstance.id, flowInstance.version, clientId)
-    }
+  override def afterAll(): Unit = {
+    flowApi.remove(flowInstance.id, flowInstance.version, clientId)
+  }
 
   "Processor Lifecycle" should "execute sucessfully" taggedAs IT in {
 
@@ -72,7 +58,7 @@ class FlowControlISpec extends FlowCreationBehaviours {
       RemoteProcessor.IngestionProcessorType,
       true)
 
-    gbifP = validateProcessorCreation(processorApi,
+    var gbifP = validateProcessorCreation(processorApi,
       gbifPsd,
       flowInstance.id,
       clientId)
@@ -82,7 +68,7 @@ class FlowControlISpec extends FlowCreationBehaviours {
       RemoteProcessor.WorkerProcessorType,
       false)
 
-    latlongP = validateProcessorCreation(processorApi,
+    var latlongP = validateProcessorCreation(processorApi,
       latLongPsd,
       flowInstance.id,
       clientId)
@@ -93,7 +79,7 @@ class FlowControlISpec extends FlowCreationBehaviours {
       RemoteProcessor.WorkerProcessorType,
       false)
 
-    filterP = validateProcessorCreation(processorApi,
+    var filterP = validateProcessorCreation(processorApi,
       filterPsd,
       flowInstance.id,
       clientId)
@@ -103,7 +89,7 @@ class FlowControlISpec extends FlowCreationBehaviours {
       RemoteProcessor.SinkProcessorType,
       true)
 
-    csvP = validateProcessorCreation(processorApi,
+    var csvP = validateProcessorCreation(processorApi,
       csvPsd,
       flowInstance.id,
       clientId)
@@ -137,7 +123,22 @@ class FlowControlISpec extends FlowCreationBehaviours {
     validateProcessorRemoval(processorApi, csvP.id, csvP.version, clientId)
   }
 
+  "Processor Update" should "execute sucessfully" taggedAs IT in {
 
+    val latLongPsd = ProcessorServiceDefinition(
+      ServiceClassPrefix + LatLongValidationProcessorService,
+      RemoteProcessor.WorkerProcessorType,
+      false)
+
+    val latlongP = validateProcessorCreation(processorApi,
+      latLongPsd,
+      flowInstance.id,
+      clientId)
+
+    val fieldsToMap = "{latitude:$.decimalLatitude, longitude:$.decimalLongitude}"
+    latlongP.setProperties(latlongP.properties - CoreProperties.FieldsToMapKey + (CoreProperties.FieldsToMapKey -> fieldsToMap))
+    validateProcessorPropertyUpdate(processorApi, latlongP, clientId, CoreProperties.FieldsToMapKey, fieldsToMap)
+  }
 }
 
 trait FlowCreationBehaviours extends FlowUnitSpec {
@@ -164,18 +165,18 @@ trait FlowCreationBehaviours extends FlowUnitSpec {
   }
 
   def validateProcessorStart(processorApi: ProcessorApiService,
-                            processorId: String,
-                            version: Long,
-                            clientId: String): ProcessorInstance = {
+                             processorId: String,
+                             version: Long,
+                             clientId: String): ProcessorInstance = {
     val processorInstance = processorApi.start(processorId, version, clientId).futureValue(timeout(5))
     assert(processorInstance.status == NifiProcessorClient.StateRunning)
     processorInstance
   }
 
   def validateProcessorStop(processorApi: ProcessorApiService,
-                             processorId: String,
-                             version: Long,
-                             clientId: String): ProcessorInstance = {
+                            processorId: String,
+                            version: Long,
+                            clientId: String): ProcessorInstance = {
     val processorInstance = processorApi.stop(processorId, version, clientId).futureValue(timeout(5))
     assert(processorInstance.status == NifiProcessorClient.StateStopped)
     processorInstance
@@ -197,6 +198,15 @@ trait FlowCreationBehaviours extends FlowUnitSpec {
         }
       }
     }
+  }
+
+  def validateProcessorPropertyUpdate(processorApi: ProcessorApiService,
+                                      processorInstance: ProcessorInstance,
+                                      clientId: String,
+                                      property: String,
+                                      value: String): Unit = {
+    val updatedProcessorInstance = processorApi.update(processorInstance, clientId).futureValue(timeout(5))
+    assert(updatedProcessorInstance.properties(property) == value)
   }
 }
 

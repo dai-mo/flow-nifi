@@ -173,10 +173,10 @@ trait FlowApiBehaviors extends FlowBaseUnitSpec {
   }
 
   def validateNonExistingFlowInstantiation(flowClient: NifiFlowClient) {
-    val thrown = intercept[RESTException] {
-      flowClient.instantiate(invalidTemplateId)
+    whenReady(flowClient.instantiate(invalidTemplateId).failed) { ex =>
+      ex shouldBe an [RESTException]
+      assert(ex.asInstanceOf[RESTException].errorResponse.httpStatusCode == 400)
     }
-    assert(thrown.errorResponse.httpStatusCode == 400)
   }
 
   def validateFlowRetrieval(flowClient: NifiFlowClient, flowInstanceId: String) {

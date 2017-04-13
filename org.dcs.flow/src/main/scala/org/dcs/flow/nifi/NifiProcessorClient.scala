@@ -83,6 +83,14 @@ trait NifiProcessorClient extends ProcessorApiService with JerseyRestClient {
       finalisedProcessor <- autoTerminateAllRelationships(stubProcessor)
     } yield ProcessorInstance(finalisedProcessor)
 
+  override def update(processorInstance: ProcessorInstance, clientId: String): Future[ProcessorInstance] = {
+    putAsJson(path = processorsPath(processorInstance.id),
+      body = FlowProcessorUpdateRequest(processorInstance, clientId))
+      .map { response =>
+        ProcessorInstance(response.toObject[ProcessorEntity])
+      }
+  }
+
   override def instance(processorId: String): Future[ProcessorInstance] =
     getAsJson(processorsPath(processorId))
       .map { response =>

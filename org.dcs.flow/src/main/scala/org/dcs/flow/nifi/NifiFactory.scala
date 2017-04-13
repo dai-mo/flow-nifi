@@ -6,7 +6,7 @@ import org.apache.nifi.web.api.dto.PropertyDescriptorDTO.AllowableValueDTO
 import org.apache.nifi.web.api.dto._
 import org.apache.nifi.web.api.entity._
 import org.dcs.api.processor.{CoreProperties, PossibleValue, RemoteProcessor, RemoteProperty}
-import org.dcs.api.service.{Connection, ConnectionPort, FlowInstance, FlowTemplate, ProcessorInstance, ProcessorType}
+import org.dcs.api.service.{Connection, ConnectionPort, FlowInstance, FlowTemplate, ProcessorConfig, ProcessorInstance, ProcessorType}
 import org.dcs.flow.nifi.internal.{ProcessGroup, ProcessGroupHelper}
 
 import scala.collection.JavaConversions._
@@ -171,6 +171,17 @@ object ProcessorInstance {
     remoteProperty
   }
 
+  def config(processorConfigDTO: ProcessorConfigDTO): ProcessorConfig =
+    ProcessorConfig(Option(processorConfigDTO.getAutoTerminatedRelationships).map(_.asScala.toSet).getOrElse(Set()),
+      processorConfigDTO.getBulletinLevel,
+      processorConfigDTO.getComments,
+      processorConfigDTO.getConcurrentlySchedulableTaskCount,
+      processorConfigDTO.getPenaltyDuration,
+      processorConfigDTO.getSchedulingPeriod,
+      processorConfigDTO.getSchedulingStrategy,
+      processorConfigDTO.getYieldDuration)
+
+
   def apply(processorDTO: ProcessorDTO): ProcessorInstance = {
     val processorInstance = new ProcessorInstance
 
@@ -186,6 +197,7 @@ object ProcessorInstance {
     processorInstance.setProperties(valuesOrDefaults(processorDTO.getConfig))
     processorInstance.setPropertyDefinitions(Option(processorDTO.getConfig.getDescriptors).map(_.asScala.map(pd => toRemoteProperty(pd._2)).toList).getOrElse(Nil))
     processorInstance.setValidationErrors(Option(processorDTO.getValidationErrors).map(_.asScala.toList).getOrElse(Nil))
+    processorInstance.setConfig(config(processorDTO.getConfig))
     processorInstance
   }
 
@@ -215,7 +227,7 @@ object ProcessorInstance {
       config.getDescriptors.asScala.toMap.get(key).map(pd => pd.getDefaultValue).getOrElse("")
     }
 
-     config.getProperties.asScala.toMap.map(p => (p._1, if(p._2 == null || p._2.isEmpty) default(p._1) else p._2))
+    config.getProperties.asScala.toMap.map(p => (p._1, if(p._2 == null || p._2.isEmpty) default(p._1) else p._2))
 
   }
 }

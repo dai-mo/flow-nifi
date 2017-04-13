@@ -2,9 +2,8 @@ package org.dcs.flow.client
 
 
 import org.dcs.api.service.ProcessorInstance
-import org.dcs.commons.error.RESTException
 import org.dcs.flow.nifi.{NifiFlowApi, NifiProcessorApi, NifiProvenanceApi}
-import org.dcs.flow.{DetailedLoggingFilter, FlowBaseUnitSpec, FlowUnitSpec, IT}
+import org.dcs.flow.{DetailedLoggingFilter, FlowUnitSpec, IT}
 import org.glassfish.jersey.filter.LoggingFilter
 
 
@@ -26,7 +25,7 @@ class FlowApiISpec extends FlowUnitSpec
 
   "Flow Instantiation" must "be valid  for existing template id" taggedAs IT in {
     val templateId = flowClient.templates().futureValue.find(t => t.name == "CleanGBIFData").get.getId
-    val fi = validateFlowInstantiation(flowClient, "CleanGBIFData10", templateId)
+    val fi = validateFlowInstantiation(flowClient, "CleanGBIFData", templateId)
     validateFlowRetrieval(flowClient, fi.getId)
     validateFlowInstance(fi)
     validateFlowDeletion(flowClient, fi.getId, fi.version)

@@ -6,7 +6,7 @@ import org.apache.nifi.web.api.dto.provenance.{ProvenanceDTO, ProvenanceRequestD
 import org.apache.nifi.web.api.dto._
 import org.apache.nifi.web.api.entity.{InstantiateTemplateRequestEntity, ProcessGroupEntity, ProcessorEntity, ProvenanceEntity}
 import org.dcs.api.processor.RemoteProcessor
-import org.dcs.api.service.ProcessorServiceDefinition
+import org.dcs.api.service.{FlowInstance, ProcessorConfig, ProcessorInstance, ProcessorServiceDefinition}
 import org.dcs.flow.nifi.internal.ProcessGroupHelper
 
 import scala.beans.BeanProperty
@@ -70,6 +70,8 @@ object FlowProcessorRequest {
     })
   }
 
+
+
   def apply(psd: ProcessorServiceDefinition, clientId: String): ProcessorEntity = {
     val processorEntity = new ProcessorEntity
     val processorDTO = new ProcessorDTO
@@ -77,6 +79,7 @@ object FlowProcessorRequest {
     processorDTO.setName(psd.processorServiceClassName.split("\\.").last)
 
     processorDTO.setType(clientProcessorType(psd))
+
     processorEntity.setComponent(processorDTO)
 
     processorEntity.setRevision(Revision(0.0.toLong, clientId))
@@ -84,9 +87,27 @@ object FlowProcessorRequest {
 
     processorEntity
   }
+
+
 }
 
 object FlowProcessorUpdateRequest {
+  def config(processorInstance: ProcessorInstance): ProcessorConfigDTO = {
+
+    val processorConfigDTO = new ProcessorConfigDTO
+    processorConfigDTO.setAutoTerminatedRelationships(processorInstance.getConfig.autoTerminatedRelationships.asJava)
+    processorConfigDTO.setBulletinLevel(processorInstance.getConfig.bulletinLevel)
+    processorConfigDTO.setComments(processorInstance.getConfig.comments)
+    processorConfigDTO.setConcurrentlySchedulableTaskCount(processorInstance.getConfig.concurrentlySchedulableTaskCount)
+    processorConfigDTO.setPenaltyDuration(processorInstance.getConfig.penaltyDuration)
+    processorConfigDTO.setSchedulingPeriod(processorInstance.getConfig.schedulingPeriod)
+    processorConfigDTO.setSchedulingStrategy(processorInstance.getConfig.schedulingStrategy)
+    processorConfigDTO.setYieldDuration(processorInstance.getConfig.yieldDuration)
+    processorConfigDTO.setProperties(processorInstance.properties.asJava)
+
+    processorConfigDTO
+  }
+
   def apply(properties: Map[String, String], processorEntity: ProcessorEntity): ProcessorEntity = {
     processorEntity.getComponent.getConfig.setProperties(properties.asJava)
     processorEntity
@@ -94,6 +115,21 @@ object FlowProcessorUpdateRequest {
 
   def apply(autoTerminateRelationships: Set[String], processorEntity: ProcessorEntity): ProcessorEntity = {
     processorEntity.getComponent.getConfig.setAutoTerminatedRelationships(autoTerminateRelationships.asJava)
+    processorEntity
+  }
+
+  def apply(processorInstance: ProcessorInstance, clientId: String): ProcessorEntity = {
+    val processorEntity = new ProcessorEntity
+    val processorDTO = new ProcessorDTO
+
+    processorEntity.setRevision(Revision(processorInstance.version, clientId))
+
+    processorDTO.setConfig(config(processorInstance))
+    processorDTO.setName(processorInstance.name)
+    processorDTO.setState(processorInstance.status)
+    processorDTO.setId(processorInstance.id)
+
+    processorEntity.setComponent(processorDTO)
     processorEntity
   }
 }
