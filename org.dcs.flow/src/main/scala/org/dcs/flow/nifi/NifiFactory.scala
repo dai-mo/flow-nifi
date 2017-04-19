@@ -6,7 +6,7 @@ import org.apache.nifi.web.api.dto.PropertyDescriptorDTO.AllowableValueDTO
 import org.apache.nifi.web.api.dto._
 import org.apache.nifi.web.api.entity._
 import org.dcs.api.processor.{CoreProperties, PossibleValue, RemoteProcessor, RemoteProperty}
-import org.dcs.api.service.{Connection, ConnectionPort, FlowInstance, FlowTemplate, ProcessorConfig, ProcessorInstance, ProcessorType}
+import org.dcs.api.service.{Connectable, Connection, FlowInstance, FlowTemplate, ProcessorConfig, ProcessorInstance, ProcessorType}
 import org.dcs.flow.nifi.internal.{ProcessGroup, ProcessGroupHelper}
 
 import scala.collection.JavaConversions._
@@ -17,6 +17,7 @@ import scala.collection.JavaConverters._
 /**
   * Created by cmathew on 30/05/16.
   */
+
 
 object FlowTemplate {
   def apply(template: TemplateDTO): FlowTemplate = {
@@ -58,7 +59,7 @@ object FlowInstance {
     f.setState(NifiProcessorClient.StateNotStarted)
     if(contents != null) {
       f.setProcessors(contents.getProcessors.map(p => ProcessorInstance(p)).toList)
-      f.setConnections(contents.getConnections.map(c => Connection(c)).toList)
+      f.setConnections(contents.getConnections.map(c => Connection(c, Revision.DefaultVersion)).toList)
     }
     f
   }
@@ -82,7 +83,7 @@ object FlowInstance {
       f.setState(NifiProcessorClient.StateRunning)
 
     f.setProcessors(flow.getProcessors.map(p => ProcessorInstance(p)).toList)
-    f.setConnections(flow.getConnections.map(c => Connection(c.getComponent)).toList)
+    f.setConnections(flow.getConnections.map(c => Connection(c.getComponent, Revision.DefaultVersion)).toList)
     f
   }
 
@@ -96,7 +97,7 @@ object FlowInstance {
     f.setNameId(nameId._2)
     f.setState(NifiProcessorClient.StateNotStarted)
     f.setProcessors(contents.getProcessors.map(p => ProcessorInstance(p)).toList)
-    f.setConnections(contents.getConnections.map(c => Connection(c)).toList)
+    f.setConnections(contents.getConnections.map(c => Connection(c, Revision.DefaultVersion)).toList)
 
     f
   }
@@ -113,7 +114,7 @@ object FlowInstance {
     f.setNameId(nameId._2)
     f.setState(NifiProcessorClient.StateNotStarted)
     f.setProcessors(flow.getProcessors.map(p => ProcessorInstance(p)).toList)
-    f.setConnections(flow.getConnections.map(c => Connection(c.getComponent)).toList)
+    f.setConnections(flow.getConnections.map(c => Connection(c.getComponent, Revision.DefaultVersion)).toList)
     f
   }
 
@@ -142,7 +143,7 @@ object FlowInstance {
     f.setName(nameId._1)
     f.setNameId(nameId._2)
     f.setProcessors(snippet.getProcessors.map(p => ProcessorInstance(p)).toList)
-    f.setConnections(snippet.getConnections.map(c => Connection(c)).toList)
+    f.setConnections(snippet.getConnections.map(c => Connection(c, Revision.DefaultVersion)).toList)
     f
   }
 }
@@ -243,25 +244,26 @@ object ProcessorType {
 }
 
 object Connection {
-  def apply(connection: ConnectionDTO): Connection = {
-    Connection(connection.getId,
-      sourceId = connection.getSource.getId,
-      sourceType = connection.getSource.getType,
-      destinationId = connection.getDestination.getId,
-      destinationType = connection.getDestination.getType)
+  private def toConnectable(connectableDTO: ConnectableDTO): Connectable = {
+    Connectable(connectableDTO.getId,
+      connectableDTO.getType,
+      connectableDTO.getGroupId)
   }
 
-  def apply(connectionId: String,
-            sourceId: String = "",
-            sourceType: String = "",
-            destinationId: String = "",
-            destinationType: String = ""): Connection = {
-    val c = new Connection
-    c.setId(connectionId)
-    val source = ConnectionPort(sourceId, sourceType)
-    c.setSource(source)
-    val destination = ConnectionPort(destinationId, destinationType)
-    c.setDestination(destination)
-    c
+  def apply(connectionDTO: ConnectionDTO, version: Long): Connection = {
+    new Connection(connectionDTO.getId,
+      connectionDTO.getName,
+      version,
+      toConnectable(connectionDTO.getSource),
+      toConnectable(connectionDTO.getDestination),
+      connectionDTO.getSelectedRelationships.asScala.toSet,
+      connectionDTO.getFlowFileExpiration,
+      connectionDTO.getBackPressureDataSizeThreshold,
+      connectionDTO.getBackPressureObjectThreshold,
+      connectionDTO.getPrioritizers.asScala.toList)
+  }
+
+  def apply(connectionEntity: ConnectionEntity): Connection = {
+    Connection(connectionEntity.getComponent, connectionEntity.getRevision.getVersion)
   }
 }

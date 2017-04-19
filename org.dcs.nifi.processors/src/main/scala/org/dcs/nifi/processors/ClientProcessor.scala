@@ -76,6 +76,8 @@ trait ClientProcessor extends AbstractProcessor with Write with Read {
   }
 
   override def onTrigger(context: ProcessContext, session: ProcessSession) {
+    // FIXME : Implement batching by using session.get(n) to get a max of n flow files from the queue
+    
     if (endOfStream) {
       context.`yield`()
     } else {

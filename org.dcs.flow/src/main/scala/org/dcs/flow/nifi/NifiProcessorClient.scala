@@ -23,8 +23,8 @@ object NifiProcessorClient  {
 
   val States = Set(StateRunning, StateStopped)
 
-  def processorsProcessGroupPath(processGroup: String): String =
-    "/process-groups/" + processGroup + "/processors"
+  def processorsProcessGroupPath(processGroupId: String): String =
+    "/process-groups/" + processGroupId + "/processors"
 
   def processorsPath(processorId: String): String =
     "/processors/" + processorId
