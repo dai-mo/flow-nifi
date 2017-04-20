@@ -252,6 +252,7 @@ object Connection {
 
   def apply(connectionDTO: ConnectionDTO, version: Long): Connection = {
     new Connection(connectionDTO.getId,
+      connectionDTO.getParentGroupId,
       connectionDTO.getName,
       version,
       toConnectable(connectionDTO.getSource),

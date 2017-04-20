@@ -241,16 +241,12 @@ trait FlowCreationBehaviours extends FlowUnitSpec {
                                        sourceRelationships: Set[String],
                                        name: String,
                                        clientId: String): Connection = {
-    var connection = connectionApi.create(flowInstanceId,
+    val connectionCreate = new ConnectionCreate(flowInstanceId,
       sourceConnectable,
       destinationConnectable,
-      sourceRelationships,
-      None,
-      None,
-      None,
-      None,
-      None,
-      clientId).futureValue(timeout(5))
+      sourceRelationships)
+
+    var connection = connectionApi.create(connectionCreate, clientId).futureValue(timeout(5))
     connection.setName(name)
     connection = connectionApi.update(connection, clientId).futureValue(timeout(5))
     assert(connection.name == name)
