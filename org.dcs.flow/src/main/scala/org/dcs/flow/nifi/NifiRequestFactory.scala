@@ -6,7 +6,7 @@ import org.apache.nifi.web.api.dto.provenance.{ProvenanceDTO, ProvenanceRequestD
 import org.apache.nifi.web.api.dto._
 import org.apache.nifi.web.api.entity._
 import org.dcs.api.processor.RemoteProcessor
-import org.dcs.api.service.{Connectable, Connection, FlowInstance, ProcessorConfig, ProcessorInstance, ProcessorServiceDefinition}
+import org.dcs.api.service.{Connectable, Connection, ConnectionCreate, FlowInstance, ProcessorConfig, ProcessorInstance, ProcessorServiceDefinition}
 import org.dcs.flow.nifi.internal.ProcessGroupHelper
 
 import scala.beans.BeanProperty
@@ -173,6 +173,7 @@ object FlowConnectionRequest {
             destinationConnectable: Connectable,
             sourceRelationships: Set[String],
             id: Option[String],
+            flowInstanceId: String,
             name: Option[String],
             flowFileExpiration: Option[String],
             backPressureDataSize: Option[String],
@@ -191,6 +192,7 @@ object FlowConnectionRequest {
 
     val connectionDTO = new ConnectionDTO
     id.foreach(connectionDTO.setId)
+    connectionDTO.setParentGroupId(flowInstanceId)
 
     val sourceConnectableDTO = new ConnectableDTO
     sourceConnectableDTO.setId(sourceConnectable.id)
@@ -223,6 +225,7 @@ object FlowConnectionRequest {
       connection.destination,
       connection.sourceRelationships,
       Option(connection.id),
+      connection.flowInstanceId,
       Option(connection.name),
       Option(connection.flowFileExpiration),
       Option(connection.backPressureDataSize),
@@ -230,6 +233,21 @@ object FlowConnectionRequest {
       Option(connection.prioritizers),
       clientId,
       connection.version)
+  }
+
+  def apply(connectionCreate: ConnectionCreate, clientId: String): ConnectionEntity = {
+    apply(connectionCreate.source,
+      connectionCreate.destination,
+      connectionCreate.sourceRelationships,
+      None,
+      connectionCreate.flowInstanceId,
+      None,
+      None,
+      None,
+      None,
+      None,
+      clientId,
+      0)
   }
 }
 
