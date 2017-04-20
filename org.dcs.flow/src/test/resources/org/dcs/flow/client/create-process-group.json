@@ -1,89 +1,109 @@
 {
-  "revision": {
-    "clientId": "7a18fa74-0156-1000-be0a-a3b6d7fadddb",
-    "version": 1,
-    "lastModifier": "anonymous"
+  "revision":{
+    "clientId":"67a74577-015b-1000-6a7b-46986fd78a0b",
+    "version":1,
+    "lastModifier":"anonymous"
   },
-  "id": "7a59e6f0-0156-1000-71b3-df1267a0cfd2",
-  "uri": "http://localhost:8888/nifi-api/process-groups/7a59e6f0-0156-1000-71b3-df1267a0cfd2",
-  "position": {
-    "x": 551,
-    "y": 175
+  "id":"67a976ee-015b-1000-a69b-9a30ef4b8adc",
+  "uri":"http://dcs-flow:8090/nifi-api/process-groups/67a976ee-015b-1000-a69b-9a30ef4b8adc",
+  "position":{
+    "x":325.0,
+    "y":47.0
   },
-  "permissions": {
-    "canRead": true,
-    "canWrite": true
+  "permissions":{
+    "canRead":true,
+    "canWrite":true
   },
-  "bulletins": [],
-  "component": {
-    "id": "7a59e6f0-0156-1000-71b3-df1267a0cfd2",
-    "parentGroupId": "786d9950-0156-1000-dc9b-e000dd5de772",
-    "position": {
-      "x": 551,
-      "y": 175
+  "bulletins":[
+
+  ],
+  "component":{
+    "id":"67a976ee-015b-1000-a69b-9a30ef4b8adc",
+    "parentGroupId":"6692b380-015b-1000-7d6d-7b626845a824",
+    "position":{
+      "x":325.0,
+      "y":47.0
     },
-    "name": "DateConversion;2d2f31e8-5fdd-11e6-8b77-86f30ca893d3",
-    "comments": "",
-    "runningCount": 0,
-    "stoppedCount": 0,
-    "invalidCount": 0,
-    "disabledCount": 0,
-    "activeRemotePortCount": 0,
-    "inactiveRemotePortCount": 0,
-    "inputPortCount": 0,
-    "outputPortCount": 0,
-    "contents": {
-      "processGroups": [],
-      "remoteProcessGroups": [],
-      "processors": [],
-      "inputPorts": [],
-      "outputPorts": [],
-      "connections": [],
-      "labels": [],
-      "funnels": [],
-      "controllerServices": []
+    "name":"CleanGBIFData;29474d0f-3e21-4136-90fd-ad4e2c613afb",
+    "comments":"",
+    "runningCount":0,
+    "stoppedCount":0,
+    "invalidCount":0,
+    "disabledCount":0,
+    "activeRemotePortCount":0,
+    "inactiveRemotePortCount":0,
+    "inputPortCount":0,
+    "outputPortCount":0,
+    "contents":{
+      "processGroups":[
+
+      ],
+      "remoteProcessGroups":[
+
+      ],
+      "processors":[
+
+      ],
+      "inputPorts":[
+
+      ],
+      "outputPorts":[
+
+      ],
+      "connections":[
+
+      ],
+      "labels":[
+
+      ],
+      "funnels":[
+
+      ],
+      "controllerServices":[
+
+      ]
     }
   },
-  "status": {
-    "id": "7a59e6f0-0156-1000-71b3-df1267a0cfd2",
-    "name": "DateConversion;2d2f31e8-5fdd-11e6-8b77-86f30ca893d3",
-    "statsLastRefreshed": "18:05:27 CEST",
-    "aggregateSnapshot": {
-      "id": "7a59e6f0-0156-1000-71b3-df1267a0cfd2",
-      "name": "DateConversion;2d2f31e8-5fdd-11e6-8b77-86f30ca893d3",
-      "flowFilesIn": 0,
-      "bytesIn": 0,
-      "input": "0 (0 bytes)",
-      "flowFilesQueued": 0,
-      "bytesQueued": 0,
-      "queued": "0 (0 bytes)",
-      "queuedCount": "0",
-      "queuedSize": "0 bytes",
-      "bytesRead": 0,
-      "read": "0 bytes",
-      "bytesWritten": 0,
-      "written": "0 bytes",
-      "flowFilesOut": 0,
-      "bytesOut": 0,
-      "output": "0 (0 bytes)",
-      "flowFilesTransferred": 0,
-      "bytesTransferred": 0,
-      "transferred": "0 (0 bytes)",
-      "bytesReceived": 0,
-      "flowFilesReceived": 0,
-      "received": "0 (0 bytes)",
-      "bytesSent": 0,
-      "flowFilesSent": 0,
-      "sent": "0 (0 bytes)",
-      "activeThreadCount": 0
+  "status":{
+    "id":"67a976ee-015b-1000-a69b-9a30ef4b8adc",
+    "name":"test",
+    "statsLastRefreshed":"14:13:30 UTC",
+    "aggregateSnapshot":{
+      "id":"67a976ee-015b-1000-a69b-9a30ef4b8adc",
+      "name":"test",
+      "flowFilesIn":0,
+      "bytesIn":0,
+      "input":"0 (0 bytes)",
+      "flowFilesQueued":0,
+      "bytesQueued":0,
+      "queued":"0 (0 bytes)",
+      "queuedCount":"0",
+      "queuedSize":"0 bytes",
+      "bytesRead":0,
+      "read":"0 bytes",
+      "bytesWritten":0,
+      "written":"0 bytes",
+      "flowFilesOut":0,
+      "bytesOut":0,
+      "output":"0 (0 bytes)",
+      "flowFilesTransferred":0,
+      "bytesTransferred":0,
+      "transferred":"0 (0 bytes)",
+      "bytesReceived":0,
+      "flowFilesReceived":0,
+      "received":"0 (0 bytes)",
+      "bytesSent":0,
+      "flowFilesSent":0,
+      "sent":"0 (0 bytes)",
+      "activeThreadCount":0
     }
   },
-  "runningCount": 0,
-  "stoppedCount": 0,
-  "invalidCount": 0,
-  "disabledCount": 0,
-  "activeRemotePortCount": 0,
-  "inactiveRemotePortCount": 0,
-  "inputPortCount": 0,
-  "outputPortCount": 0
+  "runningCount":0,
+  "stoppedCount":0,
+  "invalidCount":0,
+  "disabledCount":0,
+  "activeRemotePortCount":0,
+  "inactiveRemotePortCount":0,
+  "inputPortCount":0,
+  "outputPortCount":0
 }

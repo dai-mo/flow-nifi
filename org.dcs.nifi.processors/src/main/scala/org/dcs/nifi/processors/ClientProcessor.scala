@@ -64,7 +64,7 @@ trait ClientProcessor extends AbstractProcessor with Write with Read {
   }
 
   override def onPropertyModified(descriptor: PropertyDescriptor, oldValue: String, newValue: String): Unit = {
-    if(descriptor.getDisplayName == PropertyDescriptor.RemoteProcessorClassKey) initStub(newValue)
+    if(descriptor.getDisplayName == RemoteProcessor.RemoteProcessorClassKey) initStub(newValue)
 
     super.onPropertyModified(descriptor, oldValue, newValue)
   }
@@ -76,6 +76,8 @@ trait ClientProcessor extends AbstractProcessor with Write with Read {
   }
 
   override def onTrigger(context: ProcessContext, session: ProcessSession) {
+    // FIXME : Implement batching by using session.get(n) to get a max of n flow files from the queue
+    
     if (endOfStream) {
       context.`yield`()
     } else {

@@ -1,15 +1,15 @@
 {
-  "id": "7a59e6f0-0156-1000-71b3-df1267a0cfd2",
-  "position": {
-    "x": 551,
-    "y": 175
+  "id":"67a976ee-015b-1000-a69b-9a30ef4b8adc",
+  "position":{
+    "x":325.0,
+    "y":47.0
   },
-  "runningCount": 0,
-  "stoppedCount": 5,
-  "invalidCount": 0,
-  "disabledCount": 0,
-  "activeRemotePortCount": 0,
-  "inactiveRemotePortCount": 0,
-  "inputPortCount": 0,
-  "outputPortCount": 0
+  "runningCount":0,
+  "stoppedCount":4,
+  "invalidCount":0,
+  "disabledCount":0,
+  "activeRemotePortCount":0,
+  "inactiveRemotePortCount":0,
+  "inputPortCount":0,
+  "outputPortCount":0
 }

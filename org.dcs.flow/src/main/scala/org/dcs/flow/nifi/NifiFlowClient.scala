@@ -39,19 +39,24 @@ object NifiFlowClient {
 trait NifiFlowClient extends FlowApiService with JerseyRestClient {
   import NifiFlowClient._
 
-  override def templates(userId: String):Future[List[FlowTemplate]] =
+  override def templates():Future[List[FlowTemplate]] =
     getAsJson(path = TemplatesPath)
       .map { response =>
         val te = response.toObject[TemplatesEntity]
         te.getTemplates.asScala.map(t => FlowTemplate(t.getTemplate)).toList
       }
 
-  def template(flowTemplateId: String, userId: String): Future[Option[FlowTemplate]] =
-    templates(userId).map { templates =>
+  def template(flowTemplateId: String): Future[Option[FlowTemplate]] =
+    templates().map { templates =>
       templates.find(ft => ft.id == flowTemplateId)
     }
 
-  override def instantiate(flowTemplateId: String, userId: String, authToken: String): Future[FlowInstance] = {
+  override def create(flowName: String, clientId: String): Future[FlowInstance] = {
+    createProcessGroup(flowName, ProcessGroupHelper.RootProcessGroup, clientId)
+      .map(pg =>  FlowInstance(pg.id, pg.getName, pg.version))
+  }
+
+  override def instantiate(flowTemplateId: String, clientId: String): Future[FlowInstance] = {
     val qp = Map(
       "templateId" -> flowTemplateId
     )
@@ -61,7 +66,7 @@ trait NifiFlowClient extends FlowApiService with JerseyRestClient {
     // to persist individual flow instances. The workaround creates a process group
     // under the user process group which isolates the flow instance
     def templateOrError() =
-    template(flowTemplateId, userId)
+    template(flowTemplateId)
       .map { template =>
         if(template.isDefined)
           template
@@ -71,34 +76,31 @@ trait NifiFlowClient extends FlowApiService with JerseyRestClient {
 
     for {
       t <- templateOrError()
-      pg <- createProcessGroup(t.get.name + ProcessGroupHelper.NameIdDelimiter + UUID.randomUUID().toString,
-        userId,
-        authToken)
+      pg <- createProcessGroup(t.get.name, ProcessGroupHelper.RootProcessGroup, clientId)
       i <- instance(flowTemplateId, pg)
     } yield i
   }
 
-  def instance(flowTemplateId: String, processGroup: ProcessGroup) =
+  def instance(flowTemplateId: String, processGroup: ProcessGroup): Future[FlowInstance] =
     postAsJson[InstantiateTemplateRequestEntity](path = templateInstancePath(processGroup.id), body = FlowInstanceRequest(flowTemplateId))
       .map { response =>
-        FlowInstance(response.toObject[FlowEntity], processGroup.id, processGroup.getName)
+        FlowInstance(response.toObject[FlowEntity], processGroup.id, processGroup.getName, processGroup.version)
       }
 
-  override def instance(flowInstanceId: String,
-                        userId: String,
-                        authToken: String): Future[FlowInstance] = {
-    getAsJson(path = flowProcessGroupsPath(flowInstanceId))
-      .map { response =>
-        FlowInstance(response.toObject[ProcessGroupFlowEntity])
+  override def instance(flowInstanceId: String): Future[FlowInstance] = {
+    processGroupVersion(flowInstanceId)
+      .flatMap { version =>
+        getAsJson(path = flowProcessGroupsPath(flowInstanceId))
+          .map { response =>
+            FlowInstance(response.toObject[ProcessGroupFlowEntity], version.toLong)
+          }
       }
   }
 
-
-
-  override def instances(userId: String, authToken: String): Future[List[FlowInstance]] = {
+  override def instances(): Future[List[FlowInstance]] = {
 
     def rootProcessGroup(): Future[ProcessGroupFlowEntity] = {
-      getAsJson(path = flowProcessGroupsPath(userId))
+      getAsJson(path = flowProcessGroupsPath(ProcessGroupHelper.RootProcessGroup))
         .map { response =>
           response.toObject[ProcessGroupFlowEntity]
         }
@@ -106,7 +108,7 @@ trait NifiFlowClient extends FlowApiService with JerseyRestClient {
 
     def flowInstances(root: ProcessGroupFlowEntity): Future[List[FlowInstance]] = {
       Future.sequence(root.getProcessGroupFlow.getFlow.getProcessGroups.asScala.map(
-        pge => instance(pge.getComponent.getId, userId: String, authToken: String)
+        pge => instance(pge.getComponent.getId)
       ).toList)
     }
 
@@ -117,37 +119,33 @@ trait NifiFlowClient extends FlowApiService with JerseyRestClient {
     } yield instanceList
   }
 
-  override def start(flowInstanceId: String, userId: String, authToken: String): Future[Boolean] = {
+  override def start(flowInstanceId: String): Future[FlowInstance] = {
     putAsJson[FlowInstanceStartRequest](path = flowProcessGroupsPath(flowInstanceId),
       body = FlowInstanceStartRequest(flowInstanceId, NifiProcessorClient.StateRunning))
       .map { response =>
-        response.toObject[FlowInstanceStartRequest].state ==  NifiProcessorClient.StateRunning
+        response.toObject[FlowInstance]
       }
   }
 
-  override def stop(flowInstanceId: String, userId: String, authToken: String): Future[Boolean] = {
+  override def stop(flowInstanceId: String): Future[FlowInstance] = {
     putAsJson[FlowInstanceStartRequest](path = flowProcessGroupsPath(flowInstanceId),
       body = FlowInstanceStartRequest(flowInstanceId, NifiProcessorClient.StateStopped))
       .map { response =>
-        response.toObject[FlowInstanceStartRequest].state == NifiProcessorClient.StateStopped
+        response.toObject[FlowInstance]
       }
   }
 
-  override def remove(flowInstanceId: String, userId: String, authToken: String): Future[Boolean] = {
-    processGroupVersion(flowInstanceId)
-      .flatMap { version =>
-        val qp = ("version", version) :: (NifiApiConfig.ClientIdKey, userId) :: Nil
-        deleteAsJson(path = processGroupsPath(flowInstanceId),
-          queryParams = qp)
-          .map { response =>
-            response != null
-          }
+  override def remove(flowInstanceId: String, version: Long, clientId: String): Future[Boolean] = {
+    deleteAsJson(path = processGroupsPath(flowInstanceId),
+    queryParams = Revision.params(version, clientId))
+      .map { response =>
+        response != null
       }
   }
 
-  def createProcessGroup(name: String, processGroupId: String, authToken: String): Future[ProcessGroup] = {
+  def createProcessGroup(name: String, processGroupId: String, clientId: String): Future[ProcessGroup] = {
     postAsJson[ProcessGroupEntity](path = processGroupsPath(processGroupId) + "/process-groups",
-      body = FlowInstanceContainerRequest(name, processGroupId))
+      body = FlowInstanceContainerRequest(name  + ProcessGroupHelper.NameIdDelimiter + UUID.randomUUID().toString, clientId))
       .map { response =>
         ProcessGroup(response.toObject[ProcessGroupEntity])
       }

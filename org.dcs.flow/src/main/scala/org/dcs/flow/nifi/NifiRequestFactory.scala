@@ -3,8 +3,11 @@ package org.dcs.flow.nifi
 import java.util.Date
 
 import org.apache.nifi.web.api.dto.provenance.{ProvenanceDTO, ProvenanceRequestDTO}
-import org.apache.nifi.web.api.dto.{PositionDTO, ProcessGroupDTO, ProcessorDTO, RevisionDTO}
-import org.apache.nifi.web.api.entity.{InstantiateTemplateRequestEntity, ProcessGroupEntity, ProcessorEntity, ProvenanceEntity}
+import org.apache.nifi.web.api.dto._
+import org.apache.nifi.web.api.entity._
+import org.dcs.api.processor.RemoteProcessor
+import org.dcs.api.service.{Connectable, Connection, FlowInstance, ProcessorConfig, ProcessorInstance, ProcessorServiceDefinition}
+import org.dcs.flow.nifi.internal.ProcessGroupHelper
 
 import scala.beans.BeanProperty
 import scala.collection.JavaConverters._
@@ -24,6 +27,9 @@ object Position {
 }
 
 object Revision {
+
+  val DefaultVersion: Long = -1
+
   def apply(version: Long, clientId: String): RevisionDTO = {
     val rev: RevisionDTO = new RevisionDTO
     rev.setVersion(version)
@@ -31,6 +37,12 @@ object Revision {
 
     rev
   }
+
+  def params(version: Long, clientId: String): List[(String, String)] =
+    List(("version", version.toString), ("clientId", clientId))
+
+  def params(clientId: String): List[(String, String)] =
+    List(("clientId", clientId))
 }
 
 object FlowInstanceContainerRequest {
@@ -44,6 +56,84 @@ object FlowInstanceContainerRequest {
     pge.setRevision(Revision(0.0.toLong, clientId))
     pge.setComponent(pg)
     pge
+  }
+}
+
+object FlowProcessorRequest {
+
+  def clientProcessorType(psd: ProcessorServiceDefinition): String = {
+    "org.dcs.nifi.processors." + (psd.processorType match {
+      case RemoteProcessor.IngestionProcessorType =>
+        if(psd.stateful) "IngestionStatefulProcessor" else "IngestionProcessor"
+      case RemoteProcessor.WorkerProcessorType =>
+        if(psd.stateful) "WorkerStatefulProcessor" else "WorkerProcessor"
+      case RemoteProcessor.SinkProcessorType =>
+        if(psd.stateful) "SinkStatefulProcessor" else "SinkProcessor"
+      case _ => throw new IllegalArgumentException("Unknown Processor Type : " + psd.processorType)
+    })
+  }
+
+
+
+  def apply(psd: ProcessorServiceDefinition, clientId: String): ProcessorEntity = {
+    val processorEntity = new ProcessorEntity
+    val processorDTO = new ProcessorDTO
+
+    processorDTO.setName(psd.processorServiceClassName.split("\\.").last)
+
+    processorDTO.setType(clientProcessorType(psd))
+
+    processorEntity.setComponent(processorDTO)
+
+    processorEntity.setRevision(Revision(0.0.toLong, clientId))
+    processorEntity.setPosition(Position())
+
+    processorEntity
+  }
+
+
+}
+
+object FlowProcessorUpdateRequest {
+  def config(processorInstance: ProcessorInstance): ProcessorConfigDTO = {
+
+    val processorConfigDTO = new ProcessorConfigDTO
+    processorConfigDTO.setAutoTerminatedRelationships(processorInstance.getConfig.autoTerminatedRelationships.asJava)
+    processorConfigDTO.setBulletinLevel(processorInstance.getConfig.bulletinLevel)
+    processorConfigDTO.setComments(processorInstance.getConfig.comments)
+    processorConfigDTO.setConcurrentlySchedulableTaskCount(processorInstance.getConfig.concurrentlySchedulableTaskCount)
+    processorConfigDTO.setPenaltyDuration(processorInstance.getConfig.penaltyDuration)
+    processorConfigDTO.setSchedulingPeriod(processorInstance.getConfig.schedulingPeriod)
+    processorConfigDTO.setSchedulingStrategy(processorInstance.getConfig.schedulingStrategy)
+    processorConfigDTO.setYieldDuration(processorInstance.getConfig.yieldDuration)
+    processorConfigDTO.setProperties(processorInstance.properties.asJava)
+
+    processorConfigDTO
+  }
+
+  def apply(properties: Map[String, String], processorEntity: ProcessorEntity): ProcessorEntity = {
+    processorEntity.getComponent.getConfig.setProperties(properties.asJava)
+    processorEntity
+  }
+
+  def apply(autoTerminateRelationships: Set[String], processorEntity: ProcessorEntity): ProcessorEntity = {
+    processorEntity.getComponent.getConfig.setAutoTerminatedRelationships(autoTerminateRelationships.asJava)
+    processorEntity
+  }
+
+  def apply(processorInstance: ProcessorInstance, clientId: String): ProcessorEntity = {
+    val processorEntity = new ProcessorEntity
+    val processorDTO = new ProcessorDTO
+
+    processorEntity.setRevision(Revision(processorInstance.version, clientId))
+
+    processorDTO.setConfig(config(processorInstance))
+    processorDTO.setName(processorInstance.name)
+    processorDTO.setState(processorInstance.status)
+    processorDTO.setId(processorInstance.id)
+
+    processorEntity.setComponent(processorDTO)
+    processorEntity
   }
 }
 
@@ -75,6 +165,71 @@ object ProcessorStateUpdateRequest {
     pe.setRevision(Revision(currentVersion, clientId))
 
     pe
+  }
+}
+
+object FlowConnectionRequest {
+  def apply(sourceConnectable: Connectable,
+            destinationConnectable: Connectable,
+            sourceRelationships: Set[String],
+            id: Option[String],
+            name: Option[String],
+            flowFileExpiration: Option[String],
+            backPressureDataSize: Option[String],
+            backPressureObjectThreshold: Option[Long],
+            prioritizers: Option[List[String]],
+            clientId: String,
+            version: Long): ConnectionEntity = {
+    val connectionEntity = new ConnectionEntity
+    connectionEntity.setSourceId(sourceConnectable.id)
+    connectionEntity.setSourceGroupId(sourceConnectable.flowInstanceId)
+    connectionEntity.setSourceType(sourceConnectable.componentType)
+
+    connectionEntity.setDestinationId(destinationConnectable.id)
+    connectionEntity.setDestinationGroupId(destinationConnectable.flowInstanceId)
+    connectionEntity.setDestinationType(destinationConnectable.componentType)
+
+    val connectionDTO = new ConnectionDTO
+    id.foreach(connectionDTO.setId)
+
+    val sourceConnectableDTO = new ConnectableDTO
+    sourceConnectableDTO.setId(sourceConnectable.id)
+    sourceConnectableDTO.setGroupId(sourceConnectable.flowInstanceId)
+    sourceConnectableDTO.setType(sourceConnectable.componentType)
+    connectionDTO.setSource(sourceConnectableDTO)
+
+    val destinationConnectableDTO = new ConnectableDTO
+    destinationConnectableDTO.setId(destinationConnectable.id)
+    destinationConnectableDTO.setGroupId(destinationConnectable.flowInstanceId)
+    destinationConnectableDTO.setType(destinationConnectable.componentType)
+    connectionDTO.setDestination(destinationConnectableDTO)
+
+    connectionDTO.setSelectedRelationships(sourceRelationships.asJava)
+    name.foreach(connectionDTO.setName)
+    flowFileExpiration.foreach(connectionDTO.setFlowFileExpiration)
+    backPressureDataSize.foreach(connectionDTO.setBackPressureDataSizeThreshold)
+    backPressureObjectThreshold.foreach(bpot => connectionDTO.setBackPressureObjectThreshold(bpot))
+
+    connectionDTO.setPrioritizers(prioritizers.getOrElse(Nil).asJava)
+    connectionEntity.setComponent(connectionDTO)
+
+    connectionEntity.setRevision(Revision(version, clientId))
+
+    connectionEntity
+  }
+
+  def apply(connection: Connection, clientId: String): ConnectionEntity = {
+    apply(connection.source,
+      connection.destination,
+      connection.sourceRelationships,
+      Option(connection.id),
+      Option(connection.name),
+      Option(connection.flowFileExpiration),
+      Option(connection.backPressureDataSize),
+      Option(connection.backPressureObjectThreshold),
+      Option(connection.prioritizers),
+      clientId,
+      connection.version)
   }
 }
 
