@@ -60,4 +60,12 @@ trait NifiConnectionClient extends ConnectionApiService with JerseyRestClient {
         Connection(response.toObject[ConnectionEntity])
       }
   }
+
+  override def remove(connectionId: String, version: Long, clientId: String): Future[Boolean] = {
+    deleteAsJson(path = connectionsPath(connectionId),
+      queryParams = Revision.params(version, clientId))
+      .map { response =>
+        response.toObject[Connection] != null
+      }
+  }
 }

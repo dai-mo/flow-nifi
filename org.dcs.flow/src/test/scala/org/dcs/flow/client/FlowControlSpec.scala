@@ -137,6 +137,10 @@ class FlowControlISpec extends FlowCreationBehaviours {
       filterP.version,
       ClientId)
 
+    // Remove Connections
+    connectionApi.remove(gbifLatLongConnection.id, gbifLatLongConnection.version, ClientId)
+    connectionApi.remove(latLongFilterConnection.id, latLongFilterConnection.version, ClientId)
+
     // Remove processors
     validateProcessorRemoval(processorApi, gbifP.id, gbifP.version, ClientId)
     validateProcessorRemoval(processorApi, latlongP.id, latlongP.version, ClientId)
