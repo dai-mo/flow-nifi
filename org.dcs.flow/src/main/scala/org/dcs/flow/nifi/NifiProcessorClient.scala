@@ -3,9 +3,11 @@ package org.dcs.flow.nifi
 import org.apache.nifi.web.api.entity.{ProcessorEntity, ProcessorTypesEntity}
 import org.dcs.api.processor.RemoteProcessor
 import org.dcs.api.service.{ProcessorApiService, ProcessorInstance, ProcessorServiceDefinition, ProcessorType}
+import org.dcs.commons.SchemaAction
 import org.dcs.commons.error.{ErrorConstants, RESTException}
 import org.dcs.commons.serde.JsonSerializerImplicits._
 import org.dcs.commons.ws.JerseyRestClient
+import org.dcs.flow.{FlowGraph, FlowGraphTraversal}
 import org.dcs.flow.nifi.internal.ProcessGroupHelper
 
 import scala.collection.JavaConverters._
@@ -89,6 +91,20 @@ trait NifiProcessorClient extends ProcessorApiService with JerseyRestClient {
       .map { response =>
         ProcessorInstance(response.toObject[ProcessorEntity])
       }
+  }
+
+  override def updateSchema(flowInstanceId: String,
+                   processorInstanceId: String,
+                   schemaActions: List[SchemaAction],
+                   clientId: String): Future[List[ProcessorInstance]] = {
+    val nifiFlowClient = new NifiFlowApi()
+    val updatedProcessorInstances = nifiFlowClient.instance(flowInstanceId).
+      map(flowInstance =>
+        FlowGraph.executeBreadthFirstFromNode(flowInstance,
+          FlowGraphTraversal.schemaUpdate(schemaActions), processorInstanceId)).
+      map(pis => pis.filter(_.isDefined).map(_.get))
+    updatedProcessorInstances.
+      flatMap(upis => Future.sequence(upis.map(upi => update(upi, clientId))))
   }
 
   override def instance(processorId: String): Future[ProcessorInstance] =
