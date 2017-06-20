@@ -73,6 +73,32 @@ class FlowGraphSpec extends FlowUnitSpec with NifiFlowGraphBehaviors {
 
     validateProcessorSchemaUpdate(flowClient, FlowInstanceId)
   }
+
+  "Flow Graph Schema Update" must "validate processor fields with schema" in {
+
+    val processGroupPath: Path = Paths.get(FlowApiSpec.getClass.getResource("process-group.json").toURI)
+    val flowInstancePath: Path = Paths.get(FlowApiSpec.getClass.getResource("flow-instance-invalid-schema.json").toURI())
+    val flowClient = spy(new NifiFlowApi())
+
+
+    doReturn(Future.successful(jsonFromFile(processGroupPath.toFile)))
+      .when(flowClient)
+      .getAsJson(
+        Matchers.eq(NifiFlowClient.processGroupsPath(FlowInstanceId)),
+        Matchers.any[List[(String, String)]],
+        Matchers.any[List[(String, String)]]
+      )
+
+    doReturn(Future.successful(jsonFromFile(flowInstancePath.toFile))).
+      when(flowClient).
+      getAsJson(
+        Matchers.eq(NifiFlowClient.flowProcessGroupsPath(FlowInstanceId)),
+        Matchers.any[List[(String, String)]],
+        Matchers.any[List[(String, String)]]
+      )
+
+    validateProcessorFieldToSchema(flowClient, FlowInstanceId)
+  }
 }
 
 trait NifiFlowGraphBehaviors extends FlowBaseUnitSpec {
@@ -138,6 +164,24 @@ trait NifiFlowGraphBehaviors extends FlowBaseUnitSpec {
     assert(thirdProc.properties(CoreProperties.ReadSchemaKey).nonEmpty)
     assert(thirdProc.properties(CoreProperties.WriteSchemaIdKey).isEmpty)
     assert(thirdProc.properties(CoreProperties.WriteSchemaKey).isEmpty)
+
+  }
+
+  def validateProcessorFieldToSchema(flowClient: NifiFlowClient, flowInstanceId: String): Unit = {
+    val flowInstance = flowClient.instance(flowInstanceId).futureValue
+    val graphNodes = FlowGraph.buildFlowGraph(flowInstance)
+
+    val RootNodeProcessorId = "3310c81f-015b-1000-fd45-876024494d80"
+
+    val SciNName = "scientificName"
+    val remSciNameAction = SchemaAction(SchemaAction.SCHEMA_REM_ACTION,
+      JsonPath.Root + JsonPath.Sep + SciNName)
+
+    assertThrows[IllegalStateException] {
+      FlowGraph.executeBreadthFirstFromNode(flowInstance, FlowGraphTraversal.schemaUpdate(List(remSciNameAction)), RootNodeProcessorId)
+    }
+
+
 
   }
 }
