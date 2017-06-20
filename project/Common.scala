@@ -11,6 +11,7 @@ object Common {
 	lazy val UNIT = config("unit") extend Test
 	lazy val IT = config("it") extend Test
 
+
 	lazy val commonSettings = Seq(
 			organization := "org.dcs",
 			scalaVersion := "2.11.7",

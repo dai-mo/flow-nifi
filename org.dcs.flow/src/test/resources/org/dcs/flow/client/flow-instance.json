@@ -450,9 +450,9 @@
             "config":{
               "properties":{
                 "_READ_SCHEMA_ID":"org.dcs.core.processor.GBIFOccurrenceProcessor",
-                "_READ_SCHEMA":"{\n  \"namespace\": \"org.dcs.processor\",\n  \"type\": \"record\",\n  \"name\": \"GBIFOccurrence\",\n  \"fields\": [\n    {\"name\": \"decimalLongitude\", \"type\": [\"null\", \"double\"], \"default\": null},\n    {\"name\": \"decimalLatitude\",  \"type\": [\"null\", \"double\"], \"default\": null},\n    {\"name\": \"institutionCode\",  \"type\": [\"null\", \"string\"], \"default\": null}\n  ]\n}",
+                "_READ_SCHEMA":"",
                 "_WRITE_SCHEMA":"",
-                "_WRITE_SCHEMA_ID":"",
+                "_WRITE_SCHEMA_ID":"org.dcs.core.processor.GBIFOccurrenceProcessor",
                 "_PROCESSOR_TYPE":"sink",
                 "file-name":"csv-out",
                 "_PROCESSOR_CLASS":"org.dcs.core.service.CSVFileOutputProcessorService"
@@ -635,7 +635,7 @@
               "properties":{
                 "_READ_SCHEMA_ID":"org.dcs.core.processor.GBIFOccurrenceProcessor",
                 "_READ_SCHEMA":"",
-                "_WRITE_SCHEMA":"{\n  \"namespace\": \"org.dcs.processor\",\n  \"type\": \"record\",\n  \"name\": \"GBIFOccurrence\",\n  \"fields\": [\n    {\"name\": \"decimalLongitude\", \"type\": [\"null\", \"double\"], \"default\": null},\n    {\"name\": \"decimalLatitude\",  \"type\": [\"null\", \"double\"], \"default\": null},\n    {\"name\": \"institutionCode\",  \"type\": [\"null\", \"string\"], \"default\": null}\n  ]\n}",
+                "_WRITE_SCHEMA":"{\"type\":\"record\",\"name\":\"GBIFOccurrence\",\"namespace\":\"org.dcs.processor\",\"fields\":[{\"name\":\"decimalLongitude\",\"type\":[\"null\",\"double\"],\"default\":null},{\"name\":\"decimalLatitude\",\"type\":[\"null\",\"double\"],\"default\":null},{\"name\":\"institutionCode\",\"type\":[\"null\",\"string\"],\"default\":null}]}",
                 "_WRITE_SCHEMA_ID":"",
                 "_PROCESSOR_TYPE":"worker",
                 "_FIELDS_ACTIONS":"[{\"jsonPath\":\"$.institutionCode\",\"cmd\":\"contains\",\"args\":\"iNat\"}]",
