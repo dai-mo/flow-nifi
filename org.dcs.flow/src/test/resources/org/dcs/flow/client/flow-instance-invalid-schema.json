@@ -96,7 +96,7 @@
                 "_WRITE_SCHEMA":"",
                 "_WRITE_SCHEMA_ID":"",
                 "_PROCESSOR_TYPE":"worker",
-                "_FIELDS_TO_MAP":"{\"latitude\":\"$.decimalLatitude\",\"longitude\":\"$.decimalLongitude\"}",
+                "_FIELDS_TO_MAP":"{\"latitude\":\"$.ecimalLatitude\",\"longitude\":\"$.ecimalLongitude\"}",
                 "_PROCESSOR_CLASS":"org.dcs.core.service.LatLongValidationProcessorService"
               },
               "descriptors":{
@@ -638,7 +638,7 @@
                 "_WRITE_SCHEMA":"{\"type\":\"record\",\"name\":\"GBIFOccurrence\",\"namespace\":\"org.dcs.processor\",\"fields\":[{\"name\":\"decimalLongitude\",\"type\":[\"null\",\"double\"],\"default\":null},{\"name\":\"decimalLatitude\",\"type\":[\"null\",\"double\"],\"default\":null},{\"name\":\"institutionCode\",\"type\":[\"null\",\"string\"],\"default\":null}]}",
                 "_WRITE_SCHEMA_ID":"",
                 "_PROCESSOR_TYPE":"worker",
-                "_FIELDS_ACTIONS":"[{\"jsonPath\":\"$.institutionCode\",\"cmd\":\"contains\",\"args\":\"iNat\"}]",
+                "_FIELDS_ACTIONS":"[{\"jsonPath\":\"$.nstitutionCode\",\"cmd\":\"contains\",\"args\":\"iNat\"}]",
                 "_PROCESSOR_CLASS":"org.dcs.core.service.FilterProcessorService"
               },
               "descriptors":{

@@ -25,8 +25,6 @@ object Dependencies {
   lazy val flywayVersion          = "4.0.3"
   lazy val apacheCommonsVersion   = "1.3.2"
 
-
-
   lazy val mockitoVersion         = "1.10.19"
   lazy val scalaTestVersion       = "3.0.0"
   lazy val juiVersion             = "0.11"
