@@ -108,11 +108,13 @@ object FlowGraphTraversal {
         find(rsiv => rsiv._1 == CoreProperties.ReadSchemaIdKey && rsiv._2.nonEmpty).
         foreach(rsiv => AvroSchemaStore.add(rsiv._2))
 
-      val updatedWriteSchema = RemoteProcessor.resolveWriteSchema(CoreProperties(fgn.processorInstance.properties), None)
+      val resolvedWriteSchema = RemoteProcessor.resolveWriteSchema(CoreProperties(fgn.processorInstance.properties), None)
+
+      val updatedWriteSchema = resolvedWriteSchema.map(_.update(actions))
 
       updatedWriteSchema.foreach(uws => CoreProperties.schemaCheck(uws, fgn.processorInstance.properties))
 
-      val updatedWriteSchemaJson = updatedWriteSchema.map(_.update(actions).toString())
+      val updatedWriteSchemaJson = updatedWriteSchema.map(_.toString)
 
       val finalWriteSchemaJson =
         if(updatedWriteSchemaJson.contains(fgn.processorInstance.properties(CoreProperties.ReadSchemaKey)))

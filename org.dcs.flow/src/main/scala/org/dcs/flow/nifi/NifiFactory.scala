@@ -173,8 +173,7 @@ object ProcessorInstance {
   }
 
   def config(processorConfigDTO: ProcessorConfigDTO): ProcessorConfig =
-    ProcessorConfig(Option(processorConfigDTO.getAutoTerminatedRelationships).map(_.asScala.toSet).getOrElse(Set()),
-      processorConfigDTO.getBulletinLevel,
+    ProcessorConfig(processorConfigDTO.getBulletinLevel,
       processorConfigDTO.getComments,
       processorConfigDTO.getConcurrentlySchedulableTaskCount,
       processorConfigDTO.getPenaltyDuration,
