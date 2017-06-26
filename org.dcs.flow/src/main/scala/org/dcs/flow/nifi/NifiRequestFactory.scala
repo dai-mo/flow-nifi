@@ -98,7 +98,6 @@ object FlowProcessorUpdateRequest {
   def config(processorInstance: ProcessorInstance): ProcessorConfigDTO = {
 
     val processorConfigDTO = new ProcessorConfigDTO
-    processorConfigDTO.setAutoTerminatedRelationships(processorInstance.getConfig.autoTerminatedRelationships.asJava)
     processorConfigDTO.setBulletinLevel(processorInstance.getConfig.bulletinLevel)
     processorConfigDTO.setComments(processorInstance.getConfig.comments)
     processorConfigDTO.setConcurrentlySchedulableTaskCount(processorInstance.getConfig.concurrentlySchedulableTaskCount)

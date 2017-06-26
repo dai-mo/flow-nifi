@@ -273,7 +273,7 @@
                 "_READ_SCHEMA_ID":"",
                 "_READ_SCHEMA":"",
                 "_WRITE_SCHEMA":"",
-                "_WRITE_SCHEMA_ID":"org.dcs.core.processor.GBIFOccurrenceProcessor",
+                "_WRITE_SCHEMA_ID":"org.dcs.core.processor.TestGBIFOccurrenceProcessor",
                 "_PROCESSOR_TYPE":"ingestion",
                 "species-name":"Loxodonta africana",
                 "_PROCESSOR_CLASS":"org.dcs.core.service.StatefulGBIFOccurrenceProcessorService"
@@ -313,7 +313,7 @@
                   "name":"_WRITE_SCHEMA_ID",
                   "displayName":"_WRITE_SCHEMA_ID",
                   "description":"Id of avro schema used to to serialise the output of this processor to a byte array [Level100]",
-                  "defaultValue":"org.dcs.core.processor.GBIFOccurrenceProcessor",
+                  "defaultValue":"org.dcs.core.processor.TestGBIFOccurrenceProcessor",
                   "required":false,
                   "sensitive":false,
                   "dynamic":false,
@@ -449,10 +449,10 @@
             "inputRequirement":"INPUT_ALLOWED",
             "config":{
               "properties":{
-                "_READ_SCHEMA_ID":"org.dcs.core.processor.GBIFOccurrenceProcessor",
+                "_READ_SCHEMA_ID":"org.dcs.core.processor.TestGBIFOccurrenceProcessor",
                 "_READ_SCHEMA":"",
                 "_WRITE_SCHEMA":"",
-                "_WRITE_SCHEMA_ID":"org.dcs.core.processor.GBIFOccurrenceProcessor",
+                "_WRITE_SCHEMA_ID":"org.dcs.core.processor.TestGBIFOccurrenceProcessor",
                 "_PROCESSOR_TYPE":"sink",
                 "file-name":"csv-out",
                 "_PROCESSOR_CLASS":"org.dcs.core.service.CSVFileOutputProcessorService"
@@ -633,7 +633,7 @@
             "inputRequirement":"INPUT_ALLOWED",
             "config":{
               "properties":{
-                "_READ_SCHEMA_ID":"org.dcs.core.processor.GBIFOccurrenceProcessor",
+                "_READ_SCHEMA_ID":"org.dcs.core.processor.TestGBIFOccurrenceProcessor",
                 "_READ_SCHEMA":"",
                 "_WRITE_SCHEMA":"{\"type\":\"record\",\"name\":\"GBIFOccurrence\",\"namespace\":\"org.dcs.processor\",\"fields\":[{\"name\":\"decimalLongitude\",\"type\":[\"null\",\"double\"],\"default\":null},{\"name\":\"decimalLatitude\",\"type\":[\"null\",\"double\"],\"default\":null},{\"name\":\"institutionCode\",\"type\":[\"null\",\"string\"],\"default\":null}]}",
                 "_WRITE_SCHEMA_ID":"",
