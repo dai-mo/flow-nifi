@@ -93,10 +93,18 @@ trait NifiProcessorClient extends ProcessorApiService with JerseyRestClient {
       }
   }
 
+  override def updateProperties(processorId: String, properties: Map[String, String], clientId : String): Future[ProcessorInstance] = {
+    instance(processorId)
+      .flatMap(p => {
+        properties.foreach(property => p.setProperties(p.properties + property))
+        update(p, clientId)
+      })
+  }
+
   override def updateSchema(flowInstanceId: String,
-                   processorInstanceId: String,
-                   schemaActions: List[SchemaAction],
-                   clientId: String): Future[List[ProcessorInstance]] = {
+                            processorInstanceId: String,
+                            schemaActions: List[SchemaAction],
+                            clientId: String): Future[List[ProcessorInstance]] = {
     val nifiFlowClient = new NifiFlowApi()
     val updatedProcessorInstances = nifiFlowClient.instance(flowInstanceId).
       map(flowInstance =>
