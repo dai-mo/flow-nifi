@@ -6,15 +6,14 @@ import java.util.Date
 import org.apache.avro.Schema
 import org.apache.nifi.web.api.dto.provenance.ProvenanceEventDTO
 import org.apache.nifi.web.api.entity.ProvenanceEntity
-import org.dcs.api.processor.{CoreProperties, RelationshipType, RemoteProcessor}
+import org.dcs.api.processor.CoreProperties
 import org.dcs.api.service.{Provenance, ProvenanceApiService}
-import org.dcs.commons.ClientRemoteProcessorStore
-import org.dcs.commons.error.{ErrorConstants, RESTException}
+import org.dcs.commons.error.{ErrorConstants, HttpException}
+import org.dcs.commons.serde.AvroImplicits._
+import org.dcs.commons.serde.AvroSchemaStore
 import org.dcs.commons.serde.JsonSerializerImplicits._
 import org.dcs.commons.ws.JerseyRestClient
 import org.slf4j.{Logger, LoggerFactory}
-import org.dcs.commons.serde.AvroImplicits._
-import org.dcs.commons.serde.AvroSchemaStore
 
 import scala.collection.JavaConverters._
 import scala.concurrent.ExecutionContext.Implicits._
@@ -86,7 +85,7 @@ trait NifiProvenanceClient extends ProvenanceApiService with JerseyRestClient {
         .map { response =>
           try {
             if (!response.getProvenance.isFinished)
-              throw new RESTException(ErrorConstants.DCS301)
+              throw new HttpException(ErrorConstants.DCS301.http(400))
             else
               response
           } finally {

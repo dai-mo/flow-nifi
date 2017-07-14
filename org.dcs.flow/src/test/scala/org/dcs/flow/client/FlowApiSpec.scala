@@ -4,11 +4,10 @@ import java.nio.file.{Path, Paths}
 import java.util.UUID
 import javax.ws.rs.core.MediaType
 
-import org.dcs.api.service.{FlowInstance, FlowTemplate, ProcessorInstance}
-import org.dcs.commons.error.RESTException
-import org.dcs.flow.{DetailedLoggingFilter, FlowBaseUnitSpec, FlowUnitSpec}
+import org.dcs.api.service.{FlowInstance, FlowTemplate}
+import org.dcs.commons.error.HttpException
 import org.dcs.flow.nifi.{NifiFlowApi, NifiFlowClient, NifiProcessorClient}
-import org.glassfish.jersey.filter.LoggingFilter
+import org.dcs.flow.{FlowBaseUnitSpec, FlowUnitSpec}
 import org.mockito.Matchers
 import org.mockito.Mockito._
 import org.scalatest.FlatSpec
@@ -174,8 +173,8 @@ trait FlowApiBehaviors extends FlowBaseUnitSpec {
 
   def validateNonExistingFlowInstantiation(flowClient: NifiFlowClient, clientId: String) {
     whenReady(flowClient.instantiate(invalidTemplateId, clientId).failed) { ex =>
-      ex shouldBe an [RESTException]
-      assert(ex.asInstanceOf[RESTException].errorResponse.httpStatusCode == 400)
+      ex shouldBe an [HttpException]
+      assert(ex.asInstanceOf[HttpException].errorResponse.httpStatusCode == 400)
     }
   }
 

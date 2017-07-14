@@ -17,13 +17,18 @@ object MockZookeeperServiceTracker {
 
 trait MockZookeeperServiceTracker extends ServiceTracker {
 
-  
+  def init = {}
   def start = {}
   def service[T](implicit tag: ClassTag[T]): Option[T] = {
     val serviceName = tag.runtimeClass.getName
     Some(mockProcessorMap(serviceName).asInstanceOf[T])
   }
-  
+
+  def filterServiceByProperty(property: String,regex: String): List[org.dcs.api.service.ProcessorServiceDefinition] = Nil
+
+  def services(): List[org.dcs.api.service.ProcessorServiceDefinition] = Nil
+
+
   def service[T](serviceImplName: String)(implicit tag: ClassTag[T]): Option[T] = {
      Some(mockProcessorMap(serviceImplName).asInstanceOf[T])
   }

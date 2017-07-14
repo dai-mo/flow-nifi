@@ -4,11 +4,10 @@ import org.apache.nifi.web.api.entity.{ProcessorEntity, ProcessorTypesEntity}
 import org.dcs.api.processor.RemoteProcessor
 import org.dcs.api.service.{ProcessorApiService, ProcessorInstance, ProcessorServiceDefinition, ProcessorType}
 import org.dcs.commons.SchemaAction
-import org.dcs.commons.error.{ErrorConstants, RESTException}
+import org.dcs.commons.error.{ErrorConstants, HttpException}
 import org.dcs.commons.serde.JsonSerializerImplicits._
 import org.dcs.commons.ws.JerseyRestClient
 import org.dcs.flow.{FlowGraph, FlowGraphTraversal}
-import org.dcs.flow.nifi.internal.ProcessGroupHelper
 
 import scala.collection.JavaConverters._
 import scala.concurrent.ExecutionContext.Implicits._
@@ -131,7 +130,7 @@ trait NifiProcessorClient extends ProcessorApiService with JerseyRestClient {
 
   def changeState(processorId: String, currentVersion: Long, state: String, clientId: String): Future[ProcessorInstance] = {
     if(!States.contains(state))
-      throw new RESTException(ErrorConstants.DCS305.withErrorMessage("State [" + state + "] not recognised"))
+      throw new HttpException(ErrorConstants.DCS305.withDescription("State [" + state + "] not recognised").http(409))
 
     putAsJson(path = processorsPath(processorId), body = ProcessorStateUpdateRequest(processorId, state, currentVersion, clientId))
       .map { response =>
