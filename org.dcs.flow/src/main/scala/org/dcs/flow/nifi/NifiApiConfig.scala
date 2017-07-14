@@ -1,10 +1,10 @@
 package org.dcs.flow.nifi
 
 
-import org.dcs.commons.ws.ApiConfig
-import org.dcs.commons.serde.YamlSerializerImplicits._
 import org.dcs.commons.config.{GlobalConfiguration, GlobalConfigurator}
-import org.dcs.commons.error.{ErrorConstants, ErrorResponse}
+import org.dcs.commons.error.{ErrorConstants, HttpErrorResponse}
+import org.dcs.commons.serde.YamlSerializerImplicits._
+import org.dcs.commons.ws.ApiConfig
 
 object NifiApiConfig {
   val BaseUrl = GlobalConfigurator.config.toObject[GlobalConfiguration].nifiBaseUrl
@@ -18,7 +18,7 @@ trait NifiApiConfig extends ApiConfig {
   
   override def baseUrl():String = BaseUrl
 
-  override def error(status: Int, message: String): ErrorResponse = status match {
+  override def error(status: Int, message: String): HttpErrorResponse = (status match {
     case 400 => ErrorConstants.DCS301
     case 401 => ErrorConstants.DCS302
     case 403 => ErrorConstants.DCS303
@@ -26,9 +26,9 @@ trait NifiApiConfig extends ApiConfig {
     case 409 => ErrorConstants.DCS305
     case _ => {
       val er = ErrorConstants.DCS001
-      er.withErrorMessage(message)
+      er.withDescription(message)
       er
     }
-  }
+  }).http(status)
 
 }

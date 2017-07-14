@@ -4,7 +4,7 @@ import java.util.UUID
 
 import org.dcs.api.processor.{CoreProperties, RemoteProcessor}
 import org.dcs.api.service._
-import org.dcs.commons.error.{ErrorConstants, RESTException}
+import org.dcs.commons.error.{ErrorConstants, HttpException}
 import org.dcs.flow.nifi.{FlowInstance => _, ProcessorInstance => _, _}
 import org.dcs.flow.{DetailedLoggingFilter, FlowUnitSpec, IT}
 import org.glassfish.jersey.filter.LoggingFilter
@@ -217,8 +217,8 @@ trait FlowCreationBehaviours extends FlowUnitSpec {
         assert(deleted)
         whenReady(processorApi.instance(processorId).failed) {
           ex => {
-            ex shouldBe a [RESTException]
-            assert(ex.asInstanceOf[RESTException].errorResponse == ErrorConstants.DCS304)
+            ex shouldBe a [HttpException]
+            assert(ex.asInstanceOf[HttpException].errorResponse.httpStatusCode == 404)
           }
         }
       }

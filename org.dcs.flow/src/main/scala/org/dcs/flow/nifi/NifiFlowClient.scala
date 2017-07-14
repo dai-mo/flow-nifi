@@ -4,7 +4,7 @@ import java.util.UUID
 
 import org.apache.nifi.web.api.entity._
 import org.dcs.api.service.{FlowApiService, FlowInstance, FlowTemplate}
-import org.dcs.commons.error.{ErrorConstants, RESTException}
+import org.dcs.commons.error.{ErrorConstants, HttpException}
 import org.dcs.commons.serde.JsonSerializerImplicits._
 import org.dcs.commons.ws.JerseyRestClient
 import org.dcs.flow.nifi.internal.{ProcessGroup, ProcessGroupHelper}
@@ -71,7 +71,7 @@ trait NifiFlowClient extends FlowApiService with JerseyRestClient {
         if(template.isDefined)
           template
         else
-          throw new RESTException(ErrorConstants.DCS301)
+          throw new HttpException(ErrorConstants.DCS301.http(400))
       }
 
     for {

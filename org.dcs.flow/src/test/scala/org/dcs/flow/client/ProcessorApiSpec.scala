@@ -3,8 +3,8 @@ package org.dcs.flow.client
 import java.nio.file.{Path, Paths}
 import javax.ws.rs.core.MediaType
 
-import org.dcs.commons.error.RESTException
-import org.dcs.flow.{FlowBaseUnitSpec, FlowUnitSpec}
+import org.dcs.commons.error.HttpException
+import org.dcs.flow.FlowUnitSpec
 import org.dcs.flow.nifi.{NifiProcessorApi, NifiProcessorClient}
 import org.mockito.Mockito._
 import org.mockito.{Matchers, Mockito}
@@ -146,7 +146,7 @@ trait ProcessorApiBehaviors extends FlowUnitSpec {
   }
 
   def validateInvalidProcessorStateChange(processorApi: NifiProcessorApi, processorInstanceId: String, currentVersion: Long) {
-    val thrown = intercept[RESTException] {
+    val thrown = intercept[HttpException] {
       processorApi.changeState(processorInstanceId, currentVersion, "THIS_IS_INVALID",  UserId)
     }
     assert(thrown.errorResponse.httpStatusCode == 409)
