@@ -7,7 +7,6 @@ import java.util.{List => JavaList, Map => JavaMap, Set => JavaSet}
 
 import org.apache.nifi.components.PropertyDescriptor
 import org.apache.nifi.flowfile.FlowFile
-import org.apache.nifi.flowfile.attributes.CoreAttributes
 import org.apache.nifi.processor._
 import org.dcs.api.processor._
 import org.dcs.api.service.RemoteProcessorService
@@ -16,7 +15,6 @@ import org.slf4j.{Logger, LoggerFactory}
 
 import scala.collection.JavaConversions._
 import scala.collection.JavaConverters._
-import scala.collection.mutable
 import scala.collection.mutable.{Map => MutableMap}
 
 
@@ -64,7 +62,7 @@ trait ClientProcessor extends AbstractProcessor with Write with Read {
   }
 
   override def onPropertyModified(descriptor: PropertyDescriptor, oldValue: String, newValue: String): Unit = {
-    if(descriptor.getDisplayName == RemoteProcessor.RemoteProcessorClassKey) initStub(newValue)
+    if(descriptor.getDisplayName == CoreProperties.ProcessorClassKey) initStub(newValue)
 
     super.onPropertyModified(descriptor, oldValue, newValue)
   }

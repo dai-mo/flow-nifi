@@ -1,7 +1,7 @@
 package org.dcs.flow
 
 import org.apache.avro.Schema
-import org.dcs.api.processor.{CoreProperties, RemoteProcessor}
+import org.dcs.api.processor.{CoreProperties, ProcessorValidation, RemoteProcessor}
 import org.dcs.api.service.{Connection, FlowInstance, ProcessorInstance}
 import org.dcs.commons.SchemaAction
 import org.dcs.flow.FlowGraph.FlowGraphNode
@@ -19,8 +19,8 @@ object FlowGraph {
                            var parents: List[FlowGraphNode]) {
     // Need to override hashCode since the standard case class
     // hashCode implementation will follow children and parents
-    // references which may eventually refer 'this' resulting
-    // in a stack overflow
+    // references which may eventually have a cyclical reference
+    // to 'this' resulting in a stack overflow
     override def hashCode(): Int = processorInstance.id.hashCode
 
     override def toString(): String = processorInstance.toString
@@ -112,7 +112,12 @@ object FlowGraphTraversal {
 
       val updatedWriteSchema = resolvedWriteSchema.map(_.update(actions))
 
-      updatedWriteSchema.foreach(uws => CoreProperties.schemaCheck(uws, fgn.processorInstance.properties))
+      updatedWriteSchema.flatMap(uws =>
+        ProcessorValidation.schemaPathCheck(fgn.processorInstance.name,
+          fgn.processorInstance.id,
+          uws,
+          fgn.processorInstance.properties))
+      .foreach(ver => fgn.processorInstance.setValidationErrors(ver))
 
       val updatedWriteSchemaJson = updatedWriteSchema.map(_.toString)
 
