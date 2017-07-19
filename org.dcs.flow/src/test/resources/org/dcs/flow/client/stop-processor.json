@@ -43,7 +43,13 @@
         "File Size": "1 kb",
         "Batch Size": null,
         "Data Format": null,
-        "Unique FlowFiles": null
+        "Unique FlowFiles": null,
+        "_READ_SCHEMA_ID":"",
+        "_READ_SCHEMA":"",
+        "_WRITE_SCHEMA":"",
+        "_WRITE_SCHEMA_ID":"org.apache.nifi.processors.standard.GenerateFlowFile",
+        "_PROCESSOR_TYPE":"ingestion",
+        "_PROCESSOR_CLASS":"org.apache.nifi.processors.standard.GenerateFlowFile"
       },
       "descriptors": {
         "File Size": {

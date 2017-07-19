@@ -5,7 +5,7 @@ import java.util
 import org.apache.nifi.web.api.dto.PropertyDescriptorDTO.AllowableValueDTO
 import org.apache.nifi.web.api.dto._
 import org.apache.nifi.web.api.entity._
-import org.dcs.api.processor.{CoreProperties, PossibleValue, RemoteProcessor, RemoteProperty}
+import org.dcs.api.processor._
 import org.dcs.api.service.{Connectable, Connection, FlowInstance, FlowTemplate, ProcessorConfig, ProcessorInstance, ProcessorType}
 import org.dcs.flow.nifi.internal.{ProcessGroup, ProcessGroupHelper}
 
@@ -196,7 +196,13 @@ object ProcessorInstance {
 
     processorInstance.setProperties(valuesOrDefaults(processorDTO.getConfig))
     processorInstance.setPropertyDefinitions(Option(processorDTO.getConfig.getDescriptors).map(_.asScala.map(pd => toRemoteProperty(pd._2)).toList).getOrElse(Nil))
-    processorInstance.setValidationErrors(Option(processorDTO.getValidationErrors).map(_.asScala.toList).getOrElse(Nil))
+
+    ProcessorValidation
+      .validate(processorInstance.id,
+        processorInstance.properties,
+        processorInstance.propertyDefinitions)
+    .foreach(ver => processorInstance.setValidationErrors(ver))
+
     processorInstance.setConfig(config(processorDTO.getConfig))
     processorInstance
   }

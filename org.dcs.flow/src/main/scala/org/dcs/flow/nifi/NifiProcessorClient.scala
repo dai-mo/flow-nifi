@@ -1,10 +1,10 @@
 package org.dcs.flow.nifi
 
 import org.apache.nifi.web.api.entity.{ProcessorEntity, ProcessorTypesEntity}
-import org.dcs.api.processor.RemoteProcessor
+import org.dcs.api.processor.{CoreProperties, RemoteProcessor}
 import org.dcs.api.service.{ProcessorApiService, ProcessorInstance, ProcessorServiceDefinition, ProcessorType}
 import org.dcs.commons.SchemaAction
-import org.dcs.commons.error.{ErrorConstants, HttpException}
+import org.dcs.commons.error.{ErrorConstants, HttpException, ValidationErrorResponse}
 import org.dcs.commons.serde.JsonSerializerImplicits._
 import org.dcs.commons.ws.JerseyRestClient
 import org.dcs.flow.{FlowGraph, FlowGraphTraversal}
@@ -63,7 +63,7 @@ trait NifiProcessorClient extends ProcessorApiService with JerseyRestClient {
 
   def updateProcessorClass(processorServiceClassName: String, processorEntity: ProcessorEntity): Future[ProcessorEntity] =
     putAsJson(path = processorsPath(processorEntity.getId),
-      body = FlowProcessorUpdateRequest(Map(RemoteProcessor.RemoteProcessorClassKey -> processorServiceClassName), processorEntity))
+      body = FlowProcessorUpdateRequest(Map(CoreProperties.ProcessorClassKey -> processorServiceClassName), processorEntity))
       .map { response =>
         response.toObject[ProcessorEntity]
       }
@@ -109,9 +109,18 @@ trait NifiProcessorClient extends ProcessorApiService with JerseyRestClient {
       map(flowInstance =>
         FlowGraph.executeBreadthFirstFromNode(flowInstance,
           FlowGraphTraversal.schemaUpdate(schemaActions), processorInstanceId)).
-      map(pis => pis.filter(_.isDefined).map(_.get))
+      map(pis => pis.filter(pi => pi.isDefined).map(_.get))
+
+
     updatedProcessorInstances.
-      flatMap(upis => Future.sequence(upis.map(upi => update(upi, clientId))))
+      flatMap(upis => {
+        val canUpdate = upis.nonEmpty &&
+          !upis.exists(pi => pi.validationErrors != null && pi.validationErrors.validationInfo.exists(vi => vi(ValidationErrorResponse.ErrorCode) == "DCS310"))
+        if(canUpdate)
+          Future.sequence(upis.map(upi => update(upi, clientId)))
+        else
+          updatedProcessorInstances
+      })
   }
 
   override def instance(processorId: String): Future[ProcessorInstance] =

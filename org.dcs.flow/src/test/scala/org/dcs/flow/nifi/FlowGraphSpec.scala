@@ -2,8 +2,9 @@ package org.dcs.flow.nifi
 
 import java.nio.file.{Path, Paths}
 
-import org.dcs.api.processor.CoreProperties
+import org.dcs.api.processor.{CoreProperties, RemoteProcessor}
 import org.dcs.commons.SchemaAction
+import org.dcs.commons.error.ValidationErrorResponse
 import org.dcs.commons.serde.JsonPath
 import org.dcs.flow.{FlowBaseUnitSpec, FlowGraph, FlowGraphTraversal, FlowUnitSpec}
 import org.dcs.flow.client.FlowApiSpec
@@ -177,9 +178,15 @@ trait NifiFlowGraphBehaviors extends FlowBaseUnitSpec {
     val remSciNameAction = SchemaAction(SchemaAction.SCHEMA_REM_ACTION,
       JsonPath.Root + JsonPath.Sep + SciNName)
 
-    assertThrows[IllegalStateException] {
-      FlowGraph.executeBreadthFirstFromNode(flowInstance, FlowGraphTraversal.schemaUpdate(List(remSciNameAction)), RootNodeProcessorId)
-    }
+    val pis = FlowGraph.executeBreadthFirstFromNode(flowInstance, FlowGraphTraversal.schemaUpdate(List(remSciNameAction)), RootNodeProcessorId)
+
+    val vinfo = pis
+      .filter(pi => pi.isDefined && pi.get.processorType == RemoteProcessor.WorkerProcessorType)
+      .flatMap(_.get.validationErrors.validationInfo)
+
+    assert(vinfo.size == 3)
+    assert(vinfo.count(_(ValidationErrorResponse.ErrorCode) == "DCS310") == 3)
+
 
 
 
