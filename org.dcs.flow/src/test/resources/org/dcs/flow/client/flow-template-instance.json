@@ -245,7 +245,7 @@
               "_WRITE_SCHEMA":"",
               "_WRITE_SCHEMA_ID":"",
               "_PROCESSOR_TYPE":"worker",
-              "_FIELDS_TO_MAP":"{\"latitude\":\"$.decimalLatitude\",\"longitude\":\"$.decimalLongitude\"}",
+              "_FIELDS_TO_MAP":"[{\"name\":\"latitude\",\"fieldType\":\"double\",\"jsonPath\":\"$.decimalLatitude\"},{\"name\":\"longitude\",\"fieldType\":\"double\",\"jsonPath\":\"$.decimalLongitude\"}]",
               "_PROCESSOR_CLASS":"org.dcs.core.service.LatLongValidationProcessorService"
             },
             "descriptors":{
@@ -303,7 +303,7 @@
                 "name":"_FIELDS_TO_MAP",
                 "displayName":"_FIELDS_TO_MAP",
                 "description":"Field <> JsonPath Mappings for fields required by this processor [Level100]",
-                "defaultValue":"{\"latitude\":\"$.latitude\",\"longitude\":\"$.longitude\"}",
+                "defaultValue":"[{\"name\":\"latitude\",\"fieldType\":\"\",\"jsonPath\":\"\"},{\"name\":\"longitude\",\"fieldType\":\"\",\"jsonPath\":\"\"}]",
                 "required":false,
                 "sensitive":false,
                 "dynamic":false,
