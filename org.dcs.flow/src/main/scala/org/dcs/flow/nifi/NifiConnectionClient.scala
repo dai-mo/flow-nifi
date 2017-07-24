@@ -1,7 +1,7 @@
 package org.dcs.flow.nifi
 
 import org.apache.nifi.web.api.entity.ConnectionEntity
-import org.dcs.api.service.{Connectable, Connection, ConnectionApiService, ConnectionCreate}
+import org.dcs.api.service.{Connection, ConnectionApiService, ConnectionConfig}
 import org.dcs.commons.serde.JsonSerializerImplicits._
 import org.dcs.commons.ws.JerseyRestClient
 
@@ -26,9 +26,9 @@ object NifiConnectionClient {
 trait NifiConnectionClient extends ConnectionApiService with JerseyRestClient {
   import NifiConnectionClient._
 
-  override def create(connectionCreate: ConnectionCreate, clientId: String): Future[Connection] = {
-    postAsJson(path = connectionsProcessGroupPath(connectionCreate.flowInstanceId),
-      body = FlowConnectionRequest(connectionCreate, clientId))
+  override def create(connectionConfig: ConnectionConfig, clientId: String): Future[Connection] = {
+    postAsJson(path = connectionsProcessGroupPath(connectionConfig.flowInstanceId),
+      body = FlowConnectionRequest(connectionConfig, clientId))
       .map { response =>
         Connection(response.toObject[ConnectionEntity])
       }

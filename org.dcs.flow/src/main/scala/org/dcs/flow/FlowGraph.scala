@@ -31,8 +31,8 @@ object FlowGraph {
     def addNodes(connection: Connection,
                  processorInstances:List[ProcessorInstance],
                  nodeMap: Map[String, FlowGraphNode]): Map[String, FlowGraphNode] = {
-      val source = processorInstances.find(pi => pi.id == connection.getSource.id)
-      val destination = processorInstances.find(pi => pi.id == connection.getDestination.id)
+      val source = processorInstances.find(pi => pi.id == connection.config.getSource.id)
+      val destination = processorInstances.find(pi => pi.id == connection.config.getDestination.id)
 
       var updatedNodeMap: Map[String, FlowGraphNode] = nodeMap
 

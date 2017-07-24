@@ -2,12 +2,11 @@ package org.dcs.flow.nifi
 
 import java.util.Date
 
-import org.apache.nifi.web.api.dto.provenance.{ProvenanceDTO, ProvenanceRequestDTO}
 import org.apache.nifi.web.api.dto._
+import org.apache.nifi.web.api.dto.provenance.{ProvenanceDTO, ProvenanceRequestDTO}
 import org.apache.nifi.web.api.entity._
 import org.dcs.api.processor.RemoteProcessor
-import org.dcs.api.service.{Connectable, Connection, ConnectionCreate, FlowInstance, ProcessorConfig, ProcessorInstance, ProcessorServiceDefinition}
-import org.dcs.flow.nifi.internal.ProcessGroupHelper
+import org.dcs.api.service.{Connectable, Connection, ConnectionConfig, ProcessorInstance, ProcessorServiceDefinition}
 
 import scala.beans.BeanProperty
 import scala.collection.JavaConverters._
@@ -170,7 +169,8 @@ object ProcessorStateUpdateRequest {
 object FlowConnectionRequest {
   def apply(sourceConnectable: Connectable,
             destinationConnectable: Connectable,
-            sourceRelationships: Set[String],
+            selectedRelationships: Set[String],
+            availableRelationships: Set[String],
             id: Option[String],
             flowInstanceId: String,
             name: Option[String],
@@ -205,7 +205,8 @@ object FlowConnectionRequest {
     destinationConnectableDTO.setType(destinationConnectable.componentType)
     connectionDTO.setDestination(destinationConnectableDTO)
 
-    connectionDTO.setSelectedRelationships(sourceRelationships.asJava)
+    connectionDTO.setSelectedRelationships(selectedRelationships.asJava)
+    connectionDTO.setAvailableRelationships(availableRelationships.asJava)
     name.foreach(connectionDTO.setName)
     flowFileExpiration.foreach(connectionDTO.setFlowFileExpiration)
     backPressureDataSize.foreach(connectionDTO.setBackPressureDataSizeThreshold)
@@ -220,11 +221,12 @@ object FlowConnectionRequest {
   }
 
   def apply(connection: Connection, clientId: String): ConnectionEntity = {
-    apply(connection.source,
-      connection.destination,
-      connection.sourceRelationships,
+    apply(connection.config.source,
+      connection.config.destination,
+      connection.config.selectedRelationships,
+      connection.config.availableRelationships,
       Option(connection.id),
-      connection.flowInstanceId,
+      connection.config.flowInstanceId,
       Option(connection.name),
       Option(connection.flowFileExpiration),
       Option(connection.backPressureDataSize),
@@ -234,12 +236,13 @@ object FlowConnectionRequest {
       connection.version)
   }
 
-  def apply(connectionCreate: ConnectionCreate, clientId: String): ConnectionEntity = {
-    apply(connectionCreate.source,
-      connectionCreate.destination,
-      connectionCreate.sourceRelationships,
+  def apply(connectionConfig: ConnectionConfig, clientId: String): ConnectionEntity = {
+    apply(connectionConfig.source,
+      connectionConfig.destination,
+      connectionConfig.selectedRelationships,
+      Set(),
       None,
-      connectionCreate.flowInstanceId,
+      connectionConfig.flowInstanceId,
       None,
       None,
       None,

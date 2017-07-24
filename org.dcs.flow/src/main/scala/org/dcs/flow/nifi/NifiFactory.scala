@@ -6,7 +6,7 @@ import org.apache.nifi.web.api.dto.PropertyDescriptorDTO.AllowableValueDTO
 import org.apache.nifi.web.api.dto._
 import org.apache.nifi.web.api.entity._
 import org.dcs.api.processor._
-import org.dcs.api.service.{Connectable, Connection, FlowInstance, FlowTemplate, ProcessorConfig, ProcessorInstance, ProcessorType}
+import org.dcs.api.service.{Connectable, Connection, ConnectionConfig, FlowInstance, FlowTemplate, ProcessorConfig, ProcessorInstance, ProcessorType}
 import org.dcs.flow.nifi.internal.{ProcessGroup, ProcessGroupHelper}
 
 import scala.collection.JavaConversions._
@@ -51,7 +51,7 @@ object FlowInstance {
 
     val nameId = ProcessGroupHelper.extractFromName(processGroupEntity.getComponent.getName)
 
-    f.setVersion(processGroupEntity.getRevision.getVersion)
+
     f.setId(processGroupEntity.getComponent.getId)
     f.setVersion(processGroupEntity.getRevision.getVersion)
     f.setName(nameId._1)
@@ -59,7 +59,7 @@ object FlowInstance {
     f.setState(NifiProcessorClient.StateNotStarted)
     if(contents != null) {
       f.setProcessors(contents.getProcessors.map(p => ProcessorInstance(p)).toList)
-      f.setConnections(contents.getConnections.map(c => Connection(c, Revision.DefaultVersion)).toList)
+      f.setConnections(contents.getConnections.map(c => Connection(c, processGroupEntity.getRevision.getVersion)).toList)
     }
     f
   }
@@ -193,6 +193,7 @@ object ProcessorInstance {
       if(state == null) "STANDBY" else state
     })
     processorInstance.setProcessorType(getProcessorType(processorDTO.getConfig))
+    processorInstance.setRelationships(processorDTO.getRelationships.asScala.map(RemoteRelationship(_)).toSet)
 
     processorInstance.setProperties(valuesOrDefaults(processorDTO.getConfig))
     processorInstance.setPropertyDefinitions(Option(processorDTO.getConfig.getDescriptors).map(_.asScala.map(pd => toRemoteProperty(pd._2)).toList).getOrElse(Nil))
@@ -201,7 +202,7 @@ object ProcessorInstance {
       .validate(processorInstance.id,
         processorInstance.properties,
         processorInstance.propertyDefinitions)
-    .foreach(ver => processorInstance.setValidationErrors(ver))
+      .foreach(ver => processorInstance.setValidationErrors(ver))
 
     processorInstance.setConfig(config(processorDTO.getConfig))
     processorInstance
@@ -257,12 +258,13 @@ object Connection {
 
   def apply(connectionDTO: ConnectionDTO, version: Long): Connection = {
     new Connection(connectionDTO.getId,
-      connectionDTO.getParentGroupId,
       connectionDTO.getName,
       version,
-      toConnectable(connectionDTO.getSource),
-      toConnectable(connectionDTO.getDestination),
-      connectionDTO.getSelectedRelationships.asScala.toSet,
+      ConnectionConfig(connectionDTO.getParentGroupId,
+        toConnectable(connectionDTO.getSource),
+        toConnectable(connectionDTO.getDestination),
+        connectionDTO.getSelectedRelationships.asScala.toSet,
+        connectionDTO.getAvailableRelationships.asScala.toSet),
       connectionDTO.getFlowFileExpiration,
       connectionDTO.getBackPressureDataSizeThreshold,
       connectionDTO.getBackPressureObjectThreshold,
@@ -271,5 +273,11 @@ object Connection {
 
   def apply(connectionEntity: ConnectionEntity): Connection = {
     Connection(connectionEntity.getComponent, connectionEntity.getRevision.getVersion)
+  }
+}
+
+object RemoteRelationship {
+  def apply(relationship: RelationshipDTO): RemoteRelationship = {
+    new RemoteRelationship(relationship.getName, relationship.getDescription, relationship.isAutoTerminate)
   }
 }
