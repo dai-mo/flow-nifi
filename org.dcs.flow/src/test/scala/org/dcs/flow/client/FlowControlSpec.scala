@@ -103,6 +103,7 @@ class FlowControlISpec extends FlowCreationBehaviours {
       Connectable(gbifP.id, FlowComponent.ProcessorType, flowInstance.id),
       Connectable(latlongP.id, FlowComponent.ProcessorType, flowInstance.id),
       Set("success"),
+      Set("success", "failure"),
       "gbif-latlong",
       ClientId)
 
@@ -112,6 +113,7 @@ class FlowControlISpec extends FlowCreationBehaviours {
       Connectable(latlongP.id, FlowComponent.ProcessorType, flowInstance.id),
       Connectable(filterP.id, FlowComponent.ProcessorType, flowInstance.id),
       Set("valid"),
+      Set("valid", "invalid", "failure"),
       "latlong-filter",
       ClientId)
 
@@ -238,13 +240,15 @@ trait FlowCreationBehaviours extends FlowUnitSpec {
                                        flowInstanceId: String,
                                        sourceConnectable: Connectable,
                                        destinationConnectable: Connectable,
-                                       sourceRelationships: Set[String],
+                                       selectedRelationships: Set[String],
+                                       availableRelationships: Set[String],
                                        name: String,
                                        clientId: String): Connection = {
-    val connectionCreate = new ConnectionCreate(flowInstanceId,
+    val connectionCreate = new ConnectionConfig(flowInstanceId,
       sourceConnectable,
       destinationConnectable,
-      sourceRelationships)
+      selectedRelationships,
+      availableRelationships)
 
     var connection = connectionApi.create(connectionCreate, clientId).futureValue(timeout(5))
     connection.setName(name)
