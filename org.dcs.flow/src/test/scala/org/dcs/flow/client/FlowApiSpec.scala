@@ -4,7 +4,7 @@ import java.nio.file.{Path, Paths}
 import java.util.UUID
 import javax.ws.rs.core.MediaType
 
-import org.dcs.api.service.{FlowInstance, FlowTemplate}
+import org.dcs.api.service.{FlowComponent, FlowInstance, FlowTemplate}
 import org.dcs.commons.error.HttpException
 import org.dcs.flow.nifi.{NifiFlowApi, NifiFlowClient, NifiProcessorClient}
 import org.dcs.flow.{FlowBaseUnitSpec, FlowUnitSpec}
@@ -164,8 +164,8 @@ trait FlowApiBehaviors extends FlowBaseUnitSpec {
     assert(flow.connections.size == 3)
     assert(flow.name == name)
     flow.connections.foreach(c => {
-      assert(c.source.componentType == "PROCESSOR")
-      assert(c.destination.componentType == "PROCESSOR")
+      assert(c.config.source.componentType == FlowComponent.ProcessorType)
+      assert(c.config.destination.componentType == FlowComponent.ProcessorType)
     })
     assert(!flow.getId.isEmpty)
     flow
