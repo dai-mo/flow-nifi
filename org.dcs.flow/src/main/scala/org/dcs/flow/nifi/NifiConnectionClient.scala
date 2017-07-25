@@ -4,6 +4,7 @@ import org.apache.nifi.web.api.entity.ConnectionEntity
 import org.dcs.api.service.{Connection, ConnectionApiService, ConnectionConfig}
 import org.dcs.commons.serde.JsonSerializerImplicits._
 import org.dcs.commons.ws.JerseyRestClient
+import org.dcs.flow.ProcessorApi
 
 import scala.concurrent.ExecutionContext.Implicits._
 import scala.concurrent.Future
@@ -26,6 +27,14 @@ object NifiConnectionClient {
 trait NifiConnectionClient extends ConnectionApiService with JerseyRestClient {
   import NifiConnectionClient._
 
+  override def find(connectionId: String, clientId: String): Future[Connection] = {
+    getAsJson(path = connectionsPath(connectionId))
+      .map { response =>
+        Connection(response.toObject[ConnectionEntity])
+      }
+  }
+
+
   override def create(connectionConfig: ConnectionConfig, clientId: String): Future[Connection] = {
     postAsJson(path = connectionsProcessGroupPath(connectionConfig.flowInstanceId),
       body = FlowConnectionRequest(connectionConfig, clientId))
@@ -43,10 +52,13 @@ trait NifiConnectionClient extends ConnectionApiService with JerseyRestClient {
   }
 
   override def remove(connectionId: String, version: Long, clientId: String): Future[Boolean] = {
-    deleteAsJson(path = connectionsPath(connectionId),
-      queryParams = Revision.params(version, clientId))
-      .map { response =>
-        response.toObject[Connection] != null
-      }
+    find(connectionId, clientId)
+      .flatMap(connection =>
+        deleteAsJson(path = connectionsPath(connectionId),
+          queryParams = Revision.params(version, clientId))
+          .flatMap { response =>
+            ProcessorApi.autoTerminateRelationship(connection).map(_ != null)
+          }
+      )
   }
 }

@@ -2,7 +2,7 @@ package org.dcs.flow.nifi
 
 import org.apache.nifi.web.api.entity.{ProcessorEntity, ProcessorTypesEntity}
 import org.dcs.api.processor.{CoreProperties, RemoteProcessor}
-import org.dcs.api.service.{ProcessorApiService, ProcessorInstance, ProcessorServiceDefinition, ProcessorType}
+import org.dcs.api.service.{Connection, ProcessorApiService, ProcessorInstance, ProcessorServiceDefinition, ProcessorType}
 import org.dcs.commons.SchemaAction
 import org.dcs.commons.error.{ErrorConstants, HttpException, ValidationErrorResponse}
 import org.dcs.commons.serde.JsonSerializerImplicits._
@@ -74,6 +74,26 @@ trait NifiProcessorClient extends ProcessorApiService with JerseyRestClient {
       .map { response =>
         response.toObject[ProcessorEntity]
       }
+
+  override def autoTerminateRelationship(connection: Connection): Future[ProcessorInstance] =
+    getAsJson(processorsPath(connection.config.source.id))
+      .flatMap { response =>
+        val processorEntity = response.toObject[ProcessorEntity]
+        val existingRelAutoTerminatedSet = processorEntity.getComponent.getRelationships.asScala.filter(_.isAutoTerminate)
+        val relToAutoTerminateSet = processorEntity
+          .getComponent.getRelationships.asScala
+          .filter(rel => connection.config.selectedRelationships.contains(rel.getName))
+        val relSet = (existingRelAutoTerminatedSet ++ relToAutoTerminateSet)
+          .map(rel => rel.getName).toSet
+
+        putAsJson(path = processorsPath(connection.config.source.id),
+          body = FlowProcessorUpdateRequest(relSet, processorEntity))
+      }
+      .map { response =>
+        ProcessorInstance(response.toObject[ProcessorEntity])
+      }
+
+
 
   override def create(processorServiceDefinition: ProcessorServiceDefinition,
                       processGroupId: String,

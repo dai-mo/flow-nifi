@@ -256,6 +256,10 @@ object Connection {
       connectableDTO.getGroupId)
   }
 
+  private def toConnectable(connectableId: String, connectableType: String, groupId: String): Connectable = {
+    Connectable(connectableId, connectableType, groupId)
+  }
+
   def apply(connectionDTO: ConnectionDTO, version: Long): Connection = {
     new Connection(connectionDTO.getId,
       connectionDTO.getName,
@@ -274,6 +278,7 @@ object Connection {
   def apply(connectionEntity: ConnectionEntity): Connection = {
     Connection(connectionEntity.getComponent, connectionEntity.getRevision.getVersion)
   }
+
 }
 
 object RemoteRelationship {
