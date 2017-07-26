@@ -79,6 +79,14 @@ class FlowGraphSpec extends FlowUnitSpec with NifiFlowGraphBehaviors {
     validateProcessorSchemaUpdate(flowClient, FlowInstanceId)
   }
 
+  "Flow Graph Schema Update on disconnected flow" must "generate valid graph" in {
+
+    val flowInstancePath: Path = Paths.get(FlowApiSpec.getClass.getResource("flow-instance-not-connected.json").toURI())
+
+    validateProcessorSchemaDisconnectedUpdate(jsonFromFile(flowInstancePath.toFile).toObject[FlowInstance])
+  }
+
+
   "Flow Graph Schema Propagation" must "generate valid graph" in {
 
     val flowInstancePath: Path = Paths.get(FlowApiSpec.getClass.getResource("flow-instance-not-connected.json").toURI())
@@ -179,6 +187,29 @@ trait NifiFlowGraphBehaviors extends FlowBaseUnitSpec {
 
   }
 
+  def validateProcessorSchemaDisconnectedUpdate(flowInstance: FlowInstance): Unit = {
+    val graphNodes = FlowGraph.buildFlowGraph(flowInstance)
+
+    val RootNodeProcessorId = "7946f60b-015d-1000-c380-c7852fdbc44e"
+
+    val SciNName = "scientificName"
+    val remSciNameAction = SchemaAction(SchemaAction.SCHEMA_REM_ACTION,
+      JsonPath.Root + JsonPath.Sep + SciNName)
+
+    val processorsToUpdate =
+      FlowGraph.executeBreadthFirstFromNode(flowInstance, FlowGraphTraversal.schemaUpdate(List(remSciNameAction)), RootNodeProcessorId)
+
+    val procs = processorsToUpdate.filter(_.isDefined).map(_.get)
+    assert(procs.size == 1)
+
+    val firstProc = procs.head
+    assert(firstProc.properties(CoreProperties.ReadSchemaIdKey).isEmpty)
+    assert(firstProc.properties(CoreProperties.ReadSchemaKey).isEmpty)
+    assert(firstProc.properties(CoreProperties.WriteSchemaIdKey).nonEmpty)
+    assert(firstProc.properties(CoreProperties.WriteSchemaKey).nonEmpty)
+
+  }
+
   def validateProcessorSchemaPropagation(flowInstance: FlowInstance): Unit = {
 
 
@@ -190,7 +221,6 @@ trait NifiFlowGraphBehaviors extends FlowBaseUnitSpec {
     val rootProcessor = flowInstance.processors.find(_.id == RootProcessorId).get
     val childOfRootProcessor = flowInstance.processors.find(_.id == ChildOfRootProcessorId).get
     val childOfChildOfRootProcessor = flowInstance.processors.find(_.id == ChildOfChildOfRootProcessorId).get
-
 
 
     val firstConnection = new Connection(UUID.randomUUID().toString,

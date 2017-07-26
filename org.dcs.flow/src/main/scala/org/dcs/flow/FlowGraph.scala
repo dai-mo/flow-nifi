@@ -60,6 +60,7 @@ object FlowGraph {
     def build(processorInstances: List[ProcessorInstance],
               connections: List[Connection],
               nodeMap: Map[String, FlowGraphNode]): Set[FlowGraphNode]  = connections match {
+      case Nil if nodeMap.isEmpty => processorInstances.map(p => FlowGraphNode(p, Nil, Nil)).toSet
       case Nil => nodeMap.values.toSet
       case _ => build(processorInstances,
         connections.tail,
@@ -170,7 +171,7 @@ object FlowGraphTraversal {
   }
 
   def schemaUnPropagate(processorId: String, coreProperties: CoreProperties)(fgn: FlowGraphNode): Option[ProcessorInstance] = {
-
+    val sourceOutputSchemaId = coreProperties.writeSchemaId.getOrElse(coreProperties.readSchemaId.getOrElse(""))
     if (fgn.processorInstance.id != processorId) {
       val currentCoreProperties = CoreProperties(fgn.processorInstance.properties)
 
@@ -185,12 +186,18 @@ object FlowGraphTraversal {
           currentCoreProperties.writeSchema.getOrElse("").toString
 
 
+
       fgn.processorInstance
         .setProperties(fgn.processorInstance.properties +
           (CoreProperties.ReadSchemaIdKey -> readSchemaId) +
           (CoreProperties.ReadSchemaKey -> readSchema) +
           (CoreProperties.WriteSchemaIdKey -> writeSchemaId) +
           (CoreProperties.WriteSchemaKey -> writeSchema))
+
+      if(currentCoreProperties.readSchemaId.getOrElse("") == sourceOutputSchemaId) {
+        fgn.processorInstance
+          .setProperties(CoreProperties.resetSchemaProperties(fgn.processorInstance.properties))
+      }
 
       Some(fgn.processorInstance)
     } else
