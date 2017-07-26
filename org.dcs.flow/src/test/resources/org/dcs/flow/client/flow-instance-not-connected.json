@@ -1,0 +1,596 @@
+{
+  "id": "67a976ee-015b-1000-a69b-9a30ef4b8adc",
+  "name": "Test",
+  "nameId": "3518dfbe-d984-4d38-af7a-355e8996e609",
+  "state": "STOPPED",
+  "version": 2,
+  "processors": [
+    {
+      "id": "7999fb82-015d-1000-eb97-2c0ede7d20e4",
+      "name": "FilterProcessorService",
+      "type": "org.dcs.nifi.processors.WorkerProcessor",
+      "processorType": "worker",
+      "status": "STOPPED",
+      "version": 4,
+      "properties": {
+        "_READ_SCHEMA_ID": "",
+        "_FIELDS_ACTIONS": "[{\"name\":\"contains\",\"fieldType\":\"string\",\"jsonPath\":\"\",\"args\":\"\"},{\"name\":\"starts with\",\"fieldType\":\"string\",\"jsonPath\":\"\",\"args\":\"\"}]",
+        "_PROCESSOR_TYPE": "worker",
+        "_WRITE_SCHEMA": "",
+        "_WRITE_SCHEMA_ID": "",
+        "_READ_SCHEMA": "",
+        "_PROCESSOR_CLASS": "org.dcs.core.service.FilterProcessorService"
+      },
+      "propertyDefinitions": [
+        {
+          "displayName": "_READ_SCHEMA_ID",
+          "name": "_READ_SCHEMA_ID",
+          "description": "Id of avro schema used to deserialise the input of this processor to a generic record [Level 100]",
+          "defaultValue": "",
+          "required": false,
+          "sensitive": false,
+          "dynamic": false,
+          "validators": [],
+          "type": "string",
+          "level": 0
+        },
+        {
+          "displayName": "_READ_SCHEMA",
+          "name": "_READ_SCHEMA",
+          "description": "Avro read schema used to deserialise the byte array input of this processor to a generic record [Level100]",
+          "defaultValue": "",
+          "required": false,
+          "sensitive": false,
+          "dynamic": true,
+          "validators": [],
+          "type": "string",
+          "level": 0
+        },
+        {
+          "displayName": "_WRITE_SCHEMA",
+          "name": "_WRITE_SCHEMA",
+          "description": "Avro schema used to serialise the output of this processor to a byte array [Level100]",
+          "defaultValue": "",
+          "required": false,
+          "sensitive": false,
+          "dynamic": true,
+          "validators": [],
+          "type": "string",
+          "level": 0
+        },
+        {
+          "displayName": "_WRITE_SCHEMA_ID",
+          "name": "_WRITE_SCHEMA_ID",
+          "description": "Id of avro schema used to to serialise the output of this processor to a byte array [Level100]",
+          "defaultValue": "",
+          "required": false,
+          "sensitive": false,
+          "dynamic": false,
+          "validators": [],
+          "type": "string",
+          "level": 0
+        },
+        {
+          "displayName": "_PROCESSOR_TYPE",
+          "name": "_PROCESSOR_TYPE",
+          "description": "Type of processor [Level100]",
+          "defaultValue": "worker",
+          "required": true,
+          "sensitive": false,
+          "dynamic": false,
+          "validators": [],
+          "type": "string",
+          "level": 0
+        },
+        {
+          "displayName": "_FIELDS_ACTIONS",
+          "name": "_FIELDS_ACTIONS",
+          "description": "A list of actions mapped to json paths which are executed by the processor [Level100]",
+          "defaultValue": "[{\"name\":\"contains\",\"fieldType\":\"string\",\"jsonPath\":\"\",\"args\":\"\"},{\"name\":\"starts with\",\"fieldType\":\"string\",\"jsonPath\":\"\",\"args\":\"\"}]",
+          "required": true,
+          "sensitive": false,
+          "dynamic": false,
+          "validators": [],
+          "type": "string",
+          "level": 0
+        },
+        {
+          "displayName": "_PROCESSOR_CLASS",
+          "name": "_PROCESSOR_CLASS",
+          "description": "Remote Processor class",
+          "defaultValue": "",
+          "required": true,
+          "sensitive": false,
+          "dynamic": false,
+          "validators": [],
+          "type": "string",
+          "level": 0
+        }
+      ],
+      "relationships": [
+        {
+          "id": "failure",
+          "description": "All failed updates will be routed to this relationship",
+          "autoTerminate": true
+        },
+        {
+          "id": "invalid",
+          "description": "All records with invalid values will be routed to this relationship",
+          "autoTerminate": true
+        },
+        {
+          "id": "valid",
+          "description": "All records with valid values will be routed to this relationship",
+          "autoTerminate": true
+        }
+      ],
+      "validationErrors": {
+        "code": "DCS306",
+        "message": "Processor Validation Error",
+        "description": "Invalid Processor Properties",
+        "validationInfo": [
+          {
+            "code": "DCS308",
+            "message": "Missing Processor Output Schema",
+            "processorName": "org.dcs.core.service.FilterProcessorService",
+            "processorId": "7999fb82-015d-1000-eb97-2c0ede7d20e4"
+          },
+          {
+            "code": "DCS307",
+            "message": "Missing Processor Input Schema",
+            "processorName": "org.dcs.core.service.FilterProcessorService",
+            "processorId": "7999fb82-015d-1000-eb97-2c0ede7d20e4"
+          }
+        ]
+      },
+      "config": {
+        "bulletinLevel": "WARN",
+        "comments": "",
+        "concurrentlySchedulableTaskCount": 1,
+        "penaltyDuration": "30 sec",
+        "schedulingPeriod": "0 sec",
+        "schedulingStrategy": "TIMER_DRIVEN",
+        "yieldDuration": "1 sec"
+      }
+    },
+    {
+      "id": "799a3560-015d-1000-4ac9-7069fd3dcfcb",
+      "name": "CSVFileOutputProcessorService",
+      "type": "org.dcs.nifi.processors.SinkStatefulProcessor",
+      "processorType": "sink",
+      "status": "STOPPED",
+      "version": 4,
+      "properties": {
+        "file-name": "",
+        "_READ_SCHEMA_ID": "",
+        "_PROCESSOR_TYPE": "sink",
+        "_WRITE_SCHEMA": "",
+        "_WRITE_SCHEMA_ID": "",
+        "_READ_SCHEMA": "",
+        "_PROCESSOR_CLASS": "org.dcs.core.service.CSVFileOutputProcessorService"
+      },
+      "propertyDefinitions": [
+        {
+          "displayName": "_READ_SCHEMA_ID",
+          "name": "_READ_SCHEMA_ID",
+          "description": "Id of avro schema used to deserialise the input of this processor to a generic record [Level 100]",
+          "defaultValue": "",
+          "required": false,
+          "sensitive": false,
+          "dynamic": false,
+          "validators": [],
+          "type": "string",
+          "level": 0
+        },
+        {
+          "displayName": "_READ_SCHEMA",
+          "name": "_READ_SCHEMA",
+          "description": "Avro read schema used to deserialise the byte array input of this processor to a generic record [Level100]",
+          "defaultValue": "",
+          "required": false,
+          "sensitive": false,
+          "dynamic": true,
+          "validators": [],
+          "type": "string",
+          "level": 0
+        },
+        {
+          "displayName": "_WRITE_SCHEMA",
+          "name": "_WRITE_SCHEMA",
+          "description": "Avro schema used to serialise the output of this processor to a byte array [Level100]",
+          "defaultValue": "",
+          "required": false,
+          "sensitive": false,
+          "dynamic": true,
+          "validators": [],
+          "type": "string",
+          "level": 0
+        },
+        {
+          "displayName": "_WRITE_SCHEMA_ID",
+          "name": "_WRITE_SCHEMA_ID",
+          "description": "Id of avro schema used to to serialise the output of this processor to a byte array [Level100]",
+          "defaultValue": "",
+          "required": false,
+          "sensitive": false,
+          "dynamic": false,
+          "validators": [],
+          "type": "string",
+          "level": 0
+        },
+        {
+          "displayName": "_PROCESSOR_TYPE",
+          "name": "_PROCESSOR_TYPE",
+          "description": "Type of processor [Level100]",
+          "defaultValue": "sink",
+          "required": true,
+          "sensitive": false,
+          "dynamic": false,
+          "validators": [],
+          "type": "string",
+          "level": 0
+        },
+        {
+          "displayName": "Output File Name",
+          "name": "file-name",
+          "description": "Output File Name",
+          "defaultValue": "",
+          "required": true,
+          "sensitive": false,
+          "dynamic": false,
+          "validators": [],
+          "type": "string",
+          "level": 0
+        },
+        {
+          "displayName": "_PROCESSOR_CLASS",
+          "name": "_PROCESSOR_CLASS",
+          "description": "Remote Processor class",
+          "defaultValue": "",
+          "required": true,
+          "sensitive": false,
+          "dynamic": false,
+          "validators": [],
+          "type": "string",
+          "level": 0
+        }
+      ],
+      "relationships": [
+        {
+          "id": "failure",
+          "description": "All failed updates will be routed to this relationship",
+          "autoTerminate": true
+        },
+        {
+          "id": "success",
+          "description": "All status updates will be routed to this relationship",
+          "autoTerminate": true
+        }
+      ],
+      "validationErrors": {
+        "code": "DCS306",
+        "message": "Processor Validation Error",
+        "description": "Invalid Processor Properties",
+        "validationInfo": [
+          {
+            "processorName": "org.dcs.core.service.CSVFileOutputProcessorService",
+            "processorPropertyName": "file-name",
+            "processorPropertyType": "string",
+            "code": "DCS314",
+            "message": "Empty Required Processor Property",
+            "processorId": "799a3560-015d-1000-4ac9-7069fd3dcfcb"
+          },
+          {
+            "code": "DCS308",
+            "message": "Missing Processor Output Schema",
+            "processorName": "org.dcs.core.service.CSVFileOutputProcessorService",
+            "processorId": "799a3560-015d-1000-4ac9-7069fd3dcfcb"
+          },
+          {
+            "code": "DCS307",
+            "message": "Missing Processor Input Schema",
+            "processorName": "org.dcs.core.service.CSVFileOutputProcessorService",
+            "processorId": "799a3560-015d-1000-4ac9-7069fd3dcfcb"
+          }
+        ]
+      },
+      "config": {
+        "bulletinLevel": "WARN",
+        "comments": "",
+        "concurrentlySchedulableTaskCount": 1,
+        "penaltyDuration": "30 sec",
+        "schedulingPeriod": "0 sec",
+        "schedulingStrategy": "TIMER_DRIVEN",
+        "yieldDuration": "1 sec"
+      }
+    },
+    {
+      "id": "799f9ebb-015d-1000-0376-0bfcd28c9d8f",
+      "name": "LatLongValidationProcessorService",
+      "type": "org.dcs.nifi.processors.WorkerProcessor",
+      "processorType": "worker",
+      "status": "STOPPED",
+      "version": 3,
+      "properties": {
+        "_READ_SCHEMA_ID": "",
+        "_FIELDS_TO_MAP": "[{\"name\":\"latitude\",\"fieldType\":\"double\",\"jsonPath\":\"\"},{\"name\":\"longitude\",\"fieldType\":\"double\",\"jsonPath\":\"\"}]",
+        "_PROCESSOR_TYPE": "worker",
+        "_WRITE_SCHEMA": "",
+        "_WRITE_SCHEMA_ID": "",
+        "_READ_SCHEMA": "",
+        "_PROCESSOR_CLASS": "org.dcs.core.service.LatLongValidationProcessorService"
+      },
+      "propertyDefinitions": [
+        {
+          "displayName": "_READ_SCHEMA_ID",
+          "name": "_READ_SCHEMA_ID",
+          "description": "Id of avro schema used to deserialise the input of this processor to a generic record [Level 100]",
+          "defaultValue": "",
+          "required": false,
+          "sensitive": false,
+          "dynamic": false,
+          "validators": [],
+          "type": "string",
+          "level": 0
+        },
+        {
+          "displayName": "_READ_SCHEMA",
+          "name": "_READ_SCHEMA",
+          "description": "Avro read schema used to deserialise the byte array input of this processor to a generic record [Level100]",
+          "defaultValue": "",
+          "required": false,
+          "sensitive": false,
+          "dynamic": true,
+          "validators": [],
+          "type": "string",
+          "level": 0
+        },
+        {
+          "displayName": "_WRITE_SCHEMA",
+          "name": "_WRITE_SCHEMA",
+          "description": "Avro schema used to serialise the output of this processor to a byte array [Level100]",
+          "defaultValue": "",
+          "required": false,
+          "sensitive": false,
+          "dynamic": true,
+          "validators": [],
+          "type": "string",
+          "level": 0
+        },
+        {
+          "displayName": "_WRITE_SCHEMA_ID",
+          "name": "_WRITE_SCHEMA_ID",
+          "description": "Id of avro schema used to to serialise the output of this processor to a byte array [Level100]",
+          "defaultValue": "",
+          "required": false,
+          "sensitive": false,
+          "dynamic": false,
+          "validators": [],
+          "type": "string",
+          "level": 0
+        },
+        {
+          "displayName": "_PROCESSOR_TYPE",
+          "name": "_PROCESSOR_TYPE",
+          "description": "Type of processor [Level100]",
+          "defaultValue": "worker",
+          "required": true,
+          "sensitive": false,
+          "dynamic": false,
+          "validators": [],
+          "type": "string",
+          "level": 0
+        },
+        {
+          "displayName": "_FIELDS_TO_MAP",
+          "name": "_FIELDS_TO_MAP",
+          "description": "Field <> JsonPath Mappings for fields required by this processor [Level100]",
+          "defaultValue": "[{\"name\":\"latitude\",\"fieldType\":\"double\",\"jsonPath\":\"\"},{\"name\":\"longitude\",\"fieldType\":\"double\",\"jsonPath\":\"\"}]",
+          "required": true,
+          "sensitive": false,
+          "dynamic": false,
+          "validators": [],
+          "type": "string",
+          "level": 0
+        },
+        {
+          "displayName": "_PROCESSOR_CLASS",
+          "name": "_PROCESSOR_CLASS",
+          "description": "Remote Processor class",
+          "defaultValue": "",
+          "required": true,
+          "sensitive": false,
+          "dynamic": false,
+          "validators": [],
+          "type": "string",
+          "level": 0
+        }
+      ],
+      "relationships": [
+        {
+          "id": "failure",
+          "description": "All failed updates will be routed to this relationship",
+          "autoTerminate": true
+        },
+        {
+          "id": "invalid",
+          "description": "All records with invalid values will be routed to this relationship",
+          "autoTerminate": true
+        },
+        {
+          "id": "valid",
+          "description": "All records with valid values will be routed to this relationship",
+          "autoTerminate": true
+        }
+      ],
+      "validationErrors": {
+        "code": "DCS306",
+        "message": "Processor Validation Error",
+        "description": "Invalid Processor Properties",
+        "validationInfo": [
+          {
+            "code": "DCS308",
+            "message": "Missing Processor Output Schema",
+            "processorName": "org.dcs.core.service.LatLongValidationProcessorService",
+            "processorId": "799f9ebb-015d-1000-0376-0bfcd28c9d8f"
+          },
+          {
+            "code": "DCS307",
+            "message": "Missing Processor Input Schema",
+            "processorName": "org.dcs.core.service.LatLongValidationProcessorService",
+            "processorId": "799f9ebb-015d-1000-0376-0bfcd28c9d8f"
+          }
+        ]
+      },
+      "config": {
+        "bulletinLevel": "WARN",
+        "comments": "",
+        "concurrentlySchedulableTaskCount": 1,
+        "penaltyDuration": "30 sec",
+        "schedulingPeriod": "0 sec",
+        "schedulingStrategy": "TIMER_DRIVEN",
+        "yieldDuration": "1 sec"
+      }
+    },
+    {
+      "id": "7946f60b-015d-1000-c380-c7852fdbc44e",
+      "name": "StatefulGBIFOccurrenceProcessorService",
+      "type": "org.dcs.nifi.processors.IngestionStatefulProcessor",
+      "processorType": "ingestion",
+      "status": "STOPPED",
+      "version": 8,
+      "properties": {
+        "_READ_SCHEMA_ID": "",
+        "_PROCESSOR_TYPE": "ingestion",
+        "_WRITE_SCHEMA": "",
+        "_WRITE_SCHEMA_ID": "org.dcs.core.processor.GBIFOccurrenceProcessor",
+        "species-name": "",
+        "_READ_SCHEMA": "",
+        "_PROCESSOR_CLASS": "org.dcs.core.service.StatefulGBIFOccurrenceProcessorService"
+      },
+      "propertyDefinitions": [
+        {
+          "displayName": "_READ_SCHEMA_ID",
+          "name": "_READ_SCHEMA_ID",
+          "description": "Id of avro schema used to deserialise the input of this processor to a generic record [Level 100]",
+          "defaultValue": "",
+          "required": false,
+          "sensitive": false,
+          "dynamic": false,
+          "validators": [],
+          "type": "string",
+          "level": 0
+        },
+        {
+          "displayName": "_READ_SCHEMA",
+          "name": "_READ_SCHEMA",
+          "description": "Avro read schema used to deserialise the byte array input of this processor to a generic record [Level100]",
+          "defaultValue": "",
+          "required": false,
+          "sensitive": false,
+          "dynamic": true,
+          "validators": [],
+          "type": "string",
+          "level": 0
+        },
+        {
+          "displayName": "_WRITE_SCHEMA",
+          "name": "_WRITE_SCHEMA",
+          "description": "Avro schema used to serialise the output of this processor to a byte array [Level100]",
+          "defaultValue": "",
+          "required": false,
+          "sensitive": false,
+          "dynamic": true,
+          "validators": [],
+          "type": "string",
+          "level": 0
+        },
+        {
+          "displayName": "_WRITE_SCHEMA_ID",
+          "name": "_WRITE_SCHEMA_ID",
+          "description": "Id of avro schema used to to serialise the output of this processor to a byte array [Level100]",
+          "defaultValue": "org.dcs.core.processor.GBIFOccurrenceProcessor",
+          "required": false,
+          "sensitive": false,
+          "dynamic": false,
+          "validators": [],
+          "type": "string",
+          "level": 0
+        },
+        {
+          "displayName": "_PROCESSOR_TYPE",
+          "name": "_PROCESSOR_TYPE",
+          "description": "Type of processor [Level100]",
+          "defaultValue": "ingestion",
+          "required": true,
+          "sensitive": false,
+          "dynamic": false,
+          "validators": [],
+          "type": "string",
+          "level": 0
+        },
+        {
+          "displayName": "Species Name",
+          "name": "species-name",
+          "description": "Species Name to search for",
+          "defaultValue": "",
+          "required": true,
+          "sensitive": false,
+          "dynamic": false,
+          "validators": [],
+          "type": "string",
+          "level": 0
+        },
+        {
+          "displayName": "_PROCESSOR_CLASS",
+          "name": "_PROCESSOR_CLASS",
+          "description": "Remote Processor class",
+          "defaultValue": "",
+          "required": true,
+          "sensitive": false,
+          "dynamic": false,
+          "validators": [],
+          "type": "string",
+          "level": 0
+        }
+      ],
+      "relationships": [
+        {
+          "id": "failure",
+          "description": "All failed updates will be routed to this relationship",
+          "autoTerminate": true
+        },
+        {
+          "id": "success",
+          "description": "All status updates will be routed to this relationship",
+          "autoTerminate": true
+        }
+      ],
+      "validationErrors": {
+        "code": "DCS306",
+        "message": "Processor Validation Error",
+        "description": "Invalid Processor Properties",
+        "validationInfo": [
+          {
+            "processorName": "org.dcs.core.service.StatefulGBIFOccurrenceProcessorService",
+            "processorPropertyName": "species-name",
+            "processorPropertyType": "string",
+            "code": "DCS314",
+            "message": "Empty Required Processor Property",
+            "processorId": "7946f60b-015d-1000-c380-c7852fdbc44e"
+          }
+        ]
+      },
+      "config": {
+        "bulletinLevel": "WARN",
+        "comments": "",
+        "concurrentlySchedulableTaskCount": 1,
+        "penaltyDuration": "30 sec",
+        "schedulingPeriod": "0 sec",
+        "schedulingStrategy": "TIMER_DRIVEN",
+        "yieldDuration": "1 sec"
+      }
+    }
+  ],
+  "connections": []
+}

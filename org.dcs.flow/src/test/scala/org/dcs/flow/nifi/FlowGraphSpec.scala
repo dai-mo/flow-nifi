@@ -1,17 +1,21 @@
 package org.dcs.flow.nifi
 
 import java.nio.file.{Path, Paths}
+import java.util.UUID
 
 import org.dcs.api.processor.{CoreProperties, RemoteProcessor}
+import org.dcs.api.service.{Connectable, Connection, ConnectionConfig, FlowComponent, FlowInstance}
 import org.dcs.commons.SchemaAction
 import org.dcs.commons.error.ValidationErrorResponse
-import org.dcs.commons.serde.JsonPath
+import org.dcs.commons.serde.{AvroSchemaStore, JsonPath}
 import org.dcs.flow.{FlowBaseUnitSpec, FlowGraph, FlowGraphTraversal, FlowUnitSpec}
 import org.dcs.flow.client.FlowApiSpec
 import org.dcs.flow.FlowGraph.FlowGraphNode
 import org.mockito.Matchers
 import org.mockito.Mockito._
 import org.scalatest.FlatSpec
+import org.dcs.commons.serde.JsonSerializerImplicits._
+import scala.Predef
 
 import scala.concurrent.Future
 
@@ -73,6 +77,13 @@ class FlowGraphSpec extends FlowUnitSpec with NifiFlowGraphBehaviors {
       )
 
     validateProcessorSchemaUpdate(flowClient, FlowInstanceId)
+  }
+
+  "Flow Graph Schema Propagation" must "generate valid graph" in {
+
+    val flowInstancePath: Path = Paths.get(FlowApiSpec.getClass.getResource("flow-instance-not-connected.json").toURI())
+
+    validateProcessorSchemaPropagation(jsonFromFile(flowInstancePath.toFile).toObject[FlowInstance])
   }
 
   "Flow Graph Schema Update" must "validate processor fields with schema" in {
@@ -147,7 +158,7 @@ trait NifiFlowGraphBehaviors extends FlowBaseUnitSpec {
 
     val procs = processorsToUpdate.filter(_.isDefined).map(_.get)
     assert(procs.size == 3)
-    
+
     val firstProc = procs.head
     assert(firstProc.properties(CoreProperties.ReadSchemaIdKey).isEmpty)
     assert(firstProc.properties(CoreProperties.ReadSchemaKey).isEmpty)
@@ -168,6 +179,84 @@ trait NifiFlowGraphBehaviors extends FlowBaseUnitSpec {
 
   }
 
+  def validateProcessorSchemaPropagation(flowInstance: FlowInstance): Unit = {
+
+
+
+    val RootProcessorId = "7946f60b-015d-1000-c380-c7852fdbc44e"
+    val ChildOfRootProcessorId = "799f9ebb-015d-1000-0376-0bfcd28c9d8f"
+    val ChildOfChildOfRootProcessorId= "7999fb82-015d-1000-eb97-2c0ede7d20e4"
+
+    val rootProcessor = flowInstance.processors.find(_.id == RootProcessorId).get
+    val childOfRootProcessor = flowInstance.processors.find(_.id == ChildOfRootProcessorId).get
+    val childOfChildOfRootProcessor = flowInstance.processors.find(_.id == ChildOfChildOfRootProcessorId).get
+
+
+
+    val firstConnection = new Connection(UUID.randomUUID().toString,
+      "",
+      1.toLong,
+      ConnectionConfig(flowInstance.id,
+        Connectable(RootProcessorId, FlowComponent.ProcessorType, flowInstance.id, Map()),
+        Connectable(ChildOfRootProcessorId, FlowComponent.ProcessorType, flowInstance.id, Map()),
+        Set("success"),
+        Set("success", "failure")),
+      "",
+      "",
+      1.toLong,
+      Nil)
+
+    val secondConnection = new Connection(UUID.randomUUID().toString,
+      "",
+      1.toLong,
+      ConnectionConfig(flowInstance.id,
+        Connectable(ChildOfRootProcessorId, FlowComponent.ProcessorType, flowInstance.id, Map()),
+        Connectable(ChildOfChildOfRootProcessorId, FlowComponent.ProcessorType, flowInstance.id, Map()),
+        Set("success"),
+        Set("success", "failure")),
+      "",
+      "",
+      1.toLong,
+      Nil)
+    flowInstance.setConnections(List(firstConnection, secondConnection))
+
+
+    val TestSchema = AvroSchemaStore.get(rootProcessor.properties(CoreProperties.WriteSchemaIdKey)).get.toString
+
+    rootProcessor.setProperties(rootProcessor.properties + (CoreProperties.WriteSchemaKey -> TestSchema))
+    val rootCoreProperties =  CoreProperties(rootProcessor.properties)
+
+      FlowGraph.executeBreadthFirstFromNode(flowInstance,
+        FlowGraphTraversal.schemaPropagate(RootProcessorId,CoreProperties(rootProcessor.properties)),
+        RootProcessorId)
+
+    assert(childOfRootProcessor.properties(CoreProperties.ReadSchemaIdKey).nonEmpty)
+    assert(childOfRootProcessor.properties(CoreProperties.ReadSchemaIdKey) ==
+      rootCoreProperties.writeSchemaId.get)
+
+    assert(childOfRootProcessor.properties(CoreProperties.ReadSchemaKey).nonEmpty)
+    assert(childOfRootProcessor.properties(CoreProperties.ReadSchemaKey) ==
+      rootCoreProperties.writeSchema.get.toString)
+
+    assert(childOfChildOfRootProcessor.properties(CoreProperties.ReadSchemaIdKey).nonEmpty)
+    assert(childOfChildOfRootProcessor.properties(CoreProperties.ReadSchemaIdKey) ==
+      rootCoreProperties.writeSchemaId.get)
+
+    assert(childOfChildOfRootProcessor.properties(CoreProperties.ReadSchemaKey).nonEmpty)
+    assert(childOfChildOfRootProcessor.properties(CoreProperties.ReadSchemaKey) ==
+      rootCoreProperties.writeSchema.get.toString)
+
+    FlowGraph.executeBreadthFirstFromNode(flowInstance,
+      FlowGraphTraversal.schemaUnPropagate(RootProcessorId,CoreProperties(rootProcessor.properties)),
+      RootProcessorId)
+
+    assert(childOfRootProcessor.properties(CoreProperties.ReadSchemaIdKey).isEmpty)
+    assert(childOfRootProcessor.properties(CoreProperties.ReadSchemaKey).isEmpty)
+    assert(childOfChildOfRootProcessor.properties(CoreProperties.ReadSchemaIdKey).isEmpty)
+    assert(childOfChildOfRootProcessor.properties(CoreProperties.ReadSchemaKey).isEmpty)
+    
+  }
+
   def validateProcessorFieldToSchema(flowClient: NifiFlowClient, flowInstanceId: String): Unit = {
     val flowInstance = flowClient.instance(flowInstanceId).futureValue
     val graphNodes = FlowGraph.buildFlowGraph(flowInstance)
@@ -186,9 +275,6 @@ trait NifiFlowGraphBehaviors extends FlowBaseUnitSpec {
 
     assert(vinfo.size == 3)
     assert(vinfo.count(_(ValidationErrorResponse.ErrorCode) == "DCS310") == 3)
-
-
-
 
   }
 }
