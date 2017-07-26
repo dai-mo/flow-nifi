@@ -117,7 +117,7 @@ object FlowGraphTraversal {
           fgn.processorInstance.id,
           uws,
           fgn.processorInstance.properties))
-      .foreach(ver => fgn.processorInstance.setValidationErrors(ver))
+        .foreach(ver => fgn.processorInstance.setValidationErrors(ver))
 
       val updatedWriteSchemaJson = updatedWriteSchema.map(_.toString)
 
@@ -139,6 +139,62 @@ object FlowGraphTraversal {
       Some(fgn.processorInstance)
 
     } else None
+  }
+
+  def schemaPropagate(processorId: String, coreProperties: CoreProperties)(fgn: FlowGraphNode): Option[ProcessorInstance] = {
+
+    if (fgn.processorInstance.id != processorId) {
+      val currentCoreProperties = CoreProperties(fgn.processorInstance.properties)
+
+      val readSchemaId = coreProperties.writeSchemaId.getOrElse(coreProperties.readSchemaId.getOrElse(""))
+      val readSchema = coreProperties.writeSchema.getOrElse(coreProperties.writeSchema.getOrElse("")).toString
+
+      val writeSchemaId = currentCoreProperties.writeSchemaId.getOrElse("")
+      val writeSchema =
+        if(writeSchemaId.isEmpty)
+          ""
+        else
+          currentCoreProperties.writeSchema.getOrElse("").toString
+
+
+      fgn.processorInstance
+        .setProperties(fgn.processorInstance.properties +
+          (CoreProperties.ReadSchemaIdKey -> readSchemaId) +
+          (CoreProperties.ReadSchemaKey -> readSchema) +
+          (CoreProperties.WriteSchemaIdKey -> writeSchemaId) +
+          (CoreProperties.WriteSchemaKey -> writeSchema))
+
+      Some(fgn.processorInstance)
+    } else
+      None
+  }
+
+  def schemaUnPropagate(processorId: String, coreProperties: CoreProperties)(fgn: FlowGraphNode): Option[ProcessorInstance] = {
+
+    if (fgn.processorInstance.id != processorId) {
+      val currentCoreProperties = CoreProperties(fgn.processorInstance.properties)
+
+      val readSchemaId = ""
+      val readSchema = ""
+
+      val writeSchemaId = currentCoreProperties.writeSchemaId.getOrElse("")
+      val writeSchema =
+        if (writeSchemaId.isEmpty)
+          ""
+        else
+          currentCoreProperties.writeSchema.getOrElse("").toString
+
+
+      fgn.processorInstance
+        .setProperties(fgn.processorInstance.properties +
+          (CoreProperties.ReadSchemaIdKey -> readSchemaId) +
+          (CoreProperties.ReadSchemaKey -> readSchema) +
+          (CoreProperties.WriteSchemaIdKey -> writeSchemaId) +
+          (CoreProperties.WriteSchemaKey -> writeSchema))
+
+      Some(fgn.processorInstance)
+    } else
+      None
   }
 }
 
