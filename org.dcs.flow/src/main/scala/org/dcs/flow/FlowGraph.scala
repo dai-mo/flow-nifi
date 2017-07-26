@@ -60,6 +60,7 @@ object FlowGraph {
     def build(processorInstances: List[ProcessorInstance],
               connections: List[Connection],
               nodeMap: Map[String, FlowGraphNode]): Set[FlowGraphNode]  = connections match {
+      case Nil if nodeMap.isEmpty => processorInstances.map(p => FlowGraphNode(p, Nil, Nil)).toSet
       case Nil => nodeMap.values.toSet
       case _ => build(processorInstances,
         connections.tail,
