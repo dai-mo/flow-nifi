@@ -66,30 +66,30 @@ abstract class StatefulClientProcessor extends ClientProcessor {
   @OnScheduled
   def onSchedule(processContext: ProcessContext): Unit = {
     Option(statefulRemoteProcessorService).map(_.onInstanceSchedule(processorStateId,
-      processContext.getProperties.asScala.keys.map(pd => RemoteProperty(pd)).toList.asJava))
+      processContext.getProperties.asScala.map(pdv => (RemoteProperty(pdv._1), pdv._2)).asJava))
   }
 
   @OnUnscheduled
   def onUnschedule(processContext: ProcessContext) = {
     Option(statefulRemoteProcessorService).map(_.onInstanceUnschedule(processorStateId,
-      processContext.getProperties.asScala.keys.map(pd => RemoteProperty(pd)).toList.asJava))
+      processContext.getProperties.asScala.map(pdv => (RemoteProperty(pdv._1), pdv._2)).asJava))
   }
 
   @OnStopped
   def onStop(processContext: ProcessContext) = {
     Option(statefulRemoteProcessorService).map(_.onInstanceStop(processorStateId,
-      processContext.getProperties.asScala.keys.map(pd => RemoteProperty(pd)).toList.asJava))
+      processContext.getProperties.asScala.map(pdv => (RemoteProperty(pdv._1), pdv._2)).asJava))
   }
 
   @OnShutdown
   def onShutdown(processContext: ProcessContext) = {
     Option(statefulRemoteProcessorService).map(_.onInstanceShutdown(processorStateId,
-      processContext.getProperties.asScala.keys.map(pd => RemoteProperty(pd)).toList.asJava))
+      processContext.getProperties.asScala.map(pdv => (RemoteProperty(pdv._1), pdv._2)).asJava))
   }
 
   @OnRemoved
   def onRemove(processContext: ProcessContext) = {
     Option(statefulRemoteProcessorService).map(_.onInstanceRemove(processorStateId,
-      processContext.getProperties.asScala.keys.map(pd => RemoteProperty(pd)).toList.asJava))
+      processContext.getProperties.asScala.map(pdv => (RemoteProperty(pdv._1), pdv._2)).asJava))
   }
 }
