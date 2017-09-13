@@ -1,13 +1,14 @@
 package org.dcs.nifi.repository
 
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream, InputStream, OutputStream}
-import java.nio.file.Path
+import java.nio.file.{Files, Path, StandardOpenOption}
 import java.sql.Timestamp
 import java.util
 
 import org.apache.nifi.controller.repository.ContentRepository
 import org.apache.nifi.controller.repository.claim.{ContentClaim, ResourceClaimManager}
 import org.apache.nifi.stream.io.StreamUtils
+import org.dcs.commons.Control
 import org.dcs.data.DbMigration
 //import org.dcs.api.data.FlowDataContent
 import org.dcs.data.IntermediateResultsAdapter
@@ -49,9 +50,19 @@ class BaseContentRepository(ira: IntermediateResultsAdapter) extends ContentRepo
     ira.closeDbConnection()
   }
 
-  override def importFrom(content: Path, claim: ContentClaim): Long = throw new UnsupportedOperationException()
+  override def importFrom(content: Path, claim: ContentClaim): Long = {
+    Control.using(Files.newInputStream(content, StandardOpenOption.READ)) { in =>
+      importFrom(in, claim)
+    }
+  }
 
-  override def importFrom(content: InputStream, claim: ContentClaim): Long = throw new UnsupportedOperationException()
+  override def importFrom(content: InputStream, claim: ContentClaim): Long = {
+    Control.using(write(claim)) { out =>
+      val count = StreamUtils.copy(content, out)
+      out.flush()
+      count
+    }
+  }
 
   override def cleanup(): Unit = {}
 
@@ -174,17 +185,32 @@ class BaseContentRepository(ira: IntermediateResultsAdapter) extends ContentRepo
   }
 
   class QuillOutputStream(claim: ContentClaim) extends OutputStream {
+    private var bytesWritten = 0L
     val out: ByteArrayOutputStream = new ByteArrayOutputStream()
 
     override def write(b: Int): Unit = {
       out.write(b)
+      bytesWritten = bytesWritten + 1
+      claim.asInstanceOf[DcsContentClaim].setLength(bytesWritten)
+    }
+
+    override def write(b: Array[Byte]): Unit = {
+      out.write(b)
+      bytesWritten = bytesWritten + b.length
+      claim.asInstanceOf[DcsContentClaim].setLength(bytesWritten)
+    }
+
+    override def write(b: Array[Byte], off: Int, len: Int): Unit = {
+      out.write(b, off, len)
+      bytesWritten = bytesWritten + len
+      claim.asInstanceOf[DcsContentClaim].setLength(bytesWritten)
+
     }
 
     override def flush(): Unit = {
       out.flush()
       val bytes = out.toByteArray
       Await.result(ira.updateDataContent(claim.getResourceClaim.getId, bytes), timeout)
-      claim.asInstanceOf[DcsContentClaim].setLength(bytes.length)
     }
 
     override def close() = {
