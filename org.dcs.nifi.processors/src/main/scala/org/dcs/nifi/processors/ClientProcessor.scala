@@ -81,7 +81,7 @@ trait ClientProcessor extends AbstractProcessor with Write with Read {
     } else {
       val in: AtomicReference[Array[Byte]] = new AtomicReference()
 
-      val valueProperties = context.getProperties.asScala.map(x => (x._1.getName, x._2))
+      val valueProperties = context.getProperties.asScala.map(x => (x._1.getName, pval(x._1, x._2)))
       val flowFile: FlowFile = session.get()
 
 
@@ -110,6 +110,9 @@ trait ClientProcessor extends AbstractProcessor with Write with Read {
       }
     }
   }
+
+  protected def pval(pd: PropertyDescriptor, value: String) =
+    if(value == null) pd.getDefaultValue else value
 
   override def getRelationships: JavaSet[Relationship] = {
     relationships

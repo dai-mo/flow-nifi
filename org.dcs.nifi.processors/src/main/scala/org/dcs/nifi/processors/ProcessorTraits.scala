@@ -46,7 +46,6 @@ trait Read {
 }
 
 
-
 @SideEffectFree
 @InputRequirement(Requirement.INPUT_REQUIRED)
 trait InputOutputClientProcessor extends ClientProcessor {
@@ -71,4 +70,10 @@ trait OutputClientProcessor extends ClientProcessor {
 trait OutputStatefulClientProcessor extends StatefulClientProcessor {
   override def canRead: Boolean = false
   override def canWrite: Boolean = true
+}
+
+@InputRequirement(Requirement.INPUT_FORBIDDEN)
+trait NoInputOutputStatefulClientProcessor extends StatefulClientProcessor {
+  override def canRead: Boolean = false
+  override def canWrite: Boolean = false
 }
