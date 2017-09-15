@@ -45,6 +45,8 @@ trait NifiConnectionClient extends ConnectionApiService with JerseyRestClient {
         createProcessorConnection(connectionConfig, clientId)
       case (FlowComponent.ProcessorType, FlowComponent.ExternalProcessorType) =>
         createConnectionToExternalProcessor(connectionConfig, clientId)
+      case (FlowComponent.ExternalProcessorType, FlowComponent.ProcessorType) =>
+        createConnectionFromExternalProcessor(connectionConfig, clientId)
       case (FlowComponent.InputPortType, FlowComponent.InputPortType) |
            (FlowComponent.OutputPortType, FlowComponent.OutputPortType) |
            (FlowComponent.InputPortType, FlowComponent.ProcessorType) |
@@ -85,6 +87,27 @@ trait NifiConnectionClient extends ConnectionApiService with JerseyRestClient {
               connectionConfig.flowInstanceId,
               connectionConfig.source,
               ioportconn._2.config.source,
+              connectionConfig.selectedRelationships,
+              connectionConfig.availableRelationships
+            )
+            createStdConnection(cc, clientId)
+          }
+      }
+  }
+
+  def createConnectionFromExternalProcessor(connectionConfig: ConnectionConfig, clientId: String): Future[Connection] = {
+
+    ioPortApi.createInputPort(connectionConfig.flowInstanceId, clientId)
+      .flatMap { iportconn =>
+        processorApi.updateProperties(connectionConfig.source.id,
+          Map(ExternalProcessorProperties.SenderKey ->
+            ExternalProcessorProperties.nifiSenderWithArgs(NifiApiConfig.BaseUiUrl, iportconn._1.name)),
+          clientId)
+          .flatMap { processor =>
+            val cc = ConnectionConfig(
+              connectionConfig.flowInstanceId,
+              iportconn._2.config.destination,
+              connectionConfig.destination,
               connectionConfig.selectedRelationships,
               connectionConfig.availableRelationships
             )

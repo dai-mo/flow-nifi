@@ -62,6 +62,18 @@ class ExternalProcessorISpec extends ExternalProcessorBehaviour {
       dgPToSbsPConnectionConfig,
       dgP.id,
       sbsP.id)
+
+    val sbsPTocsVPPConnectionConfig = ConnectionConfig(
+      flowInstance.id,
+      Connectable(sbsP.id, FlowComponent.ExternalProcessorType, flowInstance.id),
+      Connectable(csvP.id, FlowComponent.ProcessorType, flowInstance.id)
+    )
+    validateConnectionFromExternalProcessor(connectionApi,
+      ioPortApi,
+      processorApi,
+      sbsPTocsVPPConnectionConfig,
+      csvP.id,
+      sbsP.id)
   }
 
 }
@@ -88,6 +100,27 @@ trait ExternalProcessorBehaviour extends FlowUnitSpec {
 
     assert(connection.config.source.id == sourceProcessorId)
     assert(connection.config.destination.id == outputPort.id)
+  }
+
+  def validateConnectionFromExternalProcessor(connectionApi: ConnectionApiService,
+                                              ioPortApi: IOPortApiService,
+                                              processorApi: ProcessorApiService,
+                                              connectionConfig: ConnectionConfig,
+                                              destinationProcessorId: String,
+                                              externalProcessorId: String): Unit = {
+    val connection = connectionApi.create(connectionConfig, ClientId).futureValue
+
+    val inputPort = ioPortApi.inputPort(connection.config.source.id).futureValue
+
+    val senderArgs = ExternalProcessorProperties
+      .nifiSenderWithArgs(NifiApiConfig.BaseUiUrl, inputPort.name)
+
+    val externalProcessor = processorApi.instance(externalProcessorId).futureValue
+
+    assert(externalProcessor.properties(ExternalProcessorProperties.SenderKey) == senderArgs)
+
+    assert(connection.config.source.id == inputPort.id)
+    assert(connection.config.destination.id == destinationProcessorId)
   }
 
 }
