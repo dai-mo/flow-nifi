@@ -2,7 +2,7 @@ package org.dcs.flow.nifi
 
 import org.apache.nifi.web.api.entity.ConnectionEntity
 import org.dcs.api.processor.CoreProperties
-import org.dcs.api.service.{Connection, ConnectionApiService, ConnectionConfig}
+import org.dcs.api.service.{Connection, ConnectionApiService, ConnectionConfig, FlowComponent}
 import org.dcs.commons.serde.JsonSerializerImplicits._
 import org.dcs.commons.ws.JerseyRestClient
 import org.dcs.flow.{FlowApi, FlowGraph, FlowGraphTraversal, ProcessorApi}
@@ -35,8 +35,18 @@ trait NifiConnectionClient extends ConnectionApiService with JerseyRestClient {
       }
   }
 
-
   override def create(connectionConfig: ConnectionConfig, clientId: String): Future[Connection] = {
+    (connectionConfig.source.componentType, connectionConfig.destination.componentType) match {
+      case (FlowComponent.ProcessorType, FlowComponent.ProcessorType) =>
+        createProcessorConnection(connectionConfig, clientId)
+      case (FlowComponent.InputPortType, FlowComponent.InputPortType) | (FlowComponent.OutputPortType, FlowComponent.OutputPortType) =>
+        createPortConnection(connectionConfig, clientId)
+      case _ => throw new IllegalArgumentException("Cannot connect source of type " + connectionConfig.source.componentType +
+        " to destination of type " + connectionConfig.destination.componentType)
+    }
+  }
+
+  override def createProcessorConnection(connectionConfig: ConnectionConfig, clientId: String): Future[Connection] = {
     postAsJson(path = connectionsProcessGroupPath(connectionConfig.flowInstanceId),
       body = FlowConnectionRequest(connectionConfig, clientId))
       .flatMap { response =>
@@ -50,6 +60,14 @@ trait NifiConnectionClient extends ConnectionApiService with JerseyRestClient {
               p.map(p =>
                 ProcessorApi.update(p, clientId))))
           .map(pis => Connection(response.toObject[ConnectionEntity]))
+      }
+  }
+
+  override def createPortConnection(connectionConfig: ConnectionConfig, clientId: String): Future[Connection] = {
+    postAsJson(path = connectionsProcessGroupPath(connectionConfig.flowInstanceId),
+      body = FlowConnectionRequest(connectionConfig, clientId))
+      .map { response =>
+        Connection(response.toObject[ConnectionEntity])
       }
   }
 

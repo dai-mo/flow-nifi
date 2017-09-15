@@ -32,7 +32,7 @@ object FlowApiSpec {
 
 }
 
-class FlowApiSpec extends FlowUnitSpec with FlowApiBehaviors {
+class FlowApiSpec extends FlowApiBehaviors {
   import FlowApiSpec._
 
   "Templates Retrieval" must "be valid" in {
@@ -146,8 +146,7 @@ class FlowApiSpec extends FlowUnitSpec with FlowApiBehaviors {
   }
 }
 
-trait FlowApiBehaviors extends FlowBaseUnitSpec {
-  this: FlatSpec =>
+trait FlowApiBehaviors extends FlowUnitSpec {
 
   val invalidTemplateId = "invalid-template-id"
   val flowInstanceId = "3f948eeb-61d8-4f47-81f4-fff5cac50ed8"

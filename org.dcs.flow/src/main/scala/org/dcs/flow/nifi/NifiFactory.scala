@@ -6,7 +6,7 @@ import org.apache.nifi.web.api.dto.PropertyDescriptorDTO.AllowableValueDTO
 import org.apache.nifi.web.api.dto._
 import org.apache.nifi.web.api.entity._
 import org.dcs.api.processor._
-import org.dcs.api.service.{Connectable, Connection, ConnectionConfig, FlowInstance, FlowTemplate, ProcessorConfig, ProcessorInstance, ProcessorType}
+import org.dcs.api.service.{Connectable, Connection, ConnectionConfig, FlowInstance, FlowTemplate, IOPort, ProcessorConfig, ProcessorInstance, ProcessorType}
 import org.dcs.flow.nifi.internal.{ProcessGroup, ProcessGroupHelper}
 
 import scala.collection.JavaConversions._
@@ -261,14 +261,15 @@ object Connection {
   }
 
   def apply(connectionDTO: ConnectionDTO, version: Long): Connection = {
+
     new Connection(connectionDTO.getId,
       connectionDTO.getName,
       version,
       ConnectionConfig(connectionDTO.getParentGroupId,
         toConnectable(connectionDTO.getSource),
         toConnectable(connectionDTO.getDestination),
-        connectionDTO.getSelectedRelationships.asScala.toSet,
-        connectionDTO.getAvailableRelationships.asScala.toSet),
+        Option(connectionDTO.getSelectedRelationships).map(_.asScala.toSet).getOrElse(Set()),
+        Option(connectionDTO.getAvailableRelationships).map(_.asScala.toSet).getOrElse(Set())),
       connectionDTO.getFlowFileExpiration,
       connectionDTO.getBackPressureDataSizeThreshold,
       connectionDTO.getBackPressureObjectThreshold,
@@ -284,5 +285,14 @@ object Connection {
 object RemoteRelationship {
   def apply(relationship: RelationshipDTO): RemoteRelationship = {
     new RemoteRelationship(relationship.getName, relationship.getDescription, relationship.isAutoTerminate)
+  }
+}
+
+object IOPortAdapter {
+  def apply(portEntity: PortEntity): IOPort = {
+    new IOPort(portEntity.getId,
+      portEntity.getComponent.getName,
+      portEntity.getPortType,
+      portEntity.getComponent.getState)
   }
 }

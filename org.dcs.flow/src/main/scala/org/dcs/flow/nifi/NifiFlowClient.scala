@@ -52,7 +52,7 @@ trait NifiFlowClient extends FlowApiService with JerseyRestClient {
     }
 
   override def create(flowName: String, clientId: String): Future[FlowInstance] = {
-    createProcessGroup(flowName, ProcessGroupHelper.RootProcessGroup, clientId)
+    createProcessGroup(flowName, ProcessGroupHelper.RootProcessGroupId, clientId)
       .map(pg =>  FlowInstance(pg.id, pg.getName, pg.version))
   }
 
@@ -76,7 +76,7 @@ trait NifiFlowClient extends FlowApiService with JerseyRestClient {
 
     for {
       t <- templateOrError()
-      pg <- createProcessGroup(t.get.name, ProcessGroupHelper.RootProcessGroup, clientId)
+      pg <- createProcessGroup(t.get.name, ProcessGroupHelper.RootProcessGroupId, clientId)
       i <- instance(flowTemplateId, pg)
     } yield i
   }
@@ -100,7 +100,7 @@ trait NifiFlowClient extends FlowApiService with JerseyRestClient {
   override def instances(): Future[List[FlowInstance]] = {
 
     def rootProcessGroup(): Future[ProcessGroupFlowEntity] = {
-      getAsJson(path = flowProcessGroupsPath(ProcessGroupHelper.RootProcessGroup))
+      getAsJson(path = flowProcessGroupsPath(ProcessGroupHelper.RootProcessGroupId))
         .map { response =>
           response.toObject[ProcessGroupFlowEntity]
         }
