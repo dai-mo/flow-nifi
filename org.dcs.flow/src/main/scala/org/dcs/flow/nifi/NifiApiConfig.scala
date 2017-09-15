@@ -7,7 +7,10 @@ import org.dcs.commons.serde.YamlSerializerImplicits._
 import org.dcs.commons.ws.ApiConfig
 
 object NifiApiConfig {
-  val BaseUrl = GlobalConfigurator.config.toObject[GlobalConfiguration].nifiBaseUrl
+  // FIXME: Change global config to add nifi ui url
+  val BaseUiUrl = "http://dcs-flow:8090/nifi"
+  val BaseApiUrl = GlobalConfigurator.config.toObject[GlobalConfiguration].nifiBaseUrl
+
 
   val ClientIdKey = "clientId"
 }
@@ -15,8 +18,8 @@ object NifiApiConfig {
 trait NifiApiConfig extends ApiConfig {
   import NifiApiConfig._
 
-  
-  override def baseUrl():String = BaseUrl
+
+  override def baseUrl():String = BaseApiUrl
 
   override def error(status: Int, message: String): HttpErrorResponse = (status match {
     case 400 => ErrorConstants.DCS301

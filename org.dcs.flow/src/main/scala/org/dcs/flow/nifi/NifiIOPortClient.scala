@@ -15,18 +15,25 @@ class NifiIOPortApi extends NifiIOPortClient with NifiApiConfig
 
 object NifiIOPortClient {
 
-  def inputPortsPath(processGroupId: String): String =
+  val connectionApi = new NifiConnectionApi
+
+  def inputPortsCreatePath(processGroupId: String): String =
     "/process-groups/" + processGroupId + "/input-ports"
 
-  def outputPortsPath(processGroupId: String): String =
+  def outputPortsCreatePath(processGroupId: String): String =
     "/process-groups/" + processGroupId + "/output-ports"
+
+  def inputPortsPath(inputPortId: String): String =
+    "input-ports/" + inputPortId
+
+  def outputPortsPath(outputPortId: String): String =
+    "output-ports/" + outputPortId
 }
 
 
 trait NifiIOPortClient extends IOPortApiService with JerseyRestClient {
   import NifiIOPortClient._
 
-  val connectionApi = new NifiConnectionApi
 
   private def connectables(portType: String,
                            processGroupId: String,
@@ -41,10 +48,18 @@ trait NifiIOPortClient extends IOPortApiService with JerseyRestClient {
     }
   }
 
+  override def inputPort(id: String): Future[IOPort] =
+    getAsJson(path = inputPortsPath(id))
+      .map(response => IOPortAdapter(response.toObject[PortEntity]))
+
+  override def outputPort(id: String): Future[IOPort] =
+    getAsJson(path = outputPortsPath(id))
+      .map(response => IOPortAdapter(response.toObject[PortEntity]))
+
   private def createPort(portType: String,
                          portPath: (String) => String,
                          processGroupId: String,
-                         clientId: String): Future[IOPort] = {
+                         clientId: String): Future[(IOPort, Connection)] = {
     postAsJson(path = portPath(processGroupId),
       body = FlowPortRequest(portType, clientId))
       .flatMap { response =>
@@ -61,19 +76,19 @@ trait NifiIOPortClient extends IOPortApiService with JerseyRestClient {
               portConnectables._2,
               Set(),
               Set())
-            connectionApi.createPortConnection(connectionConfig, clientId)
-              .map(response => IOPortAdapter(rootPortEntity))
+            connectionApi.createStdConnection(connectionConfig, clientId)
+              .map(connection => (IOPortAdapter(rootPortEntity), connection))
           }
       }
   }
 
   override def createInputPort(processGroupId: String,
-                               clientId: String): Future[IOPort] = {
-    createPort(FlowComponent.InputPortType, inputPortsPath, processGroupId, clientId)
+                               clientId: String): Future[(IOPort, Connection)] = {
+    createPort(FlowComponent.InputPortType, inputPortsCreatePath, processGroupId, clientId)
   }
 
   override def createOutputPort(processGroupId: String,
-                                clientId: String): Future[IOPort] = {
-    createPort(FlowComponent.OutputPortType, outputPortsPath, processGroupId, clientId)
+                                clientId: String): Future[(IOPort, Connection)] = {
+    createPort(FlowComponent.OutputPortType, outputPortsCreatePath, processGroupId, clientId)
   }
 }

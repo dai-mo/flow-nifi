@@ -1,11 +1,11 @@
 package org.dcs.flow.nifi
 
 import org.apache.nifi.web.api.entity.ConnectionEntity
-import org.dcs.api.processor.CoreProperties
-import org.dcs.api.service.{Connection, ConnectionApiService, ConnectionConfig, FlowComponent}
+import org.dcs.api.processor.{CoreProperties, ExternalProcessorProperties}
+import org.dcs.api.service.{Connectable, Connection, ConnectionApiService, ConnectionConfig, FlowComponent}
 import org.dcs.commons.serde.JsonSerializerImplicits._
 import org.dcs.commons.ws.JerseyRestClient
-import org.dcs.flow.{FlowApi, FlowGraph, FlowGraphTraversal, ProcessorApi}
+import org.dcs.flow.{FlowApi, FlowGraph, FlowGraphTraversal}
 
 import scala.concurrent.ExecutionContext.Implicits._
 import scala.concurrent.Future
@@ -18,6 +18,9 @@ class NifiConnectionApi extends NifiConnectionClient with NifiApiConfig
 
 object NifiConnectionClient {
 
+  val ioPortApi = new NifiIOPortApi
+  val processorApi = new NifiProcessorApi
+
   def connectionsProcessGroupPath(processGroupId: String): String =
     "/process-groups/" + processGroupId + "/connections"
 
@@ -27,6 +30,7 @@ object NifiConnectionClient {
 
 trait NifiConnectionClient extends ConnectionApiService with JerseyRestClient {
   import NifiConnectionClient._
+
 
   override def find(connectionId: String, clientId: String): Future[Connection] = {
     getAsJson(path = connectionsPath(connectionId))
@@ -39,8 +43,13 @@ trait NifiConnectionClient extends ConnectionApiService with JerseyRestClient {
     (connectionConfig.source.componentType, connectionConfig.destination.componentType) match {
       case (FlowComponent.ProcessorType, FlowComponent.ProcessorType) =>
         createProcessorConnection(connectionConfig, clientId)
-      case (FlowComponent.InputPortType, FlowComponent.InputPortType) | (FlowComponent.OutputPortType, FlowComponent.OutputPortType) =>
-        createPortConnection(connectionConfig, clientId)
+      case (FlowComponent.ProcessorType, FlowComponent.ExternalProcessorType) =>
+        createConnectionToExternalProcessor(connectionConfig, clientId)
+      case (FlowComponent.InputPortType, FlowComponent.InputPortType) |
+           (FlowComponent.OutputPortType, FlowComponent.OutputPortType) |
+           (FlowComponent.InputPortType, FlowComponent.ProcessorType) |
+           (FlowComponent.ProcessorType, FlowComponent.OutputPortType) =>
+        createStdConnection(connectionConfig, clientId)
       case _ => throw new IllegalArgumentException("Cannot connect source of type " + connectionConfig.source.componentType +
         " to destination of type " + connectionConfig.destination.componentType)
     }
@@ -50,7 +59,7 @@ trait NifiConnectionClient extends ConnectionApiService with JerseyRestClient {
     postAsJson(path = connectionsProcessGroupPath(connectionConfig.flowInstanceId),
       body = FlowConnectionRequest(connectionConfig, clientId))
       .flatMap { response =>
-        ProcessorApi.instance(connectionConfig.source.id)
+        processorApi.instance(connectionConfig.source.id)
           .flatMap(p => FlowApi.instance(connectionConfig.flowInstanceId)
             .map(fi => FlowGraph.executeBreadthFirstFromNode(fi,
               FlowGraphTraversal.schemaPropagate(p.id, CoreProperties(p.properties)),
@@ -58,12 +67,33 @@ trait NifiConnectionClient extends ConnectionApiService with JerseyRestClient {
           .map(ptu =>
             ptu.map(p =>
               p.map(p =>
-                ProcessorApi.update(p, clientId))))
+                processorApi.update(p, clientId))))
           .map(pis => Connection(response.toObject[ConnectionEntity]))
       }
   }
 
-  override def createPortConnection(connectionConfig: ConnectionConfig, clientId: String): Future[Connection] = {
+  def createConnectionToExternalProcessor(connectionConfig: ConnectionConfig, clientId: String): Future[Connection] = {
+
+    ioPortApi.createOutputPort(connectionConfig.flowInstanceId, clientId)
+      .flatMap { ioportconn =>
+        processorApi.updateProperties(connectionConfig.destination.id,
+          Map(ExternalProcessorProperties.ReceiverKey ->
+            ExternalProcessorProperties.nifiReceiverWithArgs(NifiApiConfig.BaseUiUrl, ioportconn._1.name)),
+          clientId)
+          .flatMap { processor =>
+            val cc = ConnectionConfig(
+              connectionConfig.flowInstanceId,
+              connectionConfig.source,
+              ioportconn._2.config.source,
+              connectionConfig.selectedRelationships,
+              connectionConfig.availableRelationships
+            )
+            createStdConnection(cc, clientId)
+          }
+      }
+  }
+
+  override def createStdConnection(connectionConfig: ConnectionConfig, clientId: String): Future[Connection] = {
     postAsJson(path = connectionsProcessGroupPath(connectionConfig.flowInstanceId),
       body = FlowConnectionRequest(connectionConfig, clientId))
       .map { response =>
@@ -82,7 +112,7 @@ trait NifiConnectionClient extends ConnectionApiService with JerseyRestClient {
   override def remove(connectionId: String, version: Long, clientId: String): Future[Boolean] = {
     find(connectionId, clientId)
       .flatMap(connection =>
-        ProcessorApi.instance(connection.config.source.id)
+        processorApi.instance(connection.config.source.id)
           .flatMap(p => FlowApi.instance(connection.config.flowInstanceId)
             .map(fi => FlowGraph.executeBreadthFirstFromNode(fi,
               FlowGraphTraversal.schemaUnPropagate(p.id, CoreProperties(p.properties)),
@@ -90,12 +120,12 @@ trait NifiConnectionClient extends ConnectionApiService with JerseyRestClient {
           .map(ptu =>
             ptu.map(p =>
               p.map(p =>
-                ProcessorApi.update(p, clientId))))
+                processorApi.update(p, clientId))))
           .flatMap(pis =>
             deleteAsJson(path = connectionsPath(connectionId),
               queryParams = Revision.params(version, clientId))
               .flatMap { response =>
-                ProcessorApi.autoTerminateRelationship(connection).map(_ != null)
+                processorApi.autoTerminateRelationship(connection).map(_ != null)
               }
           )
       )
