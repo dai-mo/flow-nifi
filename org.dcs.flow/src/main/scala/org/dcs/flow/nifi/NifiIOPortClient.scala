@@ -7,7 +7,6 @@ import org.dcs.commons.serde.JsonSerializerImplicits._
 import org.dcs.commons.ws.JerseyRestClient
 import org.dcs.flow.nifi.internal.ProcessGroupHelper
 
-import scala.beans.BeanProperty
 import scala.concurrent.ExecutionContext.Implicits._
 import scala.concurrent.Future
 
@@ -90,5 +89,41 @@ trait NifiIOPortClient extends IOPortApiService with JerseyRestClient {
   override def createOutputPort(processGroupId: String,
                                 clientId: String): Future[(IOPort, Connection)] = {
     createPort(FlowComponent.OutputPortType, outputPortsCreatePath, processGroupId, clientId)
+  }
+
+  override def deleteInputPort(rootPortId: String,
+                               inputPortId: String,
+                               version: Long,
+                               clientId: String): Future[Boolean] = {
+    deleteInputPort(rootPortId, version, clientId)
+      .flatMap(iport => deleteInputPort(inputPortId, iport.get.version, clientId)
+        .map(_.isDefined))
+  }
+
+  override def deleteInputPort(inputPortId: String, version: Long, clientId: String): Future[Option[IOPort]] = {
+    deleteAsJson(path = inputPortsPath(inputPortId),
+      queryParams = Revision.params(version, clientId))
+      .map { response =>
+        Option(IOPortAdapter(response.toObject[PortEntity]))
+      }
+  }
+
+  override def deleteOutputPort(outputPortId: String,
+                                rootPortId: String,
+                                version: Long,
+                                clientId: String): Future[Boolean] = {
+
+    deleteOutputPort(outputPortId, version, clientId)
+      .flatMap(oport => deleteOutputPort(rootPortId, oport.get.version, clientId)
+        .map(_.isDefined))
+
+  }
+
+  override def deleteOutputPort(outputPortId: String, version: Long, clientId: String):  Future[Option[IOPort]] = {
+    deleteAsJson(path = outputPortsPath(outputPortId),
+      queryParams = Revision.params(version, clientId))
+      .map { response =>
+        Option(IOPortAdapter(response.toObject[PortEntity]))
+      }
   }
 }

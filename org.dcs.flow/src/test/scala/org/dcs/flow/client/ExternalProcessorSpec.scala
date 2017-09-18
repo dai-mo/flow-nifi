@@ -4,8 +4,13 @@ import java.util.UUID
 
 import org.dcs.api.processor.{ExternalProcessorProperties, RemoteProcessor}
 import org.dcs.api.service._
-import org.dcs.flow.{FlowUnitSpec, IT}
+import org.dcs.commons.error.HttpException
 import org.dcs.flow.nifi.{ProcessorInstance => _, _}
+import org.dcs.flow.{AsyncFlowUnitSpec, DetailedLoggingFilter, FlowUnitSpec, IT}
+import org.glassfish.jersey.filter.LoggingFilter
+import org.scalatest.Assertion
+
+import scala.concurrent.Future
 
 object ExternalProcessorSpec {
   val ClientId: String = UUID.randomUUID().toString
@@ -19,6 +24,10 @@ object ExternalProcessorSpec {
   val processorApi = new NifiProcessorApi
   val connectionApi = new NifiConnectionApi
   val ioPortApi = new NifiIOPortApi
+
+
+  ioPortApi.requestFilter(new LoggingFilter)
+  ioPortApi.requestFilter(new DetailedLoggingFilter)
 
   val dgPsd = ProcessorServiceDefinition(
     ServiceClassPrefix + DataGeneratorProcessorService,
@@ -56,37 +65,47 @@ class ExternalProcessorISpec extends ExternalProcessorBehaviour {
       Set("success"),
       Set("failure")
     )
-    validateConnectionToExternalProcessor(connectionApi,
+
+    val outputPortConnection = validateCreateConnectionToExternalProcessor(connectionApi,
       ioPortApi,
       processorApi,
       dgPToSbsPConnectionConfig,
       dgP.id,
       sbsP.id)
 
-    val sbsPTocsVPPConnectionConfig = ConnectionConfig(
+    val sbsPToCsvPConnectionConfig = ConnectionConfig(
       flowInstance.id,
       Connectable(sbsP.id, FlowComponent.ExternalProcessorType, flowInstance.id),
       Connectable(csvP.id, FlowComponent.ProcessorType, flowInstance.id)
     )
-    validateConnectionFromExternalProcessor(connectionApi,
+    val inputPortConnection = validateCreateConnectionFromExternalProcessor(connectionApi,
       ioPortApi,
       processorApi,
-      sbsPTocsVPPConnectionConfig,
+      sbsPToCsvPConnectionConfig,
       csvP.id,
       sbsP.id)
+
+
+    val dgPToSbsPConnection =
+      Connection("", "", inputPortConnection.version, dgPToSbsPConnectionConfig, "", "", -1, List(), Set(outputPortConnection))
+    validateRemoveConnectionToExternalProcessor(connectionApi, ioPortApi, dgPToSbsPConnection)
+
+    val sbsPToCsvPConnection =
+      Connection("", "", inputPortConnection.version, sbsPToCsvPConnectionConfig, "", "", -1, List(), Set(inputPortConnection))
+    validateRemoveConnectionFromExternalProcessor(connectionApi, ioPortApi, sbsPToCsvPConnection)
   }
 
 }
 
-trait ExternalProcessorBehaviour extends FlowUnitSpec {
+trait ExternalProcessorBehaviour extends AsyncFlowUnitSpec {
   import ExternalProcessorSpec._
 
-  def validateConnectionToExternalProcessor(connectionApi: ConnectionApiService,
-                                            ioPortApi: IOPortApiService,
-                                            processorApi: ProcessorApiService,
-                                            connectionConfig: ConnectionConfig,
-                                            sourceProcessorId: String,
-                                            externalProcessorId: String): Unit = {
+  def validateCreateConnectionToExternalProcessor(connectionApi: ConnectionApiService,
+                                                  ioPortApi: IOPortApiService,
+                                                  processorApi: ProcessorApiService,
+                                                  connectionConfig: ConnectionConfig,
+                                                  sourceProcessorId: String,
+                                                  externalProcessorId: String): Connection = {
     val connection = connectionApi.create(connectionConfig, ClientId).futureValue
 
     val outputPort = ioPortApi.outputPort(connection.config.destination.id).futureValue
@@ -98,16 +117,17 @@ trait ExternalProcessorBehaviour extends FlowUnitSpec {
 
     assert(externalProcessor.properties(ExternalProcessorProperties.ReceiverKey) == receiverArgs)
 
-    assert(connection.config.source.id == sourceProcessorId)
-    assert(connection.config.destination.id == outputPort.id)
+    assert(connection.config.source.componentType == FlowComponent.ProcessorType)
+    assert(connection.config.destination.componentType == FlowComponent.OutputPortType)
+    connection
   }
 
-  def validateConnectionFromExternalProcessor(connectionApi: ConnectionApiService,
-                                              ioPortApi: IOPortApiService,
-                                              processorApi: ProcessorApiService,
-                                              connectionConfig: ConnectionConfig,
-                                              destinationProcessorId: String,
-                                              externalProcessorId: String): Unit = {
+  def validateCreateConnectionFromExternalProcessor(connectionApi: ConnectionApiService,
+                                                    ioPortApi: IOPortApiService,
+                                                    processorApi: ProcessorApiService,
+                                                    connectionConfig: ConnectionConfig,
+                                                    destinationProcessorId: String,
+                                                    externalProcessorId: String): Connection = {
     val connection = connectionApi.create(connectionConfig, ClientId).futureValue
 
     val inputPort = ioPortApi.inputPort(connection.config.source.id).futureValue
@@ -119,8 +139,39 @@ trait ExternalProcessorBehaviour extends FlowUnitSpec {
 
     assert(externalProcessor.properties(ExternalProcessorProperties.SenderKey) == senderArgs)
 
-    assert(connection.config.source.id == inputPort.id)
-    assert(connection.config.destination.id == destinationProcessorId)
+    assert(connection.config.source.componentType == FlowComponent.InputPortType)
+    assert(connection.config.destination.componentType == FlowComponent.ProcessorType)
+    connection
+  }
+
+  def validateRemoveConnectionFromExternalProcessor(connectionApi: ConnectionApiService,
+                                                    ioPortApi: IOPortApiService,
+                                                    connection: Connection): Future[Assertion] = {
+    connectionApi.remove(connection, connection.version, ClientId).futureValue
+    val rootConnection = connection.relatedConnections.head.relatedConnections.head
+
+    recoverToExceptionIf[HttpException] {
+      ioPortApi.inputPort(rootConnection.config.source.id)
+    }.map(ex => assert(ex.errorResponse.httpStatusCode == 404))
+
+    recoverToExceptionIf[HttpException] {
+      ioPortApi.inputPort(rootConnection.config.destination.id)
+    }.map(ex => assert(ex.errorResponse.httpStatusCode == 404))
+  }
+
+  def validateRemoveConnectionToExternalProcessor(connectionApi: ConnectionApiService,
+                                                  ioPortApi: IOPortApiService,
+                                                  connection: Connection): Future[Assertion] = {
+    connectionApi.remove(connection, connection.version, ClientId).futureValue
+    val rootConnection = connection.relatedConnections.head.relatedConnections.head
+
+    recoverToExceptionIf[HttpException] {
+      ioPortApi.outputPort(rootConnection.config.source.id)
+    }.map(ex => assert(ex.errorResponse.httpStatusCode == 404))
+
+    recoverToExceptionIf[HttpException] {
+      ioPortApi.outputPort(rootConnection.config.destination.id)
+    }.map(ex => assert(ex.errorResponse.httpStatusCode == 404))
   }
 
 }

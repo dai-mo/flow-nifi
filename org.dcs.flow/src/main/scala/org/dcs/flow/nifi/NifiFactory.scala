@@ -59,7 +59,7 @@ object FlowInstance {
     f.setState(NifiProcessorClient.StateNotStarted)
     if(contents != null) {
       f.setProcessors(contents.getProcessors.map(p => ProcessorInstance(p)).toList)
-      f.setConnections(contents.getConnections.map(c => Connection(c, processGroupEntity.getRevision.getVersion)).toList)
+      f.setConnections(contents.getConnections.map(c => ConnectionAdapter(c, processGroupEntity.getRevision.getVersion)).toList)
     }
     f
   }
@@ -83,7 +83,7 @@ object FlowInstance {
       f.setState(NifiProcessorClient.StateRunning)
 
     f.setProcessors(flow.getProcessors.map(p => ProcessorInstance(p)).toList)
-    f.setConnections(flow.getConnections.map(c => Connection(c.getComponent, Revision.DefaultVersion)).toList)
+    f.setConnections(flow.getConnections.map(c => ConnectionAdapter(c.getComponent, Revision.DefaultVersion)).toList)
     f
   }
 
@@ -97,7 +97,7 @@ object FlowInstance {
     f.setNameId(nameId._2)
     f.setState(NifiProcessorClient.StateNotStarted)
     f.setProcessors(contents.getProcessors.map(p => ProcessorInstance(p)).toList)
-    f.setConnections(contents.getConnections.map(c => Connection(c, Revision.DefaultVersion)).toList)
+    f.setConnections(contents.getConnections.map(c => ConnectionAdapter(c, Revision.DefaultVersion)).toList)
 
     f
   }
@@ -114,7 +114,7 @@ object FlowInstance {
     f.setNameId(nameId._2)
     f.setState(NifiProcessorClient.StateNotStarted)
     f.setProcessors(flow.getProcessors.map(p => ProcessorInstance(p)).toList)
-    f.setConnections(flow.getConnections.map(c => Connection(c.getComponent, Revision.DefaultVersion)).toList)
+    f.setConnections(flow.getConnections.map(c => ConnectionAdapter(c.getComponent, Revision.DefaultVersion)).toList)
     f
   }
 
@@ -143,7 +143,7 @@ object FlowInstance {
     f.setName(nameId._1)
     f.setNameId(nameId._2)
     f.setProcessors(snippet.getProcessors.map(p => ProcessorInstance(p)).toList)
-    f.setConnections(snippet.getConnections.map(c => Connection(c, Revision.DefaultVersion)).toList)
+    f.setConnections(snippet.getConnections.map(c => ConnectionAdapter(c, Revision.DefaultVersion)).toList)
     f
   }
 }
@@ -249,7 +249,7 @@ object ProcessorType {
   }
 }
 
-object Connection {
+object ConnectionAdapter {
   private def toConnectable(connectableDTO: ConnectableDTO): Connectable = {
     Connectable(connectableDTO.getId,
       connectableDTO.getType,
@@ -273,11 +273,45 @@ object Connection {
       connectionDTO.getFlowFileExpiration,
       connectionDTO.getBackPressureDataSizeThreshold,
       connectionDTO.getBackPressureObjectThreshold,
-      connectionDTO.getPrioritizers.asScala.toList)
+      connectionDTO.getPrioritizers.asScala.toList,
+      Set())
+  }
+
+
+  def apply(connectionId: String,
+            sourceId: String,
+            sourceType: String,
+            sourceGroupId: String,
+            destinationId: String,
+            destinationType: String,
+            destinationGroupId: String): Connection = {
+
+    new Connection(connectionId,
+      "",
+      Revision.DefaultVersion,
+      ConnectionConfig("",
+        toConnectable(sourceId, sourceType, sourceGroupId),
+        toConnectable(destinationId, destinationType, destinationGroupId),
+        Set(),
+        Set()),
+      "",
+      "",
+      -1,
+      List(),
+      Set())
   }
 
   def apply(connectionEntity: ConnectionEntity): Connection = {
-    Connection(connectionEntity.getComponent, connectionEntity.getRevision.getVersion)
+    if(connectionEntity.getComponent != null && connectionEntity.getRevision != null)
+      ConnectionAdapter(connectionEntity.getComponent, connectionEntity.getRevision.getVersion)
+    else
+      ConnectionAdapter(connectionEntity.getId,
+        connectionEntity.getSourceId,
+        connectionEntity.getSourceType,
+        connectionEntity.getSourceGroupId,
+        connectionEntity.getDestinationId,
+        connectionEntity.getDestinationType,
+        connectionEntity.getDestinationGroupId)
   }
 
 }
@@ -290,9 +324,12 @@ object RemoteRelationship {
 
 object IOPortAdapter {
   def apply(portEntity: PortEntity): IOPort = {
+    val componentO = Option(portEntity.getComponent)
+    val revisionO = Option(portEntity.getRevision)
     new IOPort(portEntity.getId,
-      portEntity.getComponent.getName,
+      componentO.map(_.getName).orNull,
+      revisionO.map(_.getVersion.toLong).getOrElse(Revision.DefaultVersion),
       portEntity.getPortType,
-      portEntity.getComponent.getState)
+      componentO.map(_.getState).orNull)
   }
 }
