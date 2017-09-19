@@ -3,7 +3,7 @@ package org.dcs.flow.nifi
 import java.util.UUID
 
 import org.apache.nifi.web.api.entity._
-import org.dcs.api.service.{FlowApiService, FlowInstance, FlowTemplate}
+import org.dcs.api.service.{Connection, FlowApiService, FlowInstance, FlowTemplate}
 import org.dcs.commons.error.{ErrorConstants, HttpException}
 import org.dcs.commons.serde.JsonSerializerImplicits._
 import org.dcs.commons.ws.JerseyRestClient
@@ -20,6 +20,8 @@ import scala.concurrent.Future
 class NifiFlowApi extends NifiFlowClient with NifiApiConfig
 
 object NifiFlowClient {
+
+  val connectionApi = new NifiConnectionApi
 
   val TemplatesPath = "/flow/templates"
 
@@ -135,12 +137,23 @@ trait NifiFlowClient extends FlowApiService with JerseyRestClient {
       }
   }
 
-  override def remove(flowInstanceId: String, version: Long, clientId: String): Future[Boolean] = {
+  private def remove(flowInstanceId: String, version: Long, clientId: String): Future[Boolean] = {
+
     deleteAsJson(path = processGroupsPath(flowInstanceId),
-    queryParams = Revision.params(version, clientId))
+      queryParams = Revision.params(version, clientId))
       .map { response =>
         response != null
       }
+  }
+
+  override def remove(flowInstanceId: String, version: Long, clientId: String, externalConnections: List[Connection] = Nil): Future[Boolean] = {
+
+    if(externalConnections.isEmpty)
+      remove(flowInstanceId, version, clientId)
+    else
+      Future.sequence(externalConnections.map(c => connectionApi.remove(c, c.version, clientId)))
+        .map(_.forall(identity))
+        .flatMap(deleteOk => if(deleteOk) remove(flowInstanceId, version, clientId) else Future(false))
   }
 
   def createProcessGroup(name: String, processGroupId: String, clientId: String): Future[ProcessGroup] = {

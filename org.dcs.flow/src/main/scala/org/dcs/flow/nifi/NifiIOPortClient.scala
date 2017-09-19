@@ -37,9 +37,10 @@ trait NifiIOPortClient extends IOPortApiService with JerseyRestClient {
   private def connectables(portType: String,
                            processGroupId: String,
                            portEntityId: String,
-                           rootPortEntityId: String): (Connectable, Connectable) = {
-    val processGroupPortConnectable = Connectable(portEntityId, portType, processGroupId)
-    val rootPortConnectable = Connectable(rootPortEntityId, portType, ProcessGroupHelper.RootProcessGroupId)
+                           rootPortEntityId: String,
+                           portName: String): (Connectable, Connectable) = {
+    val processGroupPortConnectable = Connectable(portEntityId, portType, processGroupId, name = portName)
+    val rootPortConnectable = Connectable(rootPortEntityId, portType, ProcessGroupHelper.RootProcessGroupId, name = portName)
 
     portType match {
       case FlowComponent.InputPortType => (rootPortConnectable, processGroupPortConnectable)
@@ -58,7 +59,7 @@ trait NifiIOPortClient extends IOPortApiService with JerseyRestClient {
   private def createPort(portType: String,
                          portPath: (String) => String,
                          processGroupId: String,
-                         clientId: String): Future[(IOPort, Connection)] = {
+                         clientId: String): Future[Connection] = {
     postAsJson(path = portPath(processGroupId),
       body = FlowPortRequest(portType, clientId))
       .flatMap { response =>
@@ -69,25 +70,24 @@ trait NifiIOPortClient extends IOPortApiService with JerseyRestClient {
             clientId))
           .flatMap { response =>
             val rootPortEntity = response.toObject[PortEntity]
-            val portConnectables = connectables(portType, processGroupId, portEntity.getId, rootPortEntity.getId)
+            val portConnectables = connectables(portType, processGroupId, portEntity.getId, rootPortEntity.getId, rootPortEntity.getComponent.getName)
             val connectionConfig = ConnectionConfig(ProcessGroupHelper.RootProcessGroupId,
               portConnectables._1,
               portConnectables._2,
               Set(),
               Set())
             connectionApi.createStdConnection(connectionConfig, clientId)
-              .map(connection => (IOPortAdapter(rootPortEntity), connection))
           }
       }
   }
 
   override def createInputPort(processGroupId: String,
-                               clientId: String): Future[(IOPort, Connection)] = {
+                               clientId: String): Future[Connection] = {
     createPort(FlowComponent.InputPortType, inputPortsCreatePath, processGroupId, clientId)
   }
 
   override def createOutputPort(processGroupId: String,
-                                clientId: String): Future[(IOPort, Connection)] = {
+                                clientId: String): Future[Connection] = {
     createPort(FlowComponent.OutputPortType, outputPortsCreatePath, processGroupId, clientId)
   }
 

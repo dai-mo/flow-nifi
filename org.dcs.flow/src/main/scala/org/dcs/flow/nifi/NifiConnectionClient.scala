@@ -78,23 +78,23 @@ trait NifiConnectionClient extends ConnectionApiService with JerseyRestClient {
   def createConnectionToExternalProcessor(connectionConfig: ConnectionConfig, clientId: String): Future[Connection] = {
 
     ioPortApi.createOutputPort(connectionConfig.flowInstanceId, clientId)
-      .flatMap { oportconn =>
+      .flatMap { oconn =>
         processorApi.updateProperties(connectionConfig.destination.id,
           Map(ExternalProcessorProperties.ReceiverKey ->
-            ExternalProcessorProperties.nifiReceiverWithArgs(NifiApiConfig.BaseUiUrl, oportconn._1.name),
-            ExternalProcessorProperties.RootOutputPortIdKey -> oportconn._1.id),
+            ExternalProcessorProperties.nifiReceiverWithArgs(NifiApiConfig.BaseUiUrl, oconn.config.destination.name),
+            ExternalProcessorProperties.RootOutputConnectionKey -> oconn.toJson),
           clientId)
-          .flatMap { processor =>
+          .flatMap { _ =>
             val cc = ConnectionConfig(
               connectionConfig.flowInstanceId,
               connectionConfig.source,
-              oportconn._2.config.source,
+              oconn.config.source,
               connectionConfig.selectedRelationships,
               connectionConfig.availableRelationships
             )
             createStdConnection(cc, clientId)
           }
-          .map(_.withConnection(oportconn._2))
+          .map(_.withConnection(oconn))
 
       }
   }
@@ -102,23 +102,23 @@ trait NifiConnectionClient extends ConnectionApiService with JerseyRestClient {
   def createConnectionFromExternalProcessor(connectionConfig: ConnectionConfig, clientId: String): Future[Connection] = {
 
     ioPortApi.createInputPort(connectionConfig.flowInstanceId, clientId)
-      .flatMap { iportconn =>
+      .flatMap { iconn =>
         processorApi.updateProperties(connectionConfig.source.id,
           Map(ExternalProcessorProperties.SenderKey ->
-            ExternalProcessorProperties.nifiSenderWithArgs(NifiApiConfig.BaseUiUrl, iportconn._1.name),
-            ExternalProcessorProperties.RootInputPortIdKey -> iportconn._1.id),
+            ExternalProcessorProperties.nifiSenderWithArgs(NifiApiConfig.BaseUiUrl, iconn.config.source.name),
+            ExternalProcessorProperties.RootInputConnectionKey -> iconn.toJson),
           clientId)
           .flatMap { processor =>
             val cc = ConnectionConfig(
               connectionConfig.flowInstanceId,
-              iportconn._2.config.destination,
+              iconn.config.destination,
               connectionConfig.destination,
               connectionConfig.selectedRelationships,
               connectionConfig.availableRelationships
             )
             createStdConnection(cc, clientId)
           }
-          .map(_.withConnection(iportconn._2))
+          .map(_.withConnection(iconn))
       }
   }
 
@@ -174,13 +174,13 @@ trait NifiConnectionClient extends ConnectionApiService with JerseyRestClient {
       case (_, FlowComponent.ExternalProcessorType) =>
         processorApi.updateProperties(connection.config.destination.id,
           Map(ExternalProcessorProperties.ReceiverKey -> "",
-            ExternalProcessorProperties.RootOutputPortIdKey -> ""),
+            ExternalProcessorProperties.RootOutputConnectionKey -> ""),
           clientId)
           .map(_ != null)
       case (FlowComponent.ExternalProcessorType, _) =>
         processorApi.updateProperties(connection.config.source.id,
           Map(ExternalProcessorProperties.SenderKey -> "",
-            ExternalProcessorProperties.RootInputPortIdKey -> ""),
+            ExternalProcessorProperties.RootInputConnectionKey -> ""),
           clientId)
           .map(_ != null)
       case _ => Future(true) // do nothing
