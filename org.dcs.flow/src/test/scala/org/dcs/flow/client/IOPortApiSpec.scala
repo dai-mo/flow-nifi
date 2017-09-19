@@ -44,16 +44,15 @@ trait IOPortApiBehaviours extends FlowUnitSpec {
                                         flowClient: FlowApiService): Unit = {
 
     var flow = flowClient.create("InputPortTest", ClientId).futureValue
-    val iportconn = ioPortClient.createInputPort(flow.id, ClientId).futureValue
-    assert(iportconn._1.name.nonEmpty)
-    assert(iportconn._1.id == iportconn._2.config.source.id)
+    val iconn = ioPortClient.createInputPort(flow.id, ClientId).futureValue
+    assert(iconn.config.source.name.nonEmpty)
+    assert(iconn.config.source.name == iconn.config.destination.name)
 
-    val pgInputPort = ioPortApi.inputPort(iportconn._2.config.destination.id).futureValue
-    assert(iportconn._1.id != pgInputPort.id)
-    assert(iportconn._1.name == pgInputPort.name)
+    val pgInputPort = ioPortApi.inputPort(iconn.config.destination.id).futureValue
+    assert(iconn.config.destination.name == pgInputPort.name)
 
-    assert(connectionApi.removeRootInputPortConnection(iportconn._2,
-      iportconn._2.version,
+    assert(connectionApi.removeRootInputPortConnection(iconn,
+      iconn.version,
       ClientId).
       futureValue)
 
@@ -62,16 +61,15 @@ trait IOPortApiBehaviours extends FlowUnitSpec {
   def validateOutputPortCreationDeletion(ioPortClient: IOPortApiService,
                                          flowClient: FlowApiService): Unit = {
     val flow = flowClient.create("OutputPortTest", ClientId).futureValue
-    val oportconn = ioPortClient.createOutputPort(flow.id, ClientId).futureValue
-    assert(oportconn._1.name.nonEmpty)
-    assert(oportconn._1.id == oportconn._2.config.destination.id)
+    val oconn = ioPortClient.createOutputPort(flow.id, ClientId).futureValue
+    assert(oconn.config.source.name.nonEmpty)
+    assert(oconn.config.source.name == oconn.config.destination.name)
 
-    val pgOutputPort = ioPortApi.outputPort(oportconn._2.config.source.id).futureValue
-    assert(oportconn._1.id != pgOutputPort.id)
-    assert(oportconn._1.name == pgOutputPort.name)
+    val pgOutputPort = ioPortApi.outputPort(oconn.config.source.id).futureValue
+    assert(oconn.config.source.name == pgOutputPort.name)
 
-    assert(connectionApi.removeRootOutputPortConnection(oportconn._2,
-      oportconn._2.version,
+    assert(connectionApi.removeRootOutputPortConnection(oconn,
+      oconn.version,
       ClientId).
       futureValue)
 
