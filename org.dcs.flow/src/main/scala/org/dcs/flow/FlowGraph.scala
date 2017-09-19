@@ -1,12 +1,12 @@
 package org.dcs.flow
 
-import org.apache.avro.Schema
-import org.dcs.api.processor.{CoreProperties, ProcessorValidation, RemoteProcessor}
-import org.dcs.api.service.{Connection, FlowInstance, ProcessorInstance}
+import org.dcs.api.processor.{CoreProperties, ExternalProcessorProperties, ProcessorValidation, RemoteProcessor}
+import org.dcs.api.service._
 import org.dcs.commons.SchemaAction
-import org.dcs.flow.FlowGraph.FlowGraphNode
 import org.dcs.commons.serde.AvroImplicits._
 import org.dcs.commons.serde.AvroSchemaStore
+import org.dcs.commons.serde.JsonSerializerImplicits._
+import org.dcs.flow.FlowGraph.FlowGraphNode
 
 /**
   * Created by cmathew on 04/08/16.
@@ -36,32 +36,41 @@ object FlowGraph {
 
       var updatedNodeMap: Map[String, FlowGraphNode] = nodeMap
 
-      val sourceNode: FlowGraphNode =
-        if (nodeMap.get(source.get.id).isEmpty) {
-          val node = FlowGraphNode(source.get, Nil, Nil)
-          updatedNodeMap = updatedNodeMap + (node.processorInstance.id -> node)
-          node
-        } else
-          nodeMap(source.get.id)
+      val sourceNode: Option[FlowGraphNode] =
+        source.map { p =>
+          if (nodeMap.get(source.get.id).isEmpty) {
+            val node = FlowGraphNode(source.get, Nil, Nil)
+            updatedNodeMap = updatedNodeMap + (node.processorInstance.id -> node)
+            node
+          } else
+            nodeMap(source.get.id)
+        }
 
-      val destinationNode: FlowGraphNode =
-        if (nodeMap.get(destination.get.id).isEmpty) {
-          val node = FlowGraphNode(destination.get, Nil, Nil)
-          updatedNodeMap = updatedNodeMap + (node.processorInstance.id -> node)
-          node
-        } else
-          nodeMap(destination.get.id)
+      val destinationNode: Option[FlowGraphNode] =
+        destination.map { p =>
+          if (nodeMap.get(destination.get.id).isEmpty) {
+            val node = FlowGraphNode(destination.get, Nil, Nil)
+            updatedNodeMap = updatedNodeMap + (node.processorInstance.id -> node)
+            node
+          } else
+            nodeMap(destination.get.id)
+        }
 
-      sourceNode.children = destinationNode :: sourceNode.children
-      destinationNode.parents = sourceNode :: destinationNode.parents
+      sourceNode.foreach(sn => destinationNode.foreach { dn =>
+        sn.children = dn :: sn.children
+        dn.parents = sn :: dn.parents
+      })
+
       updatedNodeMap
     }
+
 
     def build(processorInstances: List[ProcessorInstance],
               connections: List[Connection],
               nodeMap: Map[String, FlowGraphNode]): Set[FlowGraphNode]  = connections match {
       case Nil if nodeMap.isEmpty => processorInstances.map(p => FlowGraphNode(p, Nil, Nil)).toSet
-      case Nil => nodeMap.values.toSet
+      case Nil => nodeMap.values.toSet ++
+        processorInstances.filter(p => !nodeMap.contains(p.id)).map(p => FlowGraphNode(p, Nil, Nil)).toSet
       case _ => build(processorInstances,
         connections.tail,
         addNodes(connections.head,processorInstances, nodeMap))

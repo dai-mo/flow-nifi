@@ -1,6 +1,6 @@
 package org.dcs.flow.nifi
 
-import java.util.Date
+import java.util.{Date, UUID}
 
 import org.apache.nifi.web.api.dto._
 import org.apache.nifi.web.api.dto.provenance.{ProvenanceDTO, ProvenanceRequestDTO}
@@ -91,7 +91,6 @@ object FlowProcessorRequest {
 
     processorEntity
   }
-
 
 }
 
@@ -253,6 +252,25 @@ object FlowConnectionRequest {
       clientId,
       0)
   }
+}
+
+object FlowPortRequest {
+
+
+  def apply(portType: String, portName: String, clientId: String): PortEntity = {
+    val portEntity = new PortEntity
+    portEntity.setRevision(Revision(0L, clientId))
+    portEntity.setPortType(portType)
+
+    val portDTO = new PortDTO
+    portDTO.setName(portName)
+
+    portEntity.setComponent(portDTO)
+    portEntity
+  }
+
+  def apply(portType: String, clientId: String): PortEntity =
+    apply(portType, UUID.randomUUID().toString, clientId)
 }
 
 
