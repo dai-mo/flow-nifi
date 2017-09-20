@@ -109,7 +109,7 @@ class ExternalProcessorISpec extends ExternalProcessorBehaviour {
     flowApi.remove(flowInstance.id, version, ClientId).map(deleteOk => assert(deleteOk))
   }
 
-  "Creation / Deletion of FlowInstance with an external processor" should "be valid" taggedAs IT in {
+  "Instantiation / Deletion of FlowInstance with an external processor" should "be valid" taggedAs IT in {
     var flowInstance = flowApi.create (FlowInstanceName, ClientId).futureValue
     val dgP = processorApi.create (dgPsd, flowInstance.id, ClientId).futureValue
     val sbsP = processorApi.create (sbsPsd, flowInstance.id, ClientId).futureValue
@@ -123,7 +123,7 @@ class ExternalProcessorISpec extends ExternalProcessorBehaviour {
       Set ("failure")
     )
 
-    val outputPortConnection = validateCreateConnectionToExternalProcessor (connectionApi,
+    validateCreateConnectionToExternalProcessor (connectionApi,
       ioPortApi,
       processorApi,
       dgPToSbsPConnectionConfig,
@@ -246,7 +246,48 @@ trait ExternalProcessorBehaviour extends AsyncFlowUnitSpec {
 
   def validateFlowInstanceWithExternalProcessor(flowApi: FlowApiService,
                                                 flowInstance: FlowInstance): FlowInstance = {
+    val externalProcessor =
+      flowInstance.processors.find(_.processorType == RemoteProcessor.ExternalProcessorType).get
+
     assert(flowInstance.connections.size == 2)
+
+    val toExternalProcessorConnection =
+      flowInstance.connections
+        .find(c => c.config.destination.componentType == FlowComponent.ExternalProcessorType).get
+    val tepcDestination = toExternalProcessorConnection.config.destination
+    assert(tepcDestination.id == externalProcessor.id)
+    assert(tepcDestination.flowInstanceId == flowInstance.id)
+    val flowOutputConnection =
+      toExternalProcessorConnection.relatedConnections.head
+    assert(flowOutputConnection.config.source.id == toExternalProcessorConnection.config.source.id)
+    assert(flowOutputConnection.config.destination.componentType == FlowComponent.OutputPortType)
+    val rootOutputConnection =
+      flowOutputConnection.relatedConnections.head
+    assert(rootOutputConnection.config.source.componentType == FlowComponent.OutputPortType)
+    assert(rootOutputConnection.config.destination.componentType == FlowComponent.OutputPortType)
+    assert(rootOutputConnection.config.source.id == flowOutputConnection.config.destination.id)
+    assert(rootOutputConnection.config.source.name == rootOutputConnection.config.destination.name)
+    assert(rootOutputConnection.config.destination.name == flowOutputConnection.config.destination.name)
+
+
+    val fromExternalProcessorConnection =
+      flowInstance.connections
+        .find(c => c.config.source.componentType == FlowComponent.ExternalProcessorType).get
+    val fepcSource = fromExternalProcessorConnection.config.source
+    assert(fepcSource.id == externalProcessor.id)
+    assert(fepcSource.flowInstanceId == flowInstance.id)
+    val flowInputConnection =
+      fromExternalProcessorConnection.relatedConnections.head
+    assert(flowInputConnection.config.destination.id == fromExternalProcessorConnection.config.destination.id)
+    assert(flowInputConnection.config.source.componentType == FlowComponent.InputPortType)
+    val rootInputConnection =
+      flowInputConnection.relatedConnections.head
+    assert(rootInputConnection.config.source.componentType == FlowComponent.InputPortType)
+    assert(rootInputConnection.config.destination.componentType == FlowComponent.InputPortType)
+    assert(rootInputConnection.config.destination.id == flowInputConnection.config.source.id)
+    assert(rootInputConnection.config.source.name == rootInputConnection.config.destination.name)
+    assert(rootInputConnection.config.source.name == flowInputConnection.config.source.name)
+
     flowInstance
   }
 
