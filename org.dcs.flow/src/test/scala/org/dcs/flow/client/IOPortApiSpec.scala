@@ -52,7 +52,6 @@ trait IOPortApiBehaviours extends FlowUnitSpec {
     assert(iconn.config.destination.name == pgInputPort.name)
 
     assert(connectionApi.removeRootInputPortConnection(iconn,
-      iconn.version,
       ClientId).
       futureValue)
 
@@ -69,7 +68,6 @@ trait IOPortApiBehaviours extends FlowUnitSpec {
     assert(oconn.config.source.name == pgOutputPort.name)
 
     assert(connectionApi.removeRootOutputPortConnection(oconn,
-      oconn.version,
       ClientId).
       futureValue)
 

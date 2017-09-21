@@ -112,9 +112,7 @@ trait NifiConnectionClient extends ConnectionApiService with JerseyRestClient {
             val cc = ConnectionConfig(
               connectionConfig.flowInstanceId,
               iconn.config.destination,
-              connectionConfig.destination,
-              connectionConfig.selectedRelationships,
-              connectionConfig.availableRelationships
+              connectionConfig.destination
             )
             createStdConnection(cc, clientId)
           }
@@ -139,37 +137,37 @@ trait NifiConnectionClient extends ConnectionApiService with JerseyRestClient {
   }
 
 
-  override def remove(connection: Connection, version: Long, clientId: String): Future[Boolean] = {
+  override def remove(connection: Connection, clientId: String): Future[Boolean] = {
     ((connection.config.source.componentType, connection.config.destination.componentType) match {
       case (FlowComponent.ProcessorType, FlowComponent.ProcessorType) =>
-        removeProcessorConnection(connection, version, clientId)
+        removeProcessorConnection(connection, clientId)
       case (FlowComponent.ProcessorType, FlowComponent.ExternalProcessorType) |
            (FlowComponent.ExternalProcessorType, FlowComponent.ProcessorType) => Future(true)
       case (FlowComponent.InputPortType, FlowComponent.InputPortType) =>
-        removeRootInputPortConnection(connection, version, clientId)
+        removeRootInputPortConnection(connection, clientId)
       case (FlowComponent.InputPortType, FlowComponent.ProcessorType) =>
-        removeProcessorInputPortConnection(connection, version, clientId)
+        removeProcessorInputPortConnection(connection, clientId)
       case (FlowComponent.OutputPortType, FlowComponent.OutputPortType) =>
-        removeRootOutputPortConnection(connection, version, clientId)
+        removeRootOutputPortConnection(connection, clientId)
       case (FlowComponent.ProcessorType, FlowComponent.OutputPortType) =>
-        removeProcessorOutputPortConnection(connection, version, clientId)
+        removeProcessorOutputPortConnection(connection, clientId)
       case _ => Future(false)
     })
       .flatMap { deleteOk =>
         if (deleteOk)
-          Future.sequence(connection.relatedConnections.map(relc => remove(relc, version, clientId)))
+          Future.sequence(connection.relatedConnections.map(relc => remove(relc, clientId)))
             .map(_.forall(identity))
         else
           Future(false)
       }
       .flatMap(deleteOk =>
         if (deleteOk)
-          postRemove(connection, version, clientId)
+          postRemove(connection, clientId)
         else
           Future(false))
   }
 
-  def postRemove(connection: Connection, version: Long, clientId: String): Future[Boolean] = {
+  def postRemove(connection: Connection, clientId: String): Future[Boolean] = {
     (connection.config.source.componentType, connection.config.destination.componentType) match {
       case (_, FlowComponent.ExternalProcessorType) =>
         processorApi.updateProperties(connection.config.destination.id,
@@ -188,16 +186,16 @@ trait NifiConnectionClient extends ConnectionApiService with JerseyRestClient {
   }
 
   override def remove(connectionId: String, version: Long, clientId: String): Future[Boolean] = {
-    find(connectionId, clientId).flatMap(connection => remove(connection, version, clientId))
+    find(connectionId, clientId).flatMap(connection => remove(connection, clientId))
   }
 
-  def removeExternalProcessorConnection(connection: Connection, version: Long, clientId: String): Future[Boolean] = {
-    Future.sequence(connection.relatedConnections.map(connection => remove(connection, version, clientId)))
+  def removeExternalProcessorConnection(connection: Connection, clientId: String): Future[Boolean] = {
+    Future.sequence(connection.relatedConnections.map(connection => remove(connection, clientId)))
       .map(_.forall(identity))
   }
 
-  def removeRootInputPortConnection(connection: Connection, version: Long, clientId: String): Future[Boolean] = {
-    removeStdConnection(connection, version, clientId)
+  def removeRootInputPortConnection(connection: Connection, clientId: String): Future[Boolean] = {
+    removeStdConnection(connection, clientId)
       .flatMap { deleteOk =>
         if(deleteOk)
           ioPortApi.deleteInputPort(connection.config.source.id, connection.config.destination.id, connection.version, clientId)
@@ -207,23 +205,23 @@ trait NifiConnectionClient extends ConnectionApiService with JerseyRestClient {
   }
 
 
-  def removeProcessorInputPortConnection(connection: Connection, version: Long, clientId: String): Future[Boolean] = {
-    removeStdConnection(connection, version, clientId)
+  def removeProcessorInputPortConnection(connection: Connection, clientId: String): Future[Boolean] = {
+    removeStdConnection(connection, clientId)
   }
 
 
-  def removeRootOutputPortConnection(connection: Connection, version: Long, clientId: String): Future[Boolean] = {
-    removeStdConnection(connection, version, clientId)
+  def removeRootOutputPortConnection(connection: Connection, clientId: String): Future[Boolean] = {
+    removeStdConnection(connection, clientId)
       .flatMap { deleteOk =>
         if(deleteOk)
-          ioPortApi.deleteOutputPort(connection.config.destination.id, connection.config.source.id, version, clientId)
+          ioPortApi.deleteOutputPort(connection.config.source.id, connection.config.destination.id, connection.version, clientId)
         else
           Future(false)
       }
   }
 
-  def removeProcessorOutputPortConnection(connection: Connection, version: Long, clientId: String): Future[Boolean] = {
-    removeStdConnection(connection, version, clientId)
+  def removeProcessorOutputPortConnection(connection: Connection, clientId: String): Future[Boolean] = {
+    removeStdConnection(connection, clientId)
       .flatMap { deleteOk =>
         if(deleteOk)
           processorApi.autoTerminateRelationship(connection).map(_ != null)
@@ -232,7 +230,7 @@ trait NifiConnectionClient extends ConnectionApiService with JerseyRestClient {
       }
   }
 
-  def removeProcessorConnection(connection: Connection, version: Long, clientId: String): Future[Boolean] = {
+  def removeProcessorConnection(connection: Connection, clientId: String): Future[Boolean] = {
     processorApi.instance(connection.config.source.id)
       .flatMap(p => FlowApi.instance(connection.config.flowInstanceId)
         .map(fi => FlowGraph.executeBreadthFirstFromNode(fi,
@@ -244,16 +242,16 @@ trait NifiConnectionClient extends ConnectionApiService with JerseyRestClient {
             processorApi.update(p, clientId))))
       .flatMap(pis =>
         deleteAsJson(path = connectionsPath(connection.id),
-          queryParams = Revision.params(version, clientId))
+          queryParams = Revision.params(connection.version, clientId))
           .flatMap { response =>
             processorApi.autoTerminateRelationship(connection).map(_ != null)
           }
       )
   }
 
-  def removeStdConnection(connection: Connection, version: Long, clientId: String): Future[Boolean] = {
+  def removeStdConnection(connection: Connection, clientId: String): Future[Boolean] = {
     deleteAsJson(path = connectionsPath(connection.id),
-      queryParams = Revision.params(version, clientId))
+      queryParams = Revision.params(connection.version, clientId))
       .map { response =>
         ConnectionAdapter(response.toObject[ConnectionEntity]) != null
       }

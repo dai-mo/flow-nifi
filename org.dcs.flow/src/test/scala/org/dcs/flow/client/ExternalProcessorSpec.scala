@@ -11,6 +11,7 @@ import org.dcs.flow._
 import org.glassfish.jersey.filter.LoggingFilter
 import org.scalatest.Assertion
 import org.dcs.commons.serde.JsonSerializerImplicits._
+import org.dcs.flow.client.ExternalProcessorSpec.processorApi
 
 import scala.concurrent.Future
 
@@ -155,6 +156,42 @@ class ExternalProcessorISpec extends ExternalProcessorBehaviour {
               c.config.destination.componentType == FlowComponent.ExternalProcessorType))
           .map(deleteOk => assert(deleteOk))
       }
+  }
+
+  "Deletion of an external processor" should "be valid" taggedAs IT in {
+    var flowInstance = flowApi.create (FlowInstanceName, ClientId).futureValue
+    val dgP = processorApi.create (dgPsd, flowInstance.id, ClientId).futureValue
+    val sbsP = processorApi.create (sbsPsd, flowInstance.id, ClientId).futureValue
+    val csvP = processorApi.create (csvPsd, flowInstance.id, ClientId).futureValue
+
+    val dgPToSbsPConnectionConfig = ConnectionConfig (
+      flowInstance.id,
+      Connectable (dgP.id, FlowComponent.ProcessorType, flowInstance.id),
+      Connectable (sbsP.id, FlowComponent.ExternalProcessorType, flowInstance.id),
+      Set ("success"),
+      Set ("failure")
+    )
+
+    validateCreateConnectionToExternalProcessor (connectionApi,
+      ioPortApi,
+      processorApi,
+      dgPToSbsPConnectionConfig,
+      dgP.id,
+      sbsP.id)
+
+    val sbsPToCsvPConnectionConfig = ConnectionConfig (
+      flowInstance.id,
+      Connectable (sbsP.id, FlowComponent.ExternalProcessorType, flowInstance.id),
+      Connectable (csvP.id, FlowComponent.ProcessorType, flowInstance.id)
+    )
+    validateCreateConnectionFromExternalProcessor (connectionApi,
+      ioPortApi,
+      processorApi,
+      sbsPToCsvPConnectionConfig,
+      csvP.id,
+      sbsP.id)
+
+    validateRemoveExternalProcessor(processorApi, sbsP.id, flowInstance.id, sbsP.processorType, sbsP.version)
 
   }
 
@@ -216,7 +253,7 @@ trait ExternalProcessorBehaviour extends AsyncFlowUnitSpec {
   def validateRemoveConnectionFromExternalProcessor(connectionApi: ConnectionApiService,
                                                     ioPortApi: IOPortApiService,
                                                     connection: Connection): Future[Assertion] = {
-    connectionApi.remove(connection, connection.version, ClientId).futureValue
+    connectionApi.remove(connection, ClientId).futureValue
     val rootConnection = connection.relatedConnections.head.relatedConnections.head
 
     recoverToExceptionIf[HttpException] {
@@ -231,7 +268,7 @@ trait ExternalProcessorBehaviour extends AsyncFlowUnitSpec {
   def validateRemoveConnectionToExternalProcessor(connectionApi: ConnectionApiService,
                                                   ioPortApi: IOPortApiService,
                                                   connection: Connection): Future[Assertion] = {
-    connectionApi.remove(connection, connection.version, ClientId).futureValue
+    connectionApi.remove(connection, ClientId).futureValue
     val rootConnection = connection.relatedConnections.head.relatedConnections.head
 
     recoverToExceptionIf[HttpException] {
@@ -291,5 +328,23 @@ trait ExternalProcessorBehaviour extends AsyncFlowUnitSpec {
     flowInstance
   }
 
+  def validateRemoveExternalProcessor(processorApi: ProcessorApiService,
+                                      processorId: String,
+                                      flowInstanceId: String,
+                                      processorType: String,
+                                      version: Long): Future[Assertion] = {
+
+    assert(processorApi.remove(processorId,
+      flowInstanceId,
+      processorType,
+      version,
+      ClientId).futureValue)
+
+
+    recoverToExceptionIf[HttpException] {
+      processorApi.instance(processorId)
+    }.map(ex => assert(ex.errorResponse.httpStatusCode == 404))
+
+  }
 
 }

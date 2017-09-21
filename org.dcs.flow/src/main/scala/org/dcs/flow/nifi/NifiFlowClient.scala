@@ -151,7 +151,7 @@ trait NifiFlowClient extends FlowApiService with JerseyRestClient {
     if(externalConnections.isEmpty)
       remove(flowInstanceId, version, clientId)
     else
-      Future.sequence(externalConnections.map(c => connectionApi.remove(c, c.version, clientId)))
+      Future.sequence(externalConnections.map(c => connectionApi.remove(c, clientId)))
         .map(_.forall(identity))
         .flatMap(deleteOk => if(deleteOk) remove(flowInstanceId, version, clientId) else Future(false))
   }

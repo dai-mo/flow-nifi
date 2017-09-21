@@ -70,7 +70,7 @@ object FlowInstance {
               fc.config.availableRelationships
             )
             rootConnection.foreach(rc => fc.setRelatedConnections(Set(rc)))
-            Connection("", "", fc.version, connectionConfig, "", "", -1, List(), Set(fc))
+            Connection(connectionConfig.genId(), connectionConfig.genId(), fc.version, connectionConfig, "", "", -1, List(), Set(fc))
           }.foreach(c => flowInstance.setConnections(c :: flowInstance.connections))
         }
 
@@ -90,7 +90,7 @@ object FlowInstance {
               fc.config.selectedRelationships,
               fc.config.availableRelationships
             )
-            Connection("", "", fc.version, connectionConfig, "", "", -1, List(), Set(fc))
+            Connection(connectionConfig.genId(), connectionConfig.genId(), fc.version, connectionConfig, "", "", -1, List(), Set(fc))
           }.foreach(c => flowInstance.setConnections(c :: flowInstance.connections))
         }
     }
@@ -137,7 +137,7 @@ object FlowInstance {
       f.setState(NifiProcessorClient.StateRunning)
 
     f.setProcessors(flow.getProcessors.map(p => ProcessorInstance(p)).toList)
-    f.setConnections(flow.getConnections.map(c => ConnectionAdapter(c.getComponent, Revision.DefaultVersion)).toList)
+    f.setConnections(flow.getConnections.map(c => ConnectionAdapter(c.getComponent, c.getRevision.getVersion)).toList)
     updateForExternalProcessors(f)
   }
 

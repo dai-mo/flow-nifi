@@ -96,7 +96,7 @@ trait NifiIOPortClient extends IOPortApiService with JerseyRestClient {
                                version: Long,
                                clientId: String): Future[Boolean] = {
     deleteInputPort(rootPortId, version, clientId)
-      .flatMap(iport => deleteInputPort(inputPortId, iport.get.version, clientId)
+      .flatMap(iport => deleteInputPort(inputPortId, version, clientId)
         .map(_.isDefined))
   }
 
@@ -114,7 +114,7 @@ trait NifiIOPortClient extends IOPortApiService with JerseyRestClient {
                                 clientId: String): Future[Boolean] = {
 
     deleteOutputPort(outputPortId, version, clientId)
-      .flatMap(oport => deleteOutputPort(rootPortId, oport.get.version, clientId)
+      .flatMap(oport => deleteOutputPort(rootPortId, version, clientId)
         .map(_.isDefined))
 
   }
