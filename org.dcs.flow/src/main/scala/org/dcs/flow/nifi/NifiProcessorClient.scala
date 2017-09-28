@@ -129,7 +129,7 @@ trait NifiProcessorClient extends ProcessorApiService with JerseyRestClient {
                             schemaActions: List[SchemaAction],
                             clientId: String): Future[List[ProcessorInstance]] = {
     val nifiFlowClient = new NifiFlowApi()
-    val updatedProcessorInstances = nifiFlowClient.instance(flowInstanceId).
+    val updatedProcessorInstances = nifiFlowClient.instance(flowInstanceId, clientId).
       map(flowInstance =>
         FlowGraph.executeBreadthFirstFromNode(flowInstance,
           FlowGraphTraversal.schemaUpdate(schemaActions), processorInstanceId)).
@@ -177,7 +177,7 @@ trait NifiProcessorClient extends ProcessorApiService with JerseyRestClient {
                       version: Long,
                       clientId: String): Future[Boolean] = {
     if (processorType == RemoteProcessor.ExternalProcessorType)
-      flowApi.instance(flowInstanceId)
+      flowApi.instance(flowInstanceId, clientId)
         .flatMap(fi =>
           Future.sequence(fi.connections
             .filter(c => c.config.source.componentType == FlowComponent.ExternalProcessorType ||

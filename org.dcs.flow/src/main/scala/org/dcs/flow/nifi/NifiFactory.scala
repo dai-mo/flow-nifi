@@ -1,20 +1,17 @@
 package org.dcs.flow.nifi
 
 import java.util
-import javax.annotation.processing.Processor
 
 import org.apache.nifi.web.api.dto.PropertyDescriptorDTO.AllowableValueDTO
 import org.apache.nifi.web.api.dto._
 import org.apache.nifi.web.api.entity._
 import org.dcs.api.processor._
-import org.dcs.api.service.{Connectable, Connection, ConnectionConfig, FlowComponent, FlowInstance, FlowTemplate, IOPort, ProcessorConfig, ProcessorInstance, ProcessorType}
-import org.dcs.flow.FlowGraph
-import org.dcs.flow.FlowGraph.FlowGraphNode
-import org.dcs.flow.nifi.internal.{ProcessGroup, ProcessGroupHelper}
+import org.dcs.api.service.{Connectable, Connection, ConnectionConfig, DropRequest, FlowComponent, FlowInstance, FlowTemplate, IOPort, ProcessorConfig, ProcessorInstance, ProcessorType}
+import org.dcs.api.util.{NameId, WithArgs}
+import org.dcs.flow.nifi.internal.ProcessGroup
 
 import scala.collection.JavaConversions._
 import scala.collection.JavaConverters._
-import org.dcs.commons.serde.JsonSerializerImplicits._
 
 
 
@@ -28,9 +25,15 @@ object FlowTemplate {
     val flowTemplate = new FlowTemplate
     flowTemplate.setId(template.getId)
     flowTemplate.setUri(template.getUri)
-    flowTemplate.setName(template.getName)
     flowTemplate.setDescription(template.getDescription)
     flowTemplate.setTimestamp(template.getTimestamp)
+
+    val tNameWithArgs = WithArgs(template.getName)
+      flowTemplate.setName(tNameWithArgs.target)
+    val processorType = tNameWithArgs.contains(CoreProperties.ProcessorTypeKey)
+    if(processorType.contains(RemoteProcessor.ExternalProcessorType))
+      flowTemplate.setHasExternal(true)
+
     flowTemplate
   }
 }
@@ -48,61 +51,14 @@ object ProcessGroup {
 }
 
 object FlowInstance {
-
-  def updateForExternalProcessors(flowInstance: FlowInstance): FlowInstance = {
-
-    val eps = flowInstance.processors.filter(_.processorType == RemoteProcessor.ExternalProcessorType)
-
-    eps.foreach { p =>
-      p.properties.get(ExternalProcessorProperties.RootInputConnectionKey)
-        .foreach { rc =>
-          val rootConnection = if(rc.isEmpty) None else Some(rc.toObject[Connection])
-          val flowConnection = rootConnection
-            .flatMap(rc => flowInstance.connections.find(_.config.source.id == rc.config.destination.id))
-          flowConnection.foreach(fc => flowInstance.setConnections(flowInstance.connections.filter(_.id != fc.id)))
-
-          flowConnection.map { fc =>
-            val connectionConfig = ConnectionConfig(
-              flowInstance.id,
-              Connectable(p.id, FlowComponent.ExternalProcessorType, flowInstance.id),
-              fc.config.destination,
-              fc.config.selectedRelationships,
-              fc.config.availableRelationships
-            )
-            rootConnection.foreach(rc => fc.setRelatedConnections(Set(rc)))
-            Connection(connectionConfig.genId(), connectionConfig.genId(), fc.version, connectionConfig, "", "", -1, List(), Set(fc))
-          }.foreach(c => flowInstance.setConnections(c :: flowInstance.connections))
-        }
-
-      p.properties.get(ExternalProcessorProperties.RootOutputConnectionKey)
-        .foreach { rc =>
-          val rootConnection = if(rc.isEmpty) None else Some(rc.toObject[Connection])
-          val flowConnection = rootConnection
-            .flatMap(rc => flowInstance.connections.find(_.config.destination.id == rc.config.source.id))
-          flowConnection.foreach(fc => flowInstance.setConnections(flowInstance.connections.filter(_.id != fc.id)))
-
-          flowConnection.map { fc =>
-            rootConnection.foreach(rc => fc.setRelatedConnections(Set(rc)))
-            val connectionConfig = ConnectionConfig(
-              flowInstance.id,
-              fc.config.source,
-              Connectable(p.id, FlowComponent.ExternalProcessorType, flowInstance.id),
-              fc.config.selectedRelationships,
-              fc.config.availableRelationships
-            )
-            Connection(connectionConfig.genId(), connectionConfig.genId(), fc.version, connectionConfig, "", "", -1, List(), Set(fc))
-          }.foreach(c => flowInstance.setConnections(c :: flowInstance.connections))
-        }
-    }
-    flowInstance
-  }
+  val RootProcessGroupId = "root"
 
   def apply(processGroupEntity: ProcessGroupEntity): FlowInstance = {
 
     val f = new org.dcs.api.service.FlowInstance
     val contents = processGroupEntity.getComponent.getContents
 
-    val nameId = ProcessGroupHelper.extractFromName(processGroupEntity.getComponent.getName)
+    val nameId = NameId.extractFromName(processGroupEntity.getComponent.getName)
 
 
     f.setId(processGroupEntity.getComponent.getId)
@@ -114,9 +70,9 @@ object FlowInstance {
       f.setProcessors(contents.getProcessors.map(p => ProcessorInstance(p)).toList)
       f.setConnections(contents.getConnections.map(c => ConnectionAdapter(c, processGroupEntity.getRevision.getVersion)).toList)
     }
-    updateForExternalProcessors(f)
-  }
 
+    f
+  }
 
 
   def apply(processGroupFlowEntity: ProcessGroupFlowEntity, version: Long): FlowInstance  = {
@@ -125,7 +81,7 @@ object FlowInstance {
     val bc = processGroupFlowEntity.getProcessGroupFlow.getBreadcrumb.getBreadcrumb
 
 
-    val nameId = ProcessGroupHelper.extractFromName(bc.getName)
+    val nameId = NameId.extractFromName(bc.getName)
     f.setId(processGroupFlowEntity.getProcessGroupFlow.getId)
     f.setVersion(version)
     f.setName(nameId._1)
@@ -138,14 +94,18 @@ object FlowInstance {
 
     f.setProcessors(flow.getProcessors.map(p => ProcessorInstance(p)).toList)
     f.setConnections(flow.getConnections.map(c => ConnectionAdapter(c.getComponent, c.getRevision.getVersion)).toList)
-    updateForExternalProcessors(f)
+
+
+    f
   }
+
+
 
   def apply(flowSnippetEntity: FlowSnippetEntity, id: String, name: String, version: Long): FlowInstance  = {
     val f = new FlowInstance
     val contents = flowSnippetEntity.getContents
 
-    val nameId = ProcessGroupHelper.extractFromName(name)
+    val nameId = NameId.extractFromName(name)
     f.setId(id)
     f.setName(nameId._1)
     f.setNameId(nameId._2)
@@ -156,12 +116,12 @@ object FlowInstance {
     f
   }
 
+
   def apply(flowEntity: FlowEntity, id: String, name: String, version: Long): FlowInstance  = {
     val f = new FlowInstance
     val flow = flowEntity.getFlow
 
-
-    val nameId = ProcessGroupHelper.extractFromName(name)
+    val nameId = NameId.extractFromName(name)
 
     f.setId(id)
     f.setName(nameId._1)
@@ -169,12 +129,12 @@ object FlowInstance {
     f.setState(NifiProcessorClient.StateNotStarted)
     f.setProcessors(flow.getProcessors.map(p => ProcessorInstance(p)).toList)
     f.setConnections(flow.getConnections.map(c => ConnectionAdapter(c.getComponent, Revision.DefaultVersion)).toList)
-    updateForExternalProcessors(f)
+    f
   }
 
   def apply(id: String, name: String, version: Long): FlowInstance  = {
     val f = new FlowInstance
-    val nameId = ProcessGroupHelper.extractFromName(name)
+    val nameId = NameId.extractFromName(name)
     f.setId(id)
     f.setVersion(version)
     f.setName(nameId._1)
@@ -186,23 +146,77 @@ object FlowInstance {
   }
 
 
-
   def apply(processGroupDTO: ProcessGroupDTO): FlowInstance  = {
     val f = new FlowInstance
     val snippet = processGroupDTO.getContents
 
-    val nameId = ProcessGroupHelper.extractFromName(processGroupDTO.getName)
+    val nameId = NameId.extractFromName(processGroupDTO.getName)
 
     f.setId(processGroupDTO.getId)
     f.setName(nameId._1)
     f.setNameId(nameId._2)
     f.setProcessors(snippet.getProcessors.map(p => ProcessorInstance(p)).toList)
     f.setConnections(snippet.getConnections.map(c => ConnectionAdapter(c, Revision.DefaultVersion)).toList)
-    updateForExternalProcessors(f)
+    f
   }
 }
 
+object FlowInstanceWithExternalConnections {
 
+  def updateForExternalProcessors(flowInstance: FlowInstance, externalConnections: List[Connection]): FlowInstance = {
+
+    val eps = flowInstance.processors.filter(_.processorType == RemoteProcessor.ExternalProcessorType)
+
+    eps.foreach { p =>
+          p.properties.get(ExternalProcessorProperties.RootInputConnectionIdKey)
+            .foreach { rcId =>
+              val rootConnection = externalConnections.find(_.id == rcId)
+              val flowConnection = rootConnection
+                .flatMap(rc => flowInstance.connections.find(_.config.source.id == rc.config.destination.id))
+              flowConnection.foreach(fc => flowInstance.setConnections(flowInstance.connections.filter(_.id != fc.id)))
+
+              flowConnection.map { fc =>
+                val connectionConfig = ConnectionConfig(
+                  flowInstance.id,
+                  Connectable(p.id, FlowComponent.ExternalProcessorType, flowInstance.id),
+                  fc.config.destination,
+                  fc.config.selectedRelationships,
+                  fc.config.availableRelationships
+                )
+                rootConnection.foreach(rc => fc.setRelatedConnections(Set(rc)))
+                Connection(connectionConfig.genId(), connectionConfig.genId(), fc.version, connectionConfig, "", "", -1, List(), Set(fc))
+              }.foreach(c => flowInstance.setConnections(c :: flowInstance.connections))
+            }
+
+          p.properties.get(ExternalProcessorProperties.RootOutputConnectionIdKey)
+            .foreach { rcId =>
+              val rootConnection = externalConnections.find(_.id == rcId)
+              val flowConnection = rootConnection
+                .flatMap(rc => flowInstance.connections.find(_.config.destination.id == rc.config.source.id))
+              flowConnection.foreach(fc => flowInstance.setConnections(flowInstance.connections.filter(_.id != fc.id)))
+
+              flowConnection.map { fc =>
+                rootConnection.foreach(rc => fc.setRelatedConnections(Set(rc)))
+                val connectionConfig = ConnectionConfig(
+                  flowInstance.id,
+                  fc.config.source,
+                  Connectable(p.id, FlowComponent.ExternalProcessorType, flowInstance.id),
+                  fc.config.selectedRelationships,
+                  fc.config.availableRelationships
+                )
+                Connection(connectionConfig.genId(), connectionConfig.genId(), fc.version, connectionConfig, "", "", -1, List(), Set(fc))
+              }.foreach(c => flowInstance.setConnections(c :: flowInstance.connections))
+            }
+        }
+
+    flowInstance
+  }
+
+
+  def apply(flowInstance: FlowInstance, externalConnections: List[Connection]): FlowInstance = {
+    updateForExternalProcessors(flowInstance, externalConnections)
+  }
+}
 
 object ProcessorInstance {
 
@@ -304,6 +318,21 @@ object ProcessorType {
 }
 
 object ConnectionAdapter {
+
+  def inputOutput(externalConnections: List[Connection]): (List[Connection], List[Connection]) = {
+    var inputConnections: List[Connection] = Nil
+    var outputConnections: List[Connection] = Nil
+
+    externalConnections.foreach { ec =>
+      (ec.config.source.componentType, ec.config.destination.componentType) match {
+        case (FlowComponent.InputPortType, FlowComponent.InputPortType) => inputConnections = ec :: inputConnections
+        case (FlowComponent.OutputPortType, FlowComponent.OutputPortType) => outputConnections = ec :: outputConnections
+        case _ => // do nothing
+      }
+    }
+    (inputConnections, outputConnections)
+  }
+
   private def toConnectable(connectableDTO: ConnectableDTO): Connectable = {
     Connectable(connectableDTO.getId,
       connectableDTO.getType,
@@ -387,5 +416,12 @@ object IOPortAdapter {
       revisionO.map(_.getVersion.toLong).getOrElse(Revision.DefaultVersion),
       portEntity.getPortType,
       componentO.map(_.getState).orNull)
+  }
+}
+
+object DropRequestAdapter {
+  def apply(dropRequestEntity: DropRequestEntity): DropRequest = {
+    val dropRequestDTO = dropRequestEntity.getDropRequest
+    DropRequest(dropRequestDTO.getId, dropRequestDTO.isFinished, dropRequestDTO.getCurrentCount)
   }
 }

@@ -2,16 +2,13 @@ package org.dcs.flow.client
 
 import java.util.UUID
 
-import org.dcs.api.processor.{ExternalProcessorProperties, RemoteProcessor}
+import org.dcs.api.processor.{CoreProperties, ExternalProcessorProperties, RemoteProcessor}
 import org.dcs.api.service._
 import org.dcs.commons.error.HttpException
-import org.dcs.flow.FlowGraph.FlowGraphNode
-import org.dcs.flow.nifi.{ProcessorInstance => _, _}
 import org.dcs.flow._
+import org.dcs.flow.nifi.{ProcessorInstance => _, _}
 import org.glassfish.jersey.filter.LoggingFilter
 import org.scalatest.Assertion
-import org.dcs.commons.serde.JsonSerializerImplicits._
-import org.dcs.flow.client.ExternalProcessorSpec.processorApi
 
 import scala.concurrent.Future
 
@@ -22,6 +19,9 @@ object ExternalProcessorSpec {
   val DataGeneratorProcessorService = "DataGeneratorProcessorService"
   val SparkBasicStatsProcessorService = "SparkBasicStatsProcessorService"
   val CSVFileOutputProcessorService = "CSVFileOutputProcessorService"
+
+  val ReadSchemaId = "org.dcs.test.Person"
+  val FlowTemplateName = "SparkStatsTest"
 
   val flowApi = new NifiFlowApi
   val processorApi = new NifiProcessorApi
@@ -34,11 +34,11 @@ object ExternalProcessorSpec {
   processorApi.requestFilter(new LoggingFilter)
   processorApi.requestFilter(new DetailedLoggingFilter)
 
-  connectionApi.requestFilter(new LoggingFilter)
-  connectionApi.requestFilter(new DetailedLoggingFilter)
-
-  ioPortApi.requestFilter(new LoggingFilter)
-  ioPortApi.requestFilter(new DetailedLoggingFilter)
+//  connectionApi.requestFilter(new LoggingFilter)
+//  connectionApi.requestFilter(new DetailedLoggingFilter)
+//
+//  ioPortApi.requestFilter(new LoggingFilter)
+//  ioPortApi.requestFilter(new DetailedLoggingFilter)
 
   val dgPsd = ProcessorServiceDefinition(
     ServiceClassPrefix + DataGeneratorProcessorService,
@@ -82,7 +82,8 @@ class ExternalProcessorISpec extends ExternalProcessorBehaviour {
       processorApi,
       dgPToSbsPConnectionConfig,
       dgP.id,
-      sbsP.id)
+      sbsP.id,
+      ReadSchemaId)
 
     val sbsPToCsvPConnectionConfig = ConnectionConfig(
       flowInstance.id,
@@ -95,9 +96,10 @@ class ExternalProcessorISpec extends ExternalProcessorBehaviour {
       processorApi,
       sbsPToCsvPConnectionConfig,
       csvP.id,
-      sbsP.id)
+      sbsP.id,
+      ReadSchemaId)
 
-    val version = flowApi.instance(flowInstance.id).futureValue.version
+    val version = flowApi.instance(flowInstance.id, ClientId).futureValue.version
 
     val dgPToSbsPConnection =
       Connection("", "", version, dgPToSbsPConnectionConfig, "", "", -1, List(), Set(outputPortConnection))
@@ -129,7 +131,8 @@ class ExternalProcessorISpec extends ExternalProcessorBehaviour {
       processorApi,
       dgPToSbsPConnectionConfig,
       dgP.id,
-      sbsP.id)
+      sbsP.id,
+      ReadSchemaId)
 
     val sbsPToCsvPConnectionConfig = ConnectionConfig (
       flowInstance.id,
@@ -141,19 +144,18 @@ class ExternalProcessorISpec extends ExternalProcessorBehaviour {
       processorApi,
       sbsPToCsvPConnectionConfig,
       csvP.id,
-      sbsP.id)
+      sbsP.id,
+      ReadSchemaId)
 
-    flowApi.instance(flowInstance.id)
+    flowApi.instance(flowInstance.id, ClientId)
       .map { fi =>
-        validateFlowInstanceWithExternalProcessor(flowApi, fi)
+        validateFlowInstanceWithExternalProcessor(flowApi, fi, fi.name)
       }
       .flatMap { fi =>
         flowApi.remove(fi.id,
           fi.version,
           ClientId,
-          fi.connections.filter(c =>
-            c.config.source.componentType == FlowComponent.ExternalProcessorType ||
-              c.config.destination.componentType == FlowComponent.ExternalProcessorType))
+          fi.externalConnections)
           .map(deleteOk => assert(deleteOk))
       }
   }
@@ -164,6 +166,7 @@ class ExternalProcessorISpec extends ExternalProcessorBehaviour {
     val sbsP = processorApi.create (sbsPsd, flowInstance.id, ClientId).futureValue
     val csvP = processorApi.create (csvPsd, flowInstance.id, ClientId).futureValue
 
+
     val dgPToSbsPConnectionConfig = ConnectionConfig (
       flowInstance.id,
       Connectable (dgP.id, FlowComponent.ProcessorType, flowInstance.id),
@@ -171,13 +174,13 @@ class ExternalProcessorISpec extends ExternalProcessorBehaviour {
       Set ("success"),
       Set ("failure")
     )
-
     validateCreateConnectionToExternalProcessor (connectionApi,
       ioPortApi,
       processorApi,
       dgPToSbsPConnectionConfig,
       dgP.id,
-      sbsP.id)
+      sbsP.id,
+      ReadSchemaId)
 
     val sbsPToCsvPConnectionConfig = ConnectionConfig (
       flowInstance.id,
@@ -189,10 +192,26 @@ class ExternalProcessorISpec extends ExternalProcessorBehaviour {
       processorApi,
       sbsPToCsvPConnectionConfig,
       csvP.id,
-      sbsP.id)
+      sbsP.id,
+      ReadSchemaId)
 
     validateRemoveExternalProcessor(processorApi, sbsP.id, flowInstance.id, sbsP.processorType, sbsP.version)
 
+  }
+
+  "Instantiation of Flow with an external processor" should "be valid" taggedAs IT in {
+    val flowTemplate = flowApi.templates().futureValue.find(_.name == FlowTemplateName).get
+    val flowInstance = flowApi.instantiate(flowTemplate.id, ClientId).futureValue
+    validateFlowInstanceWithExternalProcessor(flowApi, flowInstance, flowTemplate.name)
+    flowApi.remove(flowInstance.id, flowInstance.version, ClientId, true).map(deleteOk => assert(deleteOk))
+  }
+
+  object NifiFlowApiBehaviours extends FlowApiBehaviors
+
+  "Run of Flow with an external processor" should "be valid" taggedAs IT in {
+    val flowTemplate = flowApi.templates().futureValue.find(_.name == FlowTemplateName).get
+    NifiFlowApiBehaviours.validateRun(flowApi, flowTemplate.id, true)
+    Future(assert(true))
   }
 
 }
@@ -207,22 +226,26 @@ trait ExternalProcessorBehaviour extends AsyncFlowUnitSpec {
                                                   processorApi: ProcessorApiService,
                                                   connectionConfig: ConnectionConfig,
                                                   sourceProcessorId: String,
-                                                  externalProcessorId: String): Connection = {
+                                                  externalProcessorId: String,
+                                                  readSchemaId: String): Connection = {
     val connection = connectionApi.create(connectionConfig, ClientId).futureValue
 
-    val outputPort = ioPortApi.outputPort(connection.config.destination.id).futureValue
+    val rootOutputPort = ioPortApi.outputPort(connection.relatedConnections.head.config.destination.id).futureValue
+    val flowOutputPort = ioPortApi.outputPort(connection.config.destination.id).futureValue
 
     val receiverArgs = ExternalProcessorProperties
-      .nifiReceiverWithArgs(NifiApiConfig.BaseUiUrl, outputPort.name)
+      .nifiReceiverWithArgs(NifiApiConfig.BaseUiUrl, rootOutputPort.name)
 
     val externalProcessor = processorApi.instance(externalProcessorId).futureValue
 
     assert(externalProcessor.properties(ExternalProcessorProperties.ReceiverKey) == receiverArgs)
-    assert(externalProcessor.properties(ExternalProcessorProperties.RootOutputConnectionKey).toObject[Connection].id ==
-      connection.relatedConnections.head.id)
+    assert(externalProcessor.properties(ExternalProcessorProperties.RootOutputConnectionIdKey) == connection.relatedConnections.head.id)
+    assert(externalProcessor.properties(ExternalProcessorProperties.OutputPortNameKey) == flowOutputPort.name)
 
     assert(connection.config.source.componentType == FlowComponent.ProcessorType)
     assert(connection.config.destination.componentType == FlowComponent.OutputPortType)
+
+    assert(externalProcessor.properties(CoreProperties.ReadSchemaIdKey) == readSchemaId)
     connection
   }
 
@@ -231,22 +254,27 @@ trait ExternalProcessorBehaviour extends AsyncFlowUnitSpec {
                                                     processorApi: ProcessorApiService,
                                                     connectionConfig: ConnectionConfig,
                                                     destinationProcessorId: String,
-                                                    externalProcessorId: String): Connection = {
+                                                    externalProcessorId: String,
+                                                    readSchemaId: String): Connection = {
     val connection = connectionApi.create(connectionConfig, ClientId).futureValue
 
-    val inputPort = ioPortApi.inputPort(connection.config.source.id).futureValue
+    val rootInputPort = ioPortApi.inputPort(connection.relatedConnections.head.config.source.id).futureValue
+    val flowInputPort = ioPortApi.inputPort(connection.config.source.id).futureValue
 
     val senderArgs = ExternalProcessorProperties
-      .nifiSenderWithArgs(NifiApiConfig.BaseUiUrl, inputPort.name)
+      .nifiSenderWithArgs(NifiApiConfig.BaseUiUrl, rootInputPort.name)
 
     val externalProcessor = processorApi.instance(externalProcessorId).futureValue
 
     assert(externalProcessor.properties(ExternalProcessorProperties.SenderKey) == senderArgs)
-    assert(externalProcessor.properties(ExternalProcessorProperties.RootInputConnectionKey).toObject[Connection].id ==
-      connection.relatedConnections.head.id)
+    assert(externalProcessor.properties(ExternalProcessorProperties.RootInputConnectionIdKey) == connection.relatedConnections.head.id)
+    assert(externalProcessor.properties(ExternalProcessorProperties.InputPortNameKey) == flowInputPort.name)
 
     assert(connection.config.source.componentType == FlowComponent.InputPortType)
     assert(connection.config.destination.componentType == FlowComponent.ProcessorType)
+
+    val destinationProcessor = processorApi.instance(externalProcessorId).futureValue
+    assert(destinationProcessor.properties(CoreProperties.ReadSchemaIdKey) == readSchemaId)
     connection
   }
 
@@ -282,9 +310,11 @@ trait ExternalProcessorBehaviour extends AsyncFlowUnitSpec {
 
 
   def validateFlowInstanceWithExternalProcessor(flowApi: FlowApiService,
-                                                flowInstance: FlowInstance): FlowInstance = {
+                                                flowInstance: FlowInstance,
+                                                flowName: String): FlowInstance = {
     val externalProcessor =
       flowInstance.processors.find(_.processorType == RemoteProcessor.ExternalProcessorType).get
+    assert(flowInstance.name == flowName)
 
     assert(flowInstance.connections.size == 2)
 
@@ -303,9 +333,8 @@ trait ExternalProcessorBehaviour extends AsyncFlowUnitSpec {
     assert(rootOutputConnection.config.source.componentType == FlowComponent.OutputPortType)
     assert(rootOutputConnection.config.destination.componentType == FlowComponent.OutputPortType)
     assert(rootOutputConnection.config.source.id == flowOutputConnection.config.destination.id)
-    assert(rootOutputConnection.config.source.name == rootOutputConnection.config.destination.name)
-    assert(rootOutputConnection.config.destination.name == flowOutputConnection.config.destination.name)
-
+    assert(rootOutputConnection.config.source.name == flowOutputConnection.config.destination.name)
+    assert(rootOutputConnection.config.source.name == externalProcessor.properties(ExternalProcessorProperties.OutputPortNameKey))
 
     val fromExternalProcessorConnection =
       flowInstance.connections
@@ -322,8 +351,8 @@ trait ExternalProcessorBehaviour extends AsyncFlowUnitSpec {
     assert(rootInputConnection.config.source.componentType == FlowComponent.InputPortType)
     assert(rootInputConnection.config.destination.componentType == FlowComponent.InputPortType)
     assert(rootInputConnection.config.destination.id == flowInputConnection.config.source.id)
-    assert(rootInputConnection.config.source.name == rootInputConnection.config.destination.name)
-    assert(rootInputConnection.config.source.name == flowInputConnection.config.source.name)
+    assert(rootInputConnection.config.destination.name == flowInputConnection.config.source.name)
+    assert(rootInputConnection.config.destination.name == externalProcessor.properties(ExternalProcessorProperties.InputPortNameKey))
 
     flowInstance
   }
@@ -340,11 +369,11 @@ trait ExternalProcessorBehaviour extends AsyncFlowUnitSpec {
       version,
       ClientId).futureValue)
 
-
     recoverToExceptionIf[HttpException] {
       processorApi.instance(processorId)
     }.map(ex => assert(ex.errorResponse.httpStatusCode == 404))
 
   }
+
 
 }
