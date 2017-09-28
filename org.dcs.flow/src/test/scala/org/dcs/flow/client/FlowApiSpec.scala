@@ -121,32 +121,32 @@ class FlowApiSpec extends FlowApiBehaviors {
     validateFlowRetrieval(flowClient, FlowInstanceId, ClientId)
   }
 
-  "Flow Deletion" must "be valid" in {
-
-    val processGroupPath: Path = Paths.get(this.getClass.getResource("process-group.json").toURI)
-    val deleteFlowPath: Path = Paths.get(this.getClass.getResource("delete-flow.json").toURI)
-
-    val flowClient = spy(new NifiFlowApi())
-
-    doReturn(Future.successful(jsonFromFile(processGroupPath.toFile)))
-      .when(flowClient)
-      .getAsJson(
-        Matchers.eq(NifiFlowClient.processGroupsPath(FlowInstanceId)),
-        Matchers.any[List[(String, String)]],
-        Matchers.any[List[(String, String)]]
-      )
-
-
-    doReturn(Future.successful(jsonFromFile(deleteFlowPath.toFile)))
-      .when(flowClient)
-      .deleteAsJson(
-        Matchers.eq(NifiFlowClient.processGroupsPath(FlowInstanceId)),
-        Matchers.any[List[(String, String)]],
-        Matchers.any[List[(String, String)]]
-      )
-
-    validateFlowDeletion(flowClient, FlowInstanceId, 1, ClientId)
-  }
+//  "Flow Deletion" must "be valid" in {
+//
+//    val processGroupPath: Path = Paths.get(this.getClass.getResource("process-group.json").toURI)
+//    val deleteFlowPath: Path = Paths.get(this.getClass.getResource("delete-flow.json").toURI)
+//
+//    val flowClient = spy(new NifiFlowApi())
+//
+//    doReturn(Future.successful(jsonFromFile(processGroupPath.toFile)))
+//      .when(flowClient)
+//      .getAsJson(
+//        Matchers.eq(NifiFlowClient.processGroupsPath(FlowInstanceId)),
+//        Matchers.any[List[(String, String)]],
+//        Matchers.any[List[(String, String)]]
+//      )
+//
+//
+//    doReturn(Future.successful(jsonFromFile(deleteFlowPath.toFile)))
+//      .when(flowClient)
+//      .deleteAsJson(
+//        Matchers.eq(NifiFlowClient.processGroupsPath(FlowInstanceId)),
+//        Matchers.any[List[(String, String)]],
+//        Matchers.any[List[(String, String)]]
+//      )
+//
+//    validateFlowDeletion(flowClient, FlowInstanceId, 1, ClientId)
+//  }
 }
 
 class FlowApiISpec extends FlowApiBehaviors
