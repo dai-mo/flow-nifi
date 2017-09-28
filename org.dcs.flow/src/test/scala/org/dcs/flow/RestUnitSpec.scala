@@ -21,18 +21,7 @@ trait FlowTestUtil {
   }
 }
 
-object DetailedLoggingFilter {
-  private val LOG = LoggerFactory.getLogger(classOf[DetailedLoggingFilter].getName)
-}
 
-class DetailedLoggingFilter extends ClientRequestFilter {
-
-  @throws[IOException]
-  override def filter(requestContext: ClientRequestContext): Unit = {
-    if(requestContext != null && requestContext.getEntity != null)
-      DetailedLoggingFilter.LOG.info(requestContext.getEntity.toString)
-  }
-}
 
 trait FlowBaseUnitSpec extends Matchers
   with OptionValues

@@ -28,13 +28,14 @@ class IOPortApiISpec extends IOPortApiBehaviours {
   flowApi.requestFilter(new LoggingFilter)
   flowApi.requestFilter(new DetailedLoggingFilter)
 
-  "Input port creation / deletion" must "be valid" taggedAs IT in {
+  "Input port creation / update / deletion" must "be valid" taggedAs IT in {
     validateInputPortCreationDeletion(ioPortApi, flowApi)
   }
 
-  "Output port creation / deletion" must "be valid" taggedAs IT in {
+  "Output port creation / update / deletion" must "be valid" taggedAs IT in {
     validateOutputPortCreationDeletion(ioPortApi, flowApi)
   }
+
 }
 
 trait IOPortApiBehaviours extends FlowUnitSpec {
@@ -46,13 +47,20 @@ trait IOPortApiBehaviours extends FlowUnitSpec {
     var flow = flowClient.create("InputPortTest", ClientId).futureValue
     val iconn = ioPortClient.createInputPort(flow.id, ClientId).futureValue
     assert(iconn.config.source.name.nonEmpty)
-    assert(iconn.config.source.name == iconn.config.destination.name)
 
+    val rootInputPort = ioPortApi.inputPort(iconn.config.source.id).futureValue
     val pgInputPort = ioPortApi.inputPort(iconn.config.destination.id).futureValue
     assert(iconn.config.destination.name == pgInputPort.name)
 
+    val inputPortName = "iportname"
+    val updatedPgInputPort =
+      ioPortApi.updateInputPortName(inputPortName,  pgInputPort.id, ClientId).futureValue
+    assert(updatedPgInputPort.name == inputPortName)
+
+    assert(ioPortApi.start(rootInputPort.id, rootInputPort.`type`, ClientId).futureValue)
+    assert(ioPortApi.stop(rootInputPort.id, rootInputPort.`type`, ClientId).futureValue)
+
     assert(connectionApi.removeRootInputPortConnection(iconn,
-      iconn.version,
       ClientId).
       futureValue)
 
@@ -63,13 +71,20 @@ trait IOPortApiBehaviours extends FlowUnitSpec {
     val flow = flowClient.create("OutputPortTest", ClientId).futureValue
     val oconn = ioPortClient.createOutputPort(flow.id, ClientId).futureValue
     assert(oconn.config.source.name.nonEmpty)
-    assert(oconn.config.source.name == oconn.config.destination.name)
 
+    val rootOutputPort = ioPortApi.outputPort(oconn.config.destination.id).futureValue
     val pgOutputPort = ioPortApi.outputPort(oconn.config.source.id).futureValue
     assert(oconn.config.source.name == pgOutputPort.name)
 
+    val outputPortName = "oportname"
+    val updatedPgOutputPort =
+      ioPortApi.updateOutputPortName(outputPortName,  pgOutputPort.id, ClientId).futureValue
+    assert(updatedPgOutputPort.name == outputPortName)
+
+    assert(ioPortApi.start(rootOutputPort.id, rootOutputPort.`type`, ClientId).futureValue)
+    assert(ioPortApi.stop(rootOutputPort.id, rootOutputPort.`type`, ClientId).futureValue)
+
     assert(connectionApi.removeRootOutputPortConnection(oconn,
-      oconn.version,
       ClientId).
       futureValue)
 

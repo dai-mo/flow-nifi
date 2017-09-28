@@ -4,10 +4,11 @@ import java.nio.file.{Path, Paths}
 import java.util.UUID
 import javax.ws.rs.core.MediaType
 
-import org.dcs.api.service.{FlowComponent, FlowInstance, FlowTemplate}
+import org.dcs.api.service.{FlowApiService, FlowComponent, FlowInstance, FlowTemplate}
 import org.dcs.commons.error.HttpException
-import org.dcs.flow.nifi.{NifiFlowApi, NifiFlowClient, NifiProcessorClient}
-import org.dcs.flow.{FlowBaseUnitSpec, FlowUnitSpec}
+import org.dcs.flow.nifi._
+import org.dcs.flow.{DetailedLoggingFilter, FlowBaseUnitSpec, FlowUnitSpec, IT}
+import org.glassfish.jersey.filter.LoggingFilter
 import org.mockito.Matchers
 import org.mockito.Mockito._
 import org.scalatest.FlatSpec
@@ -25,6 +26,8 @@ object FlowApiSpec {
 
   val TemplateId = "a49eb70c-42e9-4736-86da-7193e1c892eb"
   val FlowInstanceId = "67a976ee-015b-1000-a69b-9a30ef4b8adc"
+
+  val FlowName = "CleanGBIFDataWithPFields"
 
   val ClientId: String = UUID.randomUUID().toString
 
@@ -115,38 +118,74 @@ class FlowApiSpec extends FlowApiBehaviors {
       )
 
 
-    validateFlowRetrieval(flowClient, FlowInstanceId)
+    validateFlowRetrieval(flowClient, FlowInstanceId, ClientId)
   }
 
-  "Flow Deletion" must "be valid" in {
+//  "Flow Deletion" must "be valid" in {
+//
+//    val processGroupPath: Path = Paths.get(this.getClass.getResource("process-group.json").toURI)
+//    val deleteFlowPath: Path = Paths.get(this.getClass.getResource("delete-flow.json").toURI)
+//
+//    val flowClient = spy(new NifiFlowApi())
+//
+//    doReturn(Future.successful(jsonFromFile(processGroupPath.toFile)))
+//      .when(flowClient)
+//      .getAsJson(
+//        Matchers.eq(NifiFlowClient.processGroupsPath(FlowInstanceId)),
+//        Matchers.any[List[(String, String)]],
+//        Matchers.any[List[(String, String)]]
+//      )
+//
+//
+//    doReturn(Future.successful(jsonFromFile(deleteFlowPath.toFile)))
+//      .when(flowClient)
+//      .deleteAsJson(
+//        Matchers.eq(NifiFlowClient.processGroupsPath(FlowInstanceId)),
+//        Matchers.any[List[(String, String)]],
+//        Matchers.any[List[(String, String)]]
+//      )
+//
+//    validateFlowDeletion(flowClient, FlowInstanceId, 1, ClientId)
+//  }
+}
 
-    val processGroupPath: Path = Paths.get(this.getClass.getResource("process-group.json").toURI)
-    val deleteFlowPath: Path = Paths.get(this.getClass.getResource("delete-flow.json").toURI)
+class FlowApiISpec extends FlowApiBehaviors
+  with ProcessorApiBehaviors
+  with ProvenanceApiBehaviours {
+  import FlowApiSpec._
 
-    val flowClient = spy(new NifiFlowApi())
+  val flowClient = new NifiFlowApi
+  flowClient.requestFilter(new LoggingFilter)
+  flowClient.requestFilter(new DetailedLoggingFilter)
 
-    doReturn(Future.successful(jsonFromFile(processGroupPath.toFile)))
-      .when(flowClient)
-      .getAsJson(
-        Matchers.eq(NifiFlowClient.processGroupsPath(FlowInstanceId)),
-        Matchers.any[List[(String, String)]],
-        Matchers.any[List[(String, String)]]
-      )
+  val processorClient = new NifiProcessorApi
 
+  val provenanceClient = new NifiProvenanceApi
 
-    doReturn(Future.successful(jsonFromFile(deleteFlowPath.toFile)))
-      .when(flowClient)
-      .deleteAsJson(
-        Matchers.eq(NifiFlowClient.processGroupsPath(FlowInstanceId)),
-        Matchers.any[List[(String, String)]],
-        Matchers.any[List[(String, String)]]
-      )
+  val ClientId: String = UUID.randomUUID().toString
 
-    validateFlowDeletion(flowClient, FlowInstanceId, 1, ClientId)
+  "Flow Instantiation" must "be valid  for existing template id" taggedAs IT in {
+    val templateId = flowClient.templates().futureValue.find(t => t.name == FlowName).get.getId
+    var fi = validateFlowInstantiation(flowClient, FlowName, templateId, ClientId)
+    fi = validateFlowRetrieval(flowClient, fi.getId, ClientId)
+    validateFlowInstance(fi)
+    validateFlowDeletion(flowClient, fi.getId, fi.version, ClientId)
   }
+
+  "Flow Instantiation" must "be invalid for non-existing template id" taggedAs IT in {
+    validateNonExistingFlowInstantiation(flowClient, ClientId)
+  }
+
+  "Flow Instance State Change" must "result in valid state" taggedAs IT in {
+    val templateId = flowClient.templates().futureValue.find(t => t.name == FlowName).get.getId
+    validateRun(flowClient, templateId)
+  }
+
+
 }
 
 trait FlowApiBehaviors extends FlowUnitSpec {
+  import FlowApiSpec._
 
   val invalidTemplateId = "invalid-template-id"
   val flowInstanceId = "3f948eeb-61d8-4f47-81f4-fff5cac50ed8"
@@ -177,8 +216,8 @@ trait FlowApiBehaviors extends FlowUnitSpec {
     }
   }
 
-  def validateFlowRetrieval(flowClient: NifiFlowClient, flowInstanceId: String): FlowInstance = {
-    val flowInstance = flowClient.instance(flowInstanceId).futureValue
+  def validateFlowRetrieval(flowClient: NifiFlowClient, flowInstanceId: String, clientId: String): FlowInstance = {
+    val flowInstance = flowClient.instance(flowInstanceId, clientId).futureValue
     assert(flowInstance.processors.size == 4)
     assert(flowInstance.connections.size == 3)
     flowInstance
@@ -189,23 +228,39 @@ trait FlowApiBehaviors extends FlowUnitSpec {
     assert(flowInstance.connections.size == 3)
   }
 
-  def validateFlowDeletion(flowClient: NifiFlowClient, flowInstanceId: String, version: Long, clientId: String) {
-    assert(flowClient.remove(flowInstanceId, version, clientId).futureValue)
+  def validateFlowDeletion(flowClient: FlowApiService, flowInstanceId: String, version: Long, clientId: String, hasExternal: Boolean = false) {
+    assert(flowClient.remove(flowInstanceId, version, clientId, hasExternal).futureValue)
   }
 
-  def validateStart(flowClient: NifiFlowClient, flowInstanceId: String): FlowInstance = {
-    val flowInstance = flowClient.start(flowInstanceId).futureValue
+  def validateStart(flowClient: FlowApiService, flowInstanceId: String, clientId: String): FlowInstance = {
+    val flowInstance = flowClient.start(flowInstanceId, clientId).futureValue
     assert(flowInstance.state == NifiProcessorClient.StateRunning)
-    val processors = flowClient.instance(flowInstanceId).futureValue.processors
+    val processors = flowClient.instance(flowInstanceId, clientId).futureValue.processors
     processors.foreach(p => p.status == NifiProcessorClient.StateRunning)
     flowInstance
   }
 
-  def validateStop(flowClient: NifiFlowClient, flowInstanceId: String): FlowInstance = {
-    val flowInstance = flowClient.stop(flowInstanceId).futureValue
+  def validateStop(flowClient: FlowApiService, flowInstanceId: String, clientId: String): FlowInstance = {
+    val flowInstance = flowClient.stop(flowInstanceId, clientId).futureValue
     assert(flowInstance.state == NifiProcessorClient.StateStopped)
-    val processors = flowClient.instance(flowInstanceId).futureValue.processors
+    val processors = flowClient.instance(flowInstanceId, clientId).futureValue.processors
     processors.foreach(p => p.status == NifiProcessorClient.StateStopped)
     flowInstance
+  }
+
+  def validateRun(flowClient: FlowApiService,
+                  templateId: String,
+                  hasExternal: Boolean = false): Unit = {
+    // Instantiate a flow instance from an existing flow template
+    var flowInstance = flowClient.instantiate(templateId, ClientId).futureValue
+    // Start the flow
+    flowInstance = validateStart(flowClient, flowInstance.id, ClientId)
+    // Wait a bit to allow processors to generate output
+    Thread.sleep(10000)
+    // Stop the flow
+    flowInstance = validateStop(flowClient, flowInstance.id, ClientId)
+    Thread.sleep(5000)
+    // Delete the flow
+    validateFlowDeletion(flowClient, flowInstance.getId, flowInstance.version, ClientId, hasExternal)
   }
 }

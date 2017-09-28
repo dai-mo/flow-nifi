@@ -3,11 +3,15 @@ package org.dcs.flow.nifi
 import java.util.UUID
 
 import org.apache.nifi.web.api.entity._
-import org.dcs.api.service.{Connection, FlowApiService, FlowInstance, FlowTemplate}
+import org.dcs.api.processor.{ExternalProcessorProperties, RemoteProcessor}
+import org.dcs.api.service.{Connection, FlowApiService, FlowInstance, FlowTemplate, ProcessorInstance}
+import org.dcs.api.util.NameId
+import org.dcs.commons.Control
 import org.dcs.commons.error.{ErrorConstants, HttpException}
 import org.dcs.commons.serde.JsonSerializerImplicits._
 import org.dcs.commons.ws.JerseyRestClient
-import org.dcs.flow.nifi.internal.{ProcessGroup, ProcessGroupHelper}
+import org.dcs.flow.nifi.internal.ProcessGroup
+import org.glassfish.jersey.filter.LoggingFilter
 
 import scala.collection.JavaConverters._
 import scala.concurrent.ExecutionContext.Implicits._
@@ -23,6 +27,10 @@ object NifiFlowClient {
 
   val connectionApi = new NifiConnectionApi
 
+  val processorApi = new NifiProcessorApi
+
+  val ioPortApi = new NifiIOPortApi
+
   val TemplatesPath = "/flow/templates"
 
   val SnippetsPath = "/controller/snippets"
@@ -35,6 +43,8 @@ object NifiFlowClient {
 
   def flowProcessGroupsPath(processGroupId: String) =
     "/flow/process-groups/" + processGroupId
+
+  val flowStatusPath = "/flow/status"
 
 }
 
@@ -54,7 +64,7 @@ trait NifiFlowClient extends FlowApiService with JerseyRestClient {
     }
 
   override def create(flowName: String, clientId: String): Future[FlowInstance] = {
-    createProcessGroup(flowName, ProcessGroupHelper.RootProcessGroupId, clientId)
+    createProcessGroup(flowName, FlowInstance.RootProcessGroupId, clientId)
       .map(pg =>  FlowInstance(pg.id, pg.getName, pg.version))
   }
 
@@ -71,25 +81,114 @@ trait NifiFlowClient extends FlowApiService with JerseyRestClient {
     template(flowTemplateId)
       .map { template =>
         if(template.isDefined)
-          template
+          template.get
         else
           throw new HttpException(ErrorConstants.DCS301.http(400))
       }
 
     for {
       t <- templateOrError()
-      pg <- createProcessGroup(t.get.name, ProcessGroupHelper.RootProcessGroupId, clientId)
-      i <- instance(flowTemplateId, pg)
+      pg <- createProcessGroup(t, FlowInstance.RootProcessGroupId, clientId)
+      i <- instance(t, pg, clientId)
     } yield i
   }
 
-  def instance(flowTemplateId: String, processGroup: ProcessGroup): Future[FlowInstance] =
-    postAsJson[InstantiateTemplateRequestEntity](path = templateInstancePath(processGroup.id), body = FlowInstanceRequest(flowTemplateId))
-      .map { response =>
-        FlowInstance(response.toObject[FlowEntity], processGroup.id, processGroup.getName, processGroup.version)
+  def hasSubFlowExternal(flowEntity: FlowEntity): Boolean = {
+    Option(flowEntity.getFlow.getProcessGroups).exists(_.size == 1) &&
+      Option(flowEntity.getFlow.getProcessors).exists(_.isEmpty) &&
+      Option(flowEntity.getFlow.getConnections).exists(_.size > 0)
+  }
+
+  def instance(flowTemplate: FlowTemplate, processGroup: ProcessGroup, clientId: String): Future[FlowInstance] =
+    postAsJson[InstantiateTemplateRequestEntity](path = templateInstancePath(processGroup.id), body = FlowInstanceRequest(flowTemplate.getId))
+      .flatMap { response =>
+        val flowEntity = response.toObject[FlowEntity]
+        if(hasSubFlowExternal(flowEntity))
+          instance(flowEntity.getFlow.getProcessGroups.asScala.head.getComponent.getId,
+            flowTemplate.name,
+            flowEntity.getFlow.getConnections.asScala.map(c => ConnectionAdapter(c)).toList,
+            clientId)
+
+        else
+          Future(FlowInstance(flowEntity, processGroup.id, processGroup.getName, processGroup.version))
       }
 
-  override def instance(flowInstanceId: String): Future[FlowInstance] = {
+
+
+  def updatePortName(c_fi_cid: (Connection, ProcessorInstance, String)): Future[ProcessorInstance] = {
+    if (c_fi_cid._2.properties(ExternalProcessorProperties.InputPortNameKey) == c_fi_cid._1.config.destination.name) {
+      val inputPortName = UUID.randomUUID().toString
+      ioPortApi.updateInputPortName(inputPortName,
+        c_fi_cid._1.config.source.id,
+        c_fi_cid._3)
+        .flatMap(port =>
+          processorApi.updateProperties(c_fi_cid._2.id,
+            Map(
+              ExternalProcessorProperties.RootInputConnectionIdKey -> c_fi_cid._1.id,
+              ExternalProcessorProperties.SenderKey ->
+                ExternalProcessorProperties.nifiSenderWithArgs(NifiApiConfig.BaseUiUrl, inputPortName)
+            ),
+            c_fi_cid._3))
+    } else if(c_fi_cid._2.properties(ExternalProcessorProperties.OutputPortNameKey) == c_fi_cid._1.config.source.name) {
+      val outputPortName = UUID.randomUUID().toString
+      ioPortApi.updateOutputPortName(outputPortName,
+        c_fi_cid._1.config.destination.id,
+        c_fi_cid._3)
+        .flatMap(port =>
+          processorApi.updateProperties(c_fi_cid._2.id,
+            Map(
+              ExternalProcessorProperties.RootOutputConnectionIdKey -> c_fi_cid._1.id,
+              ExternalProcessorProperties.ReceiverKey ->
+                ExternalProcessorProperties.nifiReceiverWithArgs(NifiApiConfig.BaseUiUrl, outputPortName)
+            ),
+            c_fi_cid._3))
+    } else
+      Future(c_fi_cid._2)
+  }
+
+  override def instance(flowInstanceId: String,
+                        flowInstanceName: String,
+                        externalConnections: List[Connection],
+                        clientId: String): Future[FlowInstance] = {
+    val flowInstance = instance(flowInstanceId)
+    flowInstance
+      .flatMap { fi =>
+        val cps: List[(Connection, ProcessorInstance, String)] = externalConnections
+          .flatMap(c => fi.processors.filter(p => p.processorType == RemoteProcessor.ExternalProcessorType)
+            .map(p => (c, p, clientId)))
+        Control.serialiseFutures(cps)(updatePortName)
+          .flatMap(pis => updateName(NameId(flowInstanceName), fi.id, fi.version, clientId))
+          .map(fi => FlowInstanceWithExternalConnections(fi, externalConnections))
+      }
+  }
+
+  def hasExternal(flowInstance: FlowInstance): Boolean =
+    flowInstance.processors.exists(_.processorType == RemoteProcessor.ExternalProcessorType)
+
+  override def instance(flowInstanceId: String, clientId: String): Future[FlowInstance] = {
+    instance(flowInstanceId)
+      .flatMap { flowInstance =>
+        if(hasExternal(flowInstance)) {
+          var rootConnections: List[Future[Connection]] = Nil
+          flowInstance.processors.filter(_.processorType == RemoteProcessor.ExternalProcessorType)
+            .foreach { p =>
+              val rootInputConnectionId = p.properties(ExternalProcessorProperties.RootInputConnectionIdKey)
+              val rootOutputConnectionId = p.properties(ExternalProcessorProperties.RootOutputConnectionIdKey)
+              if (rootInputConnectionId.nonEmpty)
+                rootConnections = connectionApi.find(rootInputConnectionId, clientId) :: rootConnections
+              if(rootOutputConnectionId.nonEmpty)
+                rootConnections = connectionApi.find(rootOutputConnectionId, clientId) :: rootConnections
+            }
+          Future.sequence(rootConnections)
+            .map(cs => FlowInstanceWithExternalConnections(flowInstance, cs))
+        }
+        else
+          Future(flowInstance)
+      }
+  }
+
+
+  private def instance(flowInstanceId: String): Future[FlowInstance] = {
     processGroupVersion(flowInstanceId)
       .flatMap { version =>
         getAsJson(path = flowProcessGroupsPath(flowInstanceId))
@@ -102,7 +201,7 @@ trait NifiFlowClient extends FlowApiService with JerseyRestClient {
   override def instances(): Future[List[FlowInstance]] = {
 
     def rootProcessGroup(): Future[ProcessGroupFlowEntity] = {
-      getAsJson(path = flowProcessGroupsPath(ProcessGroupHelper.RootProcessGroupId))
+      getAsJson(path = flowProcessGroupsPath(FlowInstance.RootProcessGroupId))
         .map { response =>
           response.toObject[ProcessGroupFlowEntity]
         }
@@ -121,47 +220,87 @@ trait NifiFlowClient extends FlowApiService with JerseyRestClient {
     } yield instanceList
   }
 
-  override def start(flowInstanceId: String): Future[FlowInstance] = {
-    putAsJson[FlowInstanceStartRequest](path = flowProcessGroupsPath(flowInstanceId),
-      body = FlowInstanceStartRequest(flowInstanceId, NifiProcessorClient.StateRunning))
+
+  override def updateName(name: String, flowInstanceId: String, version: Long, clientId: String): Future[FlowInstance] = {
+    putAsJson(path = processGroupsPath(flowInstanceId),
+      body = FlowInstanceUpdateRequest(name, flowInstanceId, version, clientId))
       .map { response =>
-        response.toObject[FlowInstance]
+        FlowInstance(response.toObject[ProcessGroupEntity])
       }
   }
 
-  override def stop(flowInstanceId: String): Future[FlowInstance] = {
-    putAsJson[FlowInstanceStartRequest](path = flowProcessGroupsPath(flowInstanceId),
-      body = FlowInstanceStartRequest(flowInstanceId, NifiProcessorClient.StateStopped))
-      .map { response =>
-        response.toObject[FlowInstance]
+
+  override def start(flowInstanceId: String, clientId: String): Future[FlowInstance] = {
+    instance(flowInstanceId, clientId)
+      .flatMap(fi => Future.sequence(fi.rootPortIdVersions.map(rpiv => ioPortApi.start(rpiv._1, rpiv._2, clientId)))
+        .map(_.forall(identity)))
+      .flatMap { _ =>
+        putAsJson[FlowInstanceStartRequest](path = flowProcessGroupsPath(flowInstanceId),
+          body = FlowInstanceStartRequest(flowInstanceId, NifiProcessorClient.StateRunning))
+          .map { response =>
+            response.toObject[FlowInstance]
+          }
+      }
+  }
+
+  override def stop(flowInstanceId: String, clientId: String): Future[FlowInstance] = {
+    instance(flowInstanceId, clientId)
+      .flatMap(fi => Future.sequence(fi.rootPortIdVersions.map(rpiv => ioPortApi.stop(rpiv._1, rpiv._2, clientId)))
+        .map(_.forall(identity)))
+      .flatMap { _ =>
+        putAsJson[FlowInstanceStartRequest](path = flowProcessGroupsPath(flowInstanceId),
+          body = FlowInstanceStartRequest(flowInstanceId, NifiProcessorClient.StateStopped))
+          .map { response =>
+            response.toObject[FlowInstance]
+          }
       }
   }
 
   private def remove(flowInstanceId: String, version: Long, clientId: String): Future[Boolean] = {
 
-    deleteAsJson(path = processGroupsPath(flowInstanceId),
-      queryParams = Revision.params(version, clientId))
-      .map { response =>
-        response != null
-      }
+    instance(flowInstanceId)
+      .map(fi => fi.connections)
+      .flatMap(cs => Future.sequence(cs.map(c => connectionApi.remove(c, clientId)))
+        .map(_.forall(identity)))
+      .flatMap( _ =>
+        deleteAsJson(path = processGroupsPath(flowInstanceId),
+          queryParams = Revision.params(version, clientId))
+          .map { response =>
+            response != null
+          }
+      )
   }
 
-  override def remove(flowInstanceId: String, version: Long, clientId: String, externalConnections: List[Connection] = Nil): Future[Boolean] = {
+  override def remove(flowInstanceId: String, version: Long, clientId: String, hasExternal: Boolean = false): Future[Boolean] = {
 
-    if(externalConnections.isEmpty)
-      remove(flowInstanceId, version, clientId)
+    if(hasExternal)
+      instance(flowInstanceId, clientId).flatMap(fi =>
+        remove(flowInstanceId, version, clientId, fi.externalConnections))
     else
-      Future.sequence(externalConnections.map(c => connectionApi.remove(c, c.version, clientId)))
-        .map(_.forall(identity))
-        .flatMap(deleteOk => if(deleteOk) remove(flowInstanceId, version, clientId) else Future(false))
+      remove(flowInstanceId, version, clientId)
+  }
+
+  override def remove(flowInstanceId: String, version: Long, clientId: String, externalConnections: List[Connection]): Future[Boolean] = {
+    Future.sequence(externalConnections.map(c => connectionApi.remove(c, clientId)))
+      .map(_.forall(identity))
+      .flatMap(deleteOk => if(deleteOk) remove(flowInstanceId, version, clientId) else Future(false))
+
   }
 
   def createProcessGroup(name: String, processGroupId: String, clientId: String): Future[ProcessGroup] = {
     postAsJson[ProcessGroupEntity](path = processGroupsPath(processGroupId) + "/process-groups",
-      body = FlowInstanceContainerRequest(name  + ProcessGroupHelper.NameIdDelimiter + UUID.randomUUID().toString, clientId))
+      body = FlowInstanceContainerRequest(NameId(name), clientId))
       .map { response =>
         ProcessGroup(response.toObject[ProcessGroupEntity])
       }
+  }
+
+  def createProcessGroup(flowTemplate: FlowTemplate, processGroupId: String, clientId: String): Future[ProcessGroup] = {
+
+    if(flowTemplate.hasExternal) {
+      processGroup(processGroupId)
+    } else
+      createProcessGroup(flowTemplate.name, processGroupId, clientId)
   }
 
   def processGroupVersion(flowInstanceId: String): Future[String] = {
@@ -170,4 +309,19 @@ trait NifiFlowClient extends FlowApiService with JerseyRestClient {
         response.toObject[ProcessGroupEntity].getRevision.getVersion.toString
       }
   }
+
+  def processGroup(flowInstanceId: String): Future[ProcessGroup] = {
+    getAsJson(path = processGroupsPath(flowInstanceId))
+      .map { response =>
+        ProcessGroup(response.toObject[ProcessGroupEntity])
+      }
+  }
+
+  def status(): Future[Boolean] = {
+    getAsJson(path = flowStatusPath)
+      .map { _ =>
+        true
+      }
+  }
+
 }

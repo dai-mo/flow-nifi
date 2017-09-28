@@ -2,7 +2,7 @@ package org.dcs.flow.nifi
 
 import org.apache.nifi.web.api.entity.{ProcessorEntity, ProcessorTypesEntity}
 import org.dcs.api.processor.{CoreProperties, RemoteProcessor}
-import org.dcs.api.service.{Connection, ProcessorApiService, ProcessorInstance, ProcessorServiceDefinition, ProcessorType}
+import org.dcs.api.service.{Connection, FlowComponent, ProcessorApiService, ProcessorInstance, ProcessorServiceDefinition, ProcessorType}
 import org.dcs.commons.SchemaAction
 import org.dcs.commons.error.{ErrorConstants, HttpException, ValidationErrorResponse}
 import org.dcs.commons.serde.JsonSerializerImplicits._
@@ -16,6 +16,10 @@ import scala.concurrent.Future
 class NifiProcessorApi extends NifiProcessorClient with NifiApiConfig
 
 object NifiProcessorClient  {
+
+  val flowApi = new NifiFlowApi
+  val connectionApi = new NifiConnectionApi
+
   val TypesPath = "/controller/processor-types"
 
   val StateNotStarted = "NOT_STARTED"
@@ -125,7 +129,7 @@ trait NifiProcessorClient extends ProcessorApiService with JerseyRestClient {
                             schemaActions: List[SchemaAction],
                             clientId: String): Future[List[ProcessorInstance]] = {
     val nifiFlowClient = new NifiFlowApi()
-    val updatedProcessorInstances = nifiFlowClient.instance(flowInstanceId).
+    val updatedProcessorInstances = nifiFlowClient.instance(flowInstanceId, clientId).
       map(flowInstance =>
         FlowGraph.executeBreadthFirstFromNode(flowInstance,
           FlowGraphTraversal.schemaUpdate(schemaActions), processorInstanceId)).
@@ -167,7 +171,26 @@ trait NifiProcessorClient extends ProcessorApiService with JerseyRestClient {
       }
   }
 
-  override def remove(processorId: String, version: Long, clientId: String): Future[Boolean] =
+  override def remove(processorId: String,
+                      flowInstanceId: String,
+                      processorType: String,
+                      version: Long,
+                      clientId: String): Future[Boolean] = {
+    if (processorType == RemoteProcessor.ExternalProcessorType)
+      flowApi.instance(flowInstanceId, clientId)
+        .flatMap(fi =>
+          Future.sequence(fi.connections
+            .filter(c => c.config.source.componentType == FlowComponent.ExternalProcessorType ||
+              c.config.destination.componentType == FlowComponent.ExternalProcessorType)
+            .map(c => connectionApi.remove(c, clientId)))
+            .map(_.forall(identity))
+        )
+        .flatMap(deleteOk => if(deleteOk) remove(processorId, version, clientId) else Future(false))
+    else
+      remove(processorId, version, clientId)
+  }
+
+  def remove(processorId: String, version: Long, clientId: String): Future[Boolean] =
     deleteAsJson(path = processorsPath(processorId),
       queryParams = Revision.params(version, clientId))
       .map { response =>

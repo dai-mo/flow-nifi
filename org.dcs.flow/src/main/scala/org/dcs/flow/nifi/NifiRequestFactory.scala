@@ -6,7 +6,7 @@ import org.apache.nifi.web.api.dto._
 import org.apache.nifi.web.api.dto.provenance.{ProvenanceDTO, ProvenanceRequestDTO}
 import org.apache.nifi.web.api.entity._
 import org.dcs.api.processor.RemoteProcessor
-import org.dcs.api.service.{Connectable, Connection, ConnectionConfig, ProcessorInstance, ProcessorServiceDefinition}
+import org.dcs.api.service.{Connectable, Connection, ConnectionConfig, IOPort, ProcessorInstance, ProcessorServiceDefinition}
 
 import scala.beans.BeanProperty
 import scala.collection.JavaConverters._
@@ -28,6 +28,7 @@ object Position {
 object Revision {
 
   val DefaultVersion: Long = -1
+  val InitialVersion: Long = 0
 
   def apply(version: Long, clientId: String): RevisionDTO = {
     val rev: RevisionDTO = new RevisionDTO
@@ -153,6 +154,19 @@ case class FlowInstanceStartRequest(@BeanProperty var id: String,
   def this() = this("", "")
 }
 
+object FlowInstanceUpdateRequest {
+  def apply(name: String, flowInstanceId: String, version: Long, clientId: String): ProcessGroupEntity = {
+    val pge = new ProcessGroupEntity
+    val pgdto = new ProcessGroupDTO
+    pgdto.setId(flowInstanceId)
+    pgdto.setName(name)
+
+    pge.setComponent(pgdto)
+
+    pge.setRevision(Revision(version, clientId))
+    pge
+  }
+}
 object ProcessorStateUpdateRequest {
   def apply(processorId: String, state: String, currentVersion: Long, clientId: String): ProcessorEntity = {
     val processor = new ProcessorDTO
@@ -256,21 +270,27 @@ object FlowConnectionRequest {
 
 object FlowPortRequest {
 
-
-  def apply(portType: String, portName: String, clientId: String): PortEntity = {
+  def apply(portId: String, portType: String, portName: String, version: Long, clientId: String): PortEntity = {
     val portEntity = new PortEntity
-    portEntity.setRevision(Revision(0L, clientId))
+    portEntity.setRevision(Revision(version, clientId))
     portEntity.setPortType(portType)
 
     val portDTO = new PortDTO
     portDTO.setName(portName)
+    if(portId.nonEmpty)
+      portDTO.setId(portId)
 
     portEntity.setComponent(portDTO)
     portEntity
   }
 
+  def apply(portType: String, portName: String, version: Long, clientId: String): PortEntity = {
+    apply("", portType, portName, version, clientId)
+  }
+
   def apply(portType: String, clientId: String): PortEntity =
-    apply(portType, UUID.randomUUID().toString, clientId)
+    apply("", portType, UUID.randomUUID().toString, 0L, clientId)
+
 }
 
 
@@ -288,6 +308,21 @@ object ProcessorProvenanceSearchRequest {
     val provenanceEntity = new ProvenanceEntity
     provenanceEntity.setProvenance(provenance)
     provenanceEntity
+  }
+}
+
+object IOPortStateRequest {
+  def apply(ioPortId: String, state: String, version: Long, clientId: String): PortEntity = {
+    val ioPortStateRequest = new PortEntity
+
+    ioPortStateRequest.setRevision(Revision(version, clientId))
+
+    val ioPortStateRequestDTO = new PortDTO
+    ioPortStateRequestDTO.setId(ioPortId)
+    ioPortStateRequestDTO.setState(state)
+
+    ioPortStateRequest.setComponent(ioPortStateRequestDTO)
+    ioPortStateRequest
   }
 }
 

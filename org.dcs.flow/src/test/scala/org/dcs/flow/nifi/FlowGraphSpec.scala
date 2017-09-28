@@ -50,7 +50,7 @@ class FlowGraphSpec extends FlowUnitSpec with NifiFlowGraphBehaviors {
         Matchers.any[List[(String, String)]]
       )
 
-    validateFlowGraphConstruction(flowClient, FlowInstanceId)
+    validateFlowGraphConstruction(flowClient, FlowInstanceId, ClientId)
   }
 
   "Flow Graph Schema Update" must "generate valid graph" in {
@@ -76,7 +76,7 @@ class FlowGraphSpec extends FlowUnitSpec with NifiFlowGraphBehaviors {
         Matchers.any[List[(String, String)]]
       )
 
-    validateProcessorSchemaUpdate(flowClient, FlowInstanceId)
+    validateProcessorSchemaUpdate(flowClient, FlowInstanceId, ClientId)
   }
 
   "Flow Graph Schema Update on disconnected flow" must "generate valid graph" in {
@@ -117,15 +117,15 @@ class FlowGraphSpec extends FlowUnitSpec with NifiFlowGraphBehaviors {
         Matchers.any[List[(String, String)]]
       )
 
-    validateProcessorFieldToSchema(flowClient, FlowInstanceId)
+    validateProcessorFieldToSchema(flowClient, FlowInstanceId, ClientId)
   }
 }
 
 trait NifiFlowGraphBehaviors extends FlowBaseUnitSpec {
   this: FlatSpec =>
 
-  def validateFlowGraphConstruction(flowClient: NifiFlowClient, flowInstanceId: String) {
-    val flowInstance = flowClient.instance(flowInstanceId).futureValue
+  def validateFlowGraphConstruction(flowClient: NifiFlowClient, flowInstanceId: String, clientId: String) {
+    val flowInstance = flowClient.instance(flowInstanceId, clientId).futureValue
     val graphNodes = FlowGraph.buildFlowGraph(flowInstance)
     assert(graphNodes.count(n => n.parents.isEmpty) == 1)
     assert(graphNodes.count(n => n.children.isEmpty) == 1)
@@ -151,8 +151,8 @@ trait NifiFlowGraphBehaviors extends FlowBaseUnitSpec {
     assert(filteredNode.processorInstance.id == NodeToFilterProcessorId)
   }
 
-  def validateProcessorSchemaUpdate(flowClient: NifiFlowClient, flowInstanceId: String): Unit = {
-    val flowInstance = flowClient.instance(flowInstanceId).futureValue
+  def validateProcessorSchemaUpdate(flowClient: NifiFlowClient, flowInstanceId: String, clientId: String): Unit = {
+    val flowInstance = flowClient.instance(flowInstanceId, clientId).futureValue
     val graphNodes = FlowGraph.buildFlowGraph(flowInstance)
 
     val RootNodeProcessorId = "3310c81f-015b-1000-fd45-876024494d80"
@@ -287,8 +287,8 @@ trait NifiFlowGraphBehaviors extends FlowBaseUnitSpec {
     
   }
 
-  def validateProcessorFieldToSchema(flowClient: NifiFlowClient, flowInstanceId: String): Unit = {
-    val flowInstance = flowClient.instance(flowInstanceId).futureValue
+  def validateProcessorFieldToSchema(flowClient: NifiFlowClient, flowInstanceId: String, clientId: String): Unit = {
+    val flowInstance = flowClient.instance(flowInstanceId, clientId).futureValue
     val graphNodes = FlowGraph.buildFlowGraph(flowInstance)
 
     val RootNodeProcessorId = "3310c81f-015b-1000-fd45-876024494d80"

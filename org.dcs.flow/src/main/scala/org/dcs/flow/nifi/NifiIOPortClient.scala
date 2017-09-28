@@ -5,7 +5,6 @@ import org.apache.nifi.web.api.entity.PortEntity
 import org.dcs.api.service._
 import org.dcs.commons.serde.JsonSerializerImplicits._
 import org.dcs.commons.ws.JerseyRestClient
-import org.dcs.flow.nifi.internal.ProcessGroupHelper
 
 import scala.concurrent.ExecutionContext.Implicits._
 import scala.concurrent.Future
@@ -40,7 +39,7 @@ trait NifiIOPortClient extends IOPortApiService with JerseyRestClient {
                            rootPortEntityId: String,
                            portName: String): (Connectable, Connectable) = {
     val processGroupPortConnectable = Connectable(portEntityId, portType, processGroupId, name = portName)
-    val rootPortConnectable = Connectable(rootPortEntityId, portType, ProcessGroupHelper.RootProcessGroupId, name = portName)
+    val rootPortConnectable = Connectable(rootPortEntityId, portType, FlowInstance.RootProcessGroupId, name = portName)
 
     portType match {
       case FlowComponent.InputPortType => (rootPortConnectable, processGroupPortConnectable)
@@ -64,14 +63,13 @@ trait NifiIOPortClient extends IOPortApiService with JerseyRestClient {
       body = FlowPortRequest(portType, clientId))
       .flatMap { response =>
         val portEntity = response.toObject[PortEntity]
-        postAsJson(path = portPath(ProcessGroupHelper.RootProcessGroupId),
+        postAsJson(path = portPath(FlowInstance.RootProcessGroupId),
           body = FlowPortRequest(portType,
-            portEntity.getComponent.getName,
             clientId))
           .flatMap { response =>
             val rootPortEntity = response.toObject[PortEntity]
             val portConnectables = connectables(portType, processGroupId, portEntity.getId, rootPortEntity.getId, rootPortEntity.getComponent.getName)
-            val connectionConfig = ConnectionConfig(ProcessGroupHelper.RootProcessGroupId,
+            val connectionConfig = ConnectionConfig(FlowInstance.RootProcessGroupId,
               portConnectables._1,
               portConnectables._2,
               Set(),
@@ -91,39 +89,92 @@ trait NifiIOPortClient extends IOPortApiService with JerseyRestClient {
     createPort(FlowComponent.OutputPortType, outputPortsCreatePath, processGroupId, clientId)
   }
 
-  override def deleteInputPort(rootPortId: String,
-                               inputPortId: String,
-                               version: Long,
-                               clientId: String): Future[Boolean] = {
-    deleteInputPort(rootPortId, version, clientId)
-      .flatMap(iport => deleteInputPort(inputPortId, iport.get.version, clientId)
-        .map(_.isDefined))
-  }
-
-  override def deleteInputPort(inputPortId: String, version: Long, clientId: String): Future[Option[IOPort]] = {
-    deleteAsJson(path = inputPortsPath(inputPortId),
-      queryParams = Revision.params(version, clientId))
+  def updateName(portName: String,
+                 portId: String,
+                 portType: String,
+                 portPath: (String) => String,
+                 clientId: String): Future[IOPort] = {
+    putAsJson(path = portPath(portId),
+      body = FlowPortRequest(portId, portType, portName, Revision.InitialVersion,  clientId))
       .map { response =>
-        Option(IOPortAdapter(response.toObject[PortEntity]))
+        IOPortAdapter(response.toObject[PortEntity])
       }
   }
 
-  override def deleteOutputPort(outputPortId: String,
-                                rootPortId: String,
-                                version: Long,
-                                clientId: String): Future[Boolean] = {
+  override def updateInputPortName(portName: String,
+                                   portId: String,
+                                   clientId: String): Future[IOPort] = {
+    updateName(portName, portId, FlowComponent.InputPortType, inputPortsPath, clientId)
+  }
 
-    deleteOutputPort(outputPortId, version, clientId)
-      .flatMap(oport => deleteOutputPort(rootPortId, oport.get.version, clientId)
+  override def updateOutputPortName(portName: String,
+                                    portId: String,
+                                    clientId: String): Future[IOPort] = {
+    updateName(portName, portId, FlowComponent.OutputPortType, outputPortsPath, clientId)
+  }
+
+  override def deleteInputPort(rootPortId: String, inputPortId: String, clientId: String): Future[Boolean] = {
+    deleteInputPort(rootPortId, clientId)
+      .flatMap(iport => deleteInputPort(inputPortId, clientId)
+        .map(_.isDefined))
+  }
+
+  override def deleteInputPort(inputPortId: String, clientId: String): Future[Option[IOPort]] = {
+    inputPort(inputPortId)
+      .flatMap { iport =>
+        deleteAsJson(path = inputPortsPath(inputPortId),
+          queryParams = Revision.params(iport.version, clientId))
+          .map { response =>
+            Option(IOPortAdapter(response.toObject[PortEntity]))
+          }
+      }
+  }
+
+  override def deleteOutputPort(outputPortId: String, rootPortId: String, clientId: String): Future[Boolean] = {
+
+    deleteOutputPort(outputPortId, clientId)
+      .flatMap(oport => deleteOutputPort(rootPortId, clientId)
         .map(_.isDefined))
 
   }
 
-  override def deleteOutputPort(outputPortId: String, version: Long, clientId: String):  Future[Option[IOPort]] = {
-    deleteAsJson(path = outputPortsPath(outputPortId),
-      queryParams = Revision.params(version, clientId))
-      .map { response =>
-        Option(IOPortAdapter(response.toObject[PortEntity]))
+  override def deleteOutputPort(outputPortId: String, clientId: String):  Future[Option[IOPort]] = {
+    outputPort(outputPortId)
+      .flatMap { oport =>
+        deleteAsJson(path = outputPortsPath(outputPortId),
+          queryParams = Revision.params(oport.version, clientId))
+          .map { response =>
+            Option(IOPortAdapter(response.toObject[PortEntity]))
+          }
       }
+  }
+
+  def stateChange(ioPort: IOPort,
+                  portPath: (String) => String,
+                  state: String,
+                  clientId: String): Future[Boolean] = {
+
+    putAsJson(path = portPath(ioPort.id),
+      body = IOPortStateRequest(ioPort.id, state, ioPort.version, clientId))
+      .map(_.toObject[PortEntity].getComponent.getState == state)
+
+  }
+
+  def stateChange(portId: String, portType: String, state: String, clientId: String): Future[Boolean] = {
+    portType match {
+      case FlowComponent.InputPortType => inputPort(portId)
+        .flatMap(port => stateChange(port, inputPortsPath _ , state, clientId))
+      case FlowComponent.OutputPortType => outputPort(portId)
+        .flatMap(port => stateChange(port, outputPortsPath _ , state, clientId))
+      case _ => Future(false)
+    }
+  }
+
+  def start(portId: String, portType: String, clientId: String): Future[Boolean] = {
+    stateChange(portId, portType, NifiProcessorClient.StateRunning, clientId)
+  }
+
+  def stop(portId: String, portType: String, clientId: String): Future[Boolean] = {
+    stateChange(portId, portType, NifiProcessorClient.StateStopped, clientId)
   }
 }
