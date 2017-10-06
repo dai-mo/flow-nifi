@@ -5,3 +5,4 @@ org.dcs.nifi.processors.WorkerStatefulProcessor
 org.dcs.nifi.processors.SinkProcessor
 org.dcs.nifi.processors.SinkStatefulProcessor
 org.dcs.nifi.processors.ExternalProcessor
+org.dcs.nifi.processors.InputPortIngestionProcessor

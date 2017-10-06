@@ -7,11 +7,9 @@ import javax.ws.rs.core.MediaType
 import org.dcs.api.service.{FlowApiService, FlowComponent, FlowInstance, FlowTemplate}
 import org.dcs.commons.error.HttpException
 import org.dcs.flow.nifi._
-import org.dcs.flow.{DetailedLoggingFilter, FlowBaseUnitSpec, FlowUnitSpec, IT}
-import org.glassfish.jersey.filter.LoggingFilter
+import org.dcs.flow.{FlowUnitSpec, IT}
 import org.mockito.Matchers
 import org.mockito.Mockito._
-import org.scalatest.FlatSpec
 import org.slf4j.{Logger, LoggerFactory}
 
 import scala.concurrent.Future
@@ -155,8 +153,6 @@ class FlowApiISpec extends FlowApiBehaviors
   import FlowApiSpec._
 
   val flowClient = new NifiFlowApi
-  flowClient.requestFilter(new LoggingFilter)
-  flowClient.requestFilter(new DetailedLoggingFilter)
 
   val processorClient = new NifiProcessorApi
 

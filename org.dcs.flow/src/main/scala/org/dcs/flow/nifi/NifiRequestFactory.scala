@@ -71,6 +71,8 @@ object FlowProcessorRequest {
         if(psd.stateful) "SinkStatefulProcessor" else "SinkProcessor"
       case RemoteProcessor.ExternalProcessorType =>
         "ExternalProcessor"
+      case RemoteProcessor.InputPortIngestionType =>
+        "InputPortIngestionProcessor"
       case _ => throw new IllegalArgumentException("Unknown Processor Type : " + psd.processorType)
     })
   }

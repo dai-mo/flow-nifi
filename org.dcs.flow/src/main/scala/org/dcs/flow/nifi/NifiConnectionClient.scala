@@ -42,9 +42,6 @@ trait NifiConnectionClient extends ConnectionApiService with JerseyRestClient {
 
   import NifiConnectionClient._
 
-  this.requestFilter(new LoggingFilter)
-
-
   override def list(processGroupId: String): Future[List[Connection]] = {
     getAsJson(path = connectionsProcessGroupPath(processGroupId))
       .map { response =>

@@ -4,8 +4,7 @@ import java.util.UUID
 
 import org.dcs.api.service.{FlowApiService, IOPortApiService}
 import org.dcs.flow.nifi._
-import org.dcs.flow.{DetailedLoggingFilter, FlowUnitSpec, IT}
-import org.glassfish.jersey.filter.LoggingFilter
+import org.dcs.flow.{FlowUnitSpec, IT}
 
 object IOPortApiSpec {
   val ClientId = UUID.randomUUID().toString
@@ -21,12 +20,6 @@ class IOPortApiSpec {
 
 class IOPortApiISpec extends IOPortApiBehaviours {
   import IOPortApiSpec._
-
-  ioPortApi.requestFilter(new LoggingFilter)
-  ioPortApi.requestFilter(new DetailedLoggingFilter)
-
-  flowApi.requestFilter(new LoggingFilter)
-  flowApi.requestFilter(new DetailedLoggingFilter)
 
   "Input port creation / update / deletion" must "be valid" taggedAs IT in {
     validateInputPortCreationDeletion(ioPortApi, flowApi)
@@ -64,6 +57,10 @@ trait IOPortApiBehaviours extends FlowUnitSpec {
       ClientId).
       futureValue)
 
+    val currentFlow = flowClient.instance(flow.id, ClientId).futureValue
+
+    flowClient.remove(currentFlow.id, currentFlow.version, ClientId)
+
   }
 
   def validateOutputPortCreationDeletion(ioPortClient: IOPortApiService,
@@ -88,7 +85,9 @@ trait IOPortApiBehaviours extends FlowUnitSpec {
       ClientId).
       futureValue)
 
+    val currentFlow = flowClient.instance(flow.id, ClientId).futureValue
 
+    flowClient.remove(currentFlow.id, currentFlow.version, ClientId)
   }
 
 }

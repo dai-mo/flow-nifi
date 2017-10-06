@@ -29,9 +29,8 @@ object FlowTemplate {
     flowTemplate.setTimestamp(template.getTimestamp)
 
     val tNameWithArgs = WithArgs(template.getName)
-      flowTemplate.setName(tNameWithArgs.target)
-    val processorType = tNameWithArgs.contains(CoreProperties.ProcessorTypeKey)
-    if(processorType.contains(RemoteProcessor.ExternalProcessorType))
+    flowTemplate.setName(tNameWithArgs.target)
+    if(tNameWithArgs.exists(ExternalProcessorProperties.HasExternal))
       flowTemplate.setHasExternal(true)
 
     flowTemplate
@@ -168,46 +167,46 @@ object FlowInstanceWithExternalConnections {
     val eps = flowInstance.processors.filter(_.processorType == RemoteProcessor.ExternalProcessorType)
 
     eps.foreach { p =>
-          p.properties.get(ExternalProcessorProperties.RootInputConnectionIdKey)
-            .foreach { rcId =>
-              val rootConnection = externalConnections.find(_.id == rcId)
-              val flowConnection = rootConnection
-                .flatMap(rc => flowInstance.connections.find(_.config.source.id == rc.config.destination.id))
-              flowConnection.foreach(fc => flowInstance.setConnections(flowInstance.connections.filter(_.id != fc.id)))
+      p.properties.get(ExternalProcessorProperties.RootInputConnectionIdKey)
+        .foreach { rcId =>
+          val rootConnection = externalConnections.find(_.id == rcId)
+          val flowConnection = rootConnection
+            .flatMap(rc => flowInstance.connections.find(_.config.source.id == rc.config.destination.id))
+          flowConnection.foreach(fc => flowInstance.setConnections(flowInstance.connections.filter(_.id != fc.id)))
 
-              flowConnection.map { fc =>
-                val connectionConfig = ConnectionConfig(
-                  flowInstance.id,
-                  Connectable(p.id, FlowComponent.ExternalProcessorType, flowInstance.id),
-                  fc.config.destination,
-                  fc.config.selectedRelationships,
-                  fc.config.availableRelationships
-                )
-                rootConnection.foreach(rc => fc.setRelatedConnections(Set(rc)))
-                Connection(connectionConfig.genId(), connectionConfig.genId(), fc.version, connectionConfig, "", "", -1, List(), Set(fc))
-              }.foreach(c => flowInstance.setConnections(c :: flowInstance.connections))
-            }
-
-          p.properties.get(ExternalProcessorProperties.RootOutputConnectionIdKey)
-            .foreach { rcId =>
-              val rootConnection = externalConnections.find(_.id == rcId)
-              val flowConnection = rootConnection
-                .flatMap(rc => flowInstance.connections.find(_.config.destination.id == rc.config.source.id))
-              flowConnection.foreach(fc => flowInstance.setConnections(flowInstance.connections.filter(_.id != fc.id)))
-
-              flowConnection.map { fc =>
-                rootConnection.foreach(rc => fc.setRelatedConnections(Set(rc)))
-                val connectionConfig = ConnectionConfig(
-                  flowInstance.id,
-                  fc.config.source,
-                  Connectable(p.id, FlowComponent.ExternalProcessorType, flowInstance.id),
-                  fc.config.selectedRelationships,
-                  fc.config.availableRelationships
-                )
-                Connection(connectionConfig.genId(), connectionConfig.genId(), fc.version, connectionConfig, "", "", -1, List(), Set(fc))
-              }.foreach(c => flowInstance.setConnections(c :: flowInstance.connections))
-            }
+          flowConnection.map { fc =>
+            val connectionConfig = ConnectionConfig(
+              flowInstance.id,
+              Connectable(p.id, FlowComponent.ExternalProcessorType, flowInstance.id),
+              fc.config.destination,
+              fc.config.selectedRelationships,
+              fc.config.availableRelationships
+            )
+            rootConnection.foreach(rc => fc.setRelatedConnections(Set(rc)))
+            Connection(connectionConfig.genId(), connectionConfig.genId(), fc.version, connectionConfig, "", "", -1, List(), Set(fc))
+          }.foreach(c => flowInstance.setConnections(c :: flowInstance.connections))
         }
+
+      p.properties.get(ExternalProcessorProperties.RootOutputConnectionIdKey)
+        .foreach { rcId =>
+          val rootConnection = externalConnections.find(_.id == rcId)
+          val flowConnection = rootConnection
+            .flatMap(rc => flowInstance.connections.find(_.config.destination.id == rc.config.source.id))
+          flowConnection.foreach(fc => flowInstance.setConnections(flowInstance.connections.filter(_.id != fc.id)))
+
+          flowConnection.map { fc =>
+            rootConnection.foreach(rc => fc.setRelatedConnections(Set(rc)))
+            val connectionConfig = ConnectionConfig(
+              flowInstance.id,
+              fc.config.source,
+              Connectable(p.id, FlowComponent.ExternalProcessorType, flowInstance.id),
+              fc.config.selectedRelationships,
+              fc.config.availableRelationships
+            )
+            Connection(connectionConfig.genId(), connectionConfig.genId(), fc.version, connectionConfig, "", "", -1, List(), Set(fc))
+          }.foreach(c => flowInstance.setConnections(c :: flowInstance.connections))
+        }
+    }
 
     flowInstance
   }

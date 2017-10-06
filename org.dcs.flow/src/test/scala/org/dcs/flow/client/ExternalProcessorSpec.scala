@@ -28,18 +28,6 @@ object ExternalProcessorSpec {
   val connectionApi = new NifiConnectionApi
   val ioPortApi = new NifiIOPortApi
 
-  flowApi.requestFilter(new LoggingFilter)
-  flowApi.requestFilter(new DetailedLoggingFilter)
-
-  processorApi.requestFilter(new LoggingFilter)
-  processorApi.requestFilter(new DetailedLoggingFilter)
-
-//  connectionApi.requestFilter(new LoggingFilter)
-//  connectionApi.requestFilter(new DetailedLoggingFilter)
-//
-//  ioPortApi.requestFilter(new LoggingFilter)
-//  ioPortApi.requestFilter(new DetailedLoggingFilter)
-
   val dgPsd = ProcessorServiceDefinition(
     ServiceClassPrefix + DataGeneratorProcessorService,
     RemoteProcessor.IngestionProcessorType,
@@ -196,6 +184,13 @@ class ExternalProcessorISpec extends ExternalProcessorBehaviour {
       ReadSchemaId)
 
     validateRemoveExternalProcessor(processorApi, sbsP.id, flowInstance.id, sbsP.processorType, sbsP.version)
+      .flatMap { a =>
+        flowApi.remove(flowInstance.id,
+          flowInstance.version,
+          ClientId,
+          flowInstance.externalConnections)
+          .map(deleteOk =>  assert(deleteOk))
+      }
 
   }
 
