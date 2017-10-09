@@ -4,10 +4,9 @@ import java.util.UUID
 
 import org.dcs.api.processor.{CoreProperties, RemoteProcessor}
 import org.dcs.api.service._
-import org.dcs.commons.error.{ErrorConstants, HttpException}
-import org.dcs.flow.nifi.{FlowInstance => _, ProcessorInstance => _, _}
-import org.dcs.flow.{DetailedLoggingFilter, FlowUnitSpec, IT}
-import org.glassfish.jersey.filter.LoggingFilter
+import org.dcs.commons.error.HttpException
+import org.dcs.flow.nifi.{FlowInstance => _, ProcessorInstanceAdapter => _, _}
+import org.dcs.flow.{FlowUnitSpec, IT}
 
 
 /**
@@ -38,15 +37,6 @@ class FlowControlISpec extends FlowCreationBehaviours {
 
 
   override def beforeAll(): Unit = {
-    flowApi.requestFilter(new LoggingFilter)
-    flowApi.requestFilter(new DetailedLoggingFilter)
-
-    processorApi.requestFilter(new LoggingFilter)
-    processorApi.requestFilter(new DetailedLoggingFilter)
-
-    connectionApi.requestFilter(new LoggingFilter)
-    connectionApi.requestFilter(new DetailedLoggingFilter)
-
     flowInstance = validateFlowCreation(flowApi, ClientId)
   }
 

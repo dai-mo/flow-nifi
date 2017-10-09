@@ -32,7 +32,7 @@ trait FlowBaseUnitSpec extends Matchers
   with ScalaFutures {
 
   implicit val defaultPatience =
-    PatienceConfig(timeout = Span(5, Seconds), interval = Span(100, Millis))
+    PatienceConfig(timeout = Span(10, Seconds), interval = Span(100, Millis))
 
   // creates timeout in seconds for futures
   def timeout(secs: Int) =

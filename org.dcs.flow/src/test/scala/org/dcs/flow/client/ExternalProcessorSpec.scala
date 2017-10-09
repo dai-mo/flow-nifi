@@ -6,7 +6,7 @@ import org.dcs.api.processor.{CoreProperties, ExternalProcessorProperties, Remot
 import org.dcs.api.service._
 import org.dcs.commons.error.HttpException
 import org.dcs.flow._
-import org.dcs.flow.nifi.{ProcessorInstance => _, _}
+import org.dcs.flow.nifi.{ProcessorInstanceAdapter => _, _}
 import org.glassfish.jersey.filter.LoggingFilter
 import org.scalatest.Assertion
 
@@ -27,18 +27,6 @@ object ExternalProcessorSpec {
   val processorApi = new NifiProcessorApi
   val connectionApi = new NifiConnectionApi
   val ioPortApi = new NifiIOPortApi
-
-  flowApi.requestFilter(new LoggingFilter)
-  flowApi.requestFilter(new DetailedLoggingFilter)
-
-  processorApi.requestFilter(new LoggingFilter)
-  processorApi.requestFilter(new DetailedLoggingFilter)
-
-//  connectionApi.requestFilter(new LoggingFilter)
-//  connectionApi.requestFilter(new DetailedLoggingFilter)
-//
-//  ioPortApi.requestFilter(new LoggingFilter)
-//  ioPortApi.requestFilter(new DetailedLoggingFilter)
 
   val dgPsd = ProcessorServiceDefinition(
     ServiceClassPrefix + DataGeneratorProcessorService,
@@ -99,7 +87,11 @@ class ExternalProcessorISpec extends ExternalProcessorBehaviour {
       sbsP.id,
       ReadSchemaId)
 
-    val version = flowApi.instance(flowInstance.id, ClientId).futureValue.version
+    val updatedFlowInstance = flowApi.instance(flowInstance.id, ClientId).futureValue
+
+    validateFlowInstanceWithExternalProcessor(flowApi, updatedFlowInstance, flowInstance.name)
+
+    val version = updatedFlowInstance.version
 
     val dgPToSbsPConnection =
       Connection("", "", version, dgPToSbsPConnectionConfig, "", "", -1, List(), Set(outputPortConnection))
@@ -196,6 +188,13 @@ class ExternalProcessorISpec extends ExternalProcessorBehaviour {
       ReadSchemaId)
 
     validateRemoveExternalProcessor(processorApi, sbsP.id, flowInstance.id, sbsP.processorType, sbsP.version)
+      .flatMap { a =>
+        flowApi.remove(flowInstance.id,
+          flowInstance.version,
+          ClientId,
+          flowInstance.externalConnections)
+          .map(deleteOk =>  assert(deleteOk))
+      }
 
   }
 

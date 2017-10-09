@@ -42,9 +42,6 @@ trait NifiConnectionClient extends ConnectionApiService with JerseyRestClient {
 
   import NifiConnectionClient._
 
-  this.requestFilter(new LoggingFilter)
-
-
   override def list(processGroupId: String): Future[List[Connection]] = {
     getAsJson(path = connectionsProcessGroupPath(processGroupId))
       .map { response =>
@@ -67,6 +64,8 @@ trait NifiConnectionClient extends ConnectionApiService with JerseyRestClient {
         createConnectionToExternalProcessor(connectionConfig, clientId)
       case (FlowComponent.ExternalProcessorType, FlowComponent.ProcessorType) =>
         createConnectionFromExternalProcessor(connectionConfig, clientId)
+      case ( _ , FlowComponent.InputPortIngestionType) =>
+        createConnectionForInputPortIngestionProcessor(connectionConfig, clientId)
       case (FlowComponent.InputPortType, FlowComponent.InputPortType) |
            (FlowComponent.OutputPortType, FlowComponent.OutputPortType) |
            (FlowComponent.InputPortType, FlowComponent.ProcessorType) |
@@ -148,6 +147,29 @@ trait NifiConnectionClient extends ConnectionApiService with JerseyRestClient {
       }
   }
 
+  def createConnectionForInputPortIngestionProcessor(connectionConfig: ConnectionConfig, clientId: String): Future[Connection] = {
+
+    ioPortApi.createInputPort(connectionConfig.flowInstanceId, clientId)
+
+      .flatMap { iconn =>
+        val cc = ConnectionConfig(
+          connectionConfig.flowInstanceId,
+          iconn.config.destination,
+          connectionConfig.destination
+        )
+        createStdConnection(cc, clientId)
+          .flatMap { c =>
+            processorApi.updateProperties(connectionConfig.destination.id,
+              Map(ExternalProcessorProperties.RootInputConnectionIdKey -> iconn.id,
+                ExternalProcessorProperties.InputPortNameKey -> c.config.source.name),
+              clientId)
+              .flatMap (p => propagateSchema(connectionConfig.destination.id, c.config.flowInstanceId, clientId)
+                .map(pis => c.withConnection(iconn))
+              )
+          }
+      }
+  }
+
   override def createStdConnection(connectionConfig: ConnectionConfig, clientId: String): Future[Connection] = {
     postAsJson(path = connectionsProcessGroupPath(connectionConfig.flowInstanceId),
       body = FlowConnectionRequest(connectionConfig, clientId))
@@ -173,6 +195,8 @@ trait NifiConnectionClient extends ConnectionApiService with JerseyRestClient {
           case (FlowComponent.ProcessorType, FlowComponent.ExternalProcessorType) |
                (FlowComponent.ExternalProcessorType, FlowComponent.ProcessorType) =>
             removeExternalProcessorConnection(connection, clientId)
+          case ( _ , FlowComponent.InputPortIngestionType) =>
+            removeInputPortIngestionProcessorConnection(connection, clientId)
           case (FlowComponent.InputPortType, FlowComponent.InputPortType) =>
             emptyQueue(connection.id)
               .flatMap ( _=> removeRootInputPortConnection(connection, clientId))
@@ -227,6 +251,11 @@ trait NifiConnectionClient extends ConnectionApiService with JerseyRestClient {
 
   def removeExternalProcessorConnection(connection: Connection, clientId: String): Future[Boolean] = {
     unPropagateSchema(connection.config.source.id, connection.config.flowInstanceId, clientId)
+      .map(pis => true)
+  }
+
+  def removeInputPortIngestionProcessorConnection(connection: Connection, clientId: String): Future[Boolean] = {
+    unPropagateSchema(connection.config.destination.id, connection.config.flowInstanceId, clientId)
       .map(pis => true)
   }
 
@@ -314,6 +343,9 @@ trait NifiConnectionClient extends ConnectionApiService with JerseyRestClient {
 
   def checkDropRequestUntilFinished(connectionId: String, dropRequestId: String, checkCount: Int = 0): Future[DropRequest] = {
     import scala.concurrent._
+    // FIXME: Ugly hack to ensure that the drop request is valid.
+    //        Without this the first response of the drop request query
+    //        will be that the queue is empty which is incorrect
     blocking { Thread.sleep(1000) }
     getAsJson(path = connectionQueueDropRequestPath(connectionId, dropRequestId))
       .flatMap { response =>

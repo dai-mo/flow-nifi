@@ -2,7 +2,7 @@ package org.dcs.flow.nifi
 
 import org.apache.nifi.web.api.entity.{ProcessorEntity, ProcessorTypesEntity}
 import org.dcs.api.processor.{CoreProperties, RemoteProcessor}
-import org.dcs.api.service.{Connection, FlowComponent, ProcessorApiService, ProcessorInstance, ProcessorServiceDefinition, ProcessorType}
+import org.dcs.api.service.{Connection, ConnectionConfig, FlowComponent, ProcessorApiService, ProcessorInstance, ProcessorServiceDefinition, ProcessorType}
 import org.dcs.commons.SchemaAction
 import org.dcs.commons.error.{ErrorConstants, HttpException, ValidationErrorResponse}
 import org.dcs.commons.serde.JsonSerializerImplicits._
@@ -72,6 +72,18 @@ trait NifiProcessorClient extends ProcessorApiService with JerseyRestClient {
         response.toObject[ProcessorEntity]
       }
 
+  def finaliseProcessor(processorEntity: ProcessorEntity, clientId: String): Future[ProcessorEntity] =
+    ProcessorInstanceAdapter.valuesOrDefaults(processorEntity.getComponent.getConfig).get(CoreProperties.ProcessorTypeKey)
+      .map {
+          case RemoteProcessor.InputPortIngestionType =>
+            connectionApi.create(ConnectionConfig.inputPortIngestionConnection(processorEntity.getComponent.getParentGroupId,
+              processorEntity.getId,
+              processorEntity.getComponent.getName),
+              clientId)
+              .map(c => processorEntity)
+          case _ => Future(processorEntity)
+      }.getOrElse(Future(processorEntity))
+
   def autoTerminateAllRelationships(processorEntity: ProcessorEntity): Future[ProcessorEntity] =
     putAsJson(path = processorsPath(processorEntity.getId),
       body = FlowProcessorUpdateRequest(processorEntity.getComponent.getRelationships.asScala.map(_.getName).toSet, processorEntity))
@@ -94,7 +106,7 @@ trait NifiProcessorClient extends ProcessorApiService with JerseyRestClient {
           body = FlowProcessorUpdateRequest(relSet, processorEntity))
       }
       .map { response =>
-        ProcessorInstance(response.toObject[ProcessorEntity])
+        ProcessorInstanceAdapter(response.toObject[ProcessorEntity])
       }
 
 
@@ -105,14 +117,15 @@ trait NifiProcessorClient extends ProcessorApiService with JerseyRestClient {
     for {
       baseProcessor <- createBaseProcessor(processorServiceDefinition, processGroupId, clientId)
       stubProcessor <- updateProcessorClass(processorServiceDefinition.processorServiceClassName, baseProcessor)
-      finalisedProcessor <- autoTerminateAllRelationships(stubProcessor)
-    } yield ProcessorInstance(finalisedProcessor)
+      finalisedProcessor <- finaliseProcessor(stubProcessor, clientId)
+      autoTerminatedProcessor <- autoTerminateAllRelationships(finalisedProcessor)
+    } yield ProcessorInstanceAdapter(autoTerminatedProcessor)
 
   override def update(processorInstance: ProcessorInstance, clientId: String): Future[ProcessorInstance] = {
     putAsJson(path = processorsPath(processorInstance.id),
       body = FlowProcessorUpdateRequest(processorInstance, clientId))
       .map { response =>
-        ProcessorInstance(response.toObject[ProcessorEntity])
+        ProcessorInstanceAdapter(response.toObject[ProcessorEntity])
       }
   }
 
@@ -150,7 +163,7 @@ trait NifiProcessorClient extends ProcessorApiService with JerseyRestClient {
   override def instance(processorId: String): Future[ProcessorInstance] =
     getAsJson(processorsPath(processorId))
       .map { response =>
-        ProcessorInstance(response.toObject[ProcessorEntity])
+        ProcessorInstanceAdapter(response.toObject[ProcessorEntity])
       }
 
   override def start(processorId: String, version: Long, clientId: String): Future[ProcessorInstance] =
@@ -167,7 +180,7 @@ trait NifiProcessorClient extends ProcessorApiService with JerseyRestClient {
 
     putAsJson(path = processorsPath(processorId), body = ProcessorStateUpdateRequest(processorId, state, currentVersion, clientId))
       .map { response =>
-        ProcessorInstance(response.toObject[ProcessorEntity])
+        ProcessorInstanceAdapter(response.toObject[ProcessorEntity])
       }
   }
 
@@ -176,12 +189,11 @@ trait NifiProcessorClient extends ProcessorApiService with JerseyRestClient {
                       processorType: String,
                       version: Long,
                       clientId: String): Future[Boolean] = {
-    if (processorType == RemoteProcessor.ExternalProcessorType)
+    if (ProcessorInstance.isExternal(processorType))
       flowApi.instance(flowInstanceId, clientId)
         .flatMap(fi =>
           Future.sequence(fi.connections
-            .filter(c => c.config.source.componentType == FlowComponent.ExternalProcessorType ||
-              c.config.destination.componentType == FlowComponent.ExternalProcessorType)
+            .filter(_.config.isExternal())
             .map(c => connectionApi.remove(c, clientId)))
             .map(_.forall(identity))
         )

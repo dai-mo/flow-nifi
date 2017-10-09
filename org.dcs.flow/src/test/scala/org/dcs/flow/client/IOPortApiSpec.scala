@@ -4,8 +4,9 @@ import java.util.UUID
 
 import org.dcs.api.service.{FlowApiService, IOPortApiService}
 import org.dcs.flow.nifi._
-import org.dcs.flow.{DetailedLoggingFilter, FlowUnitSpec, IT}
-import org.glassfish.jersey.filter.LoggingFilter
+import org.dcs.flow.{FlowUnitSpec, IT}
+
+import scala.concurrent.blocking
 
 object IOPortApiSpec {
   val ClientId = UUID.randomUUID().toString
@@ -21,13 +22,6 @@ class IOPortApiSpec {
 
 class IOPortApiISpec extends IOPortApiBehaviours {
   import IOPortApiSpec._
-
-  ioPortApi.requestFilter(new LoggingFilter)
-  ioPortApi.requestFilter(new DetailedLoggingFilter)
-
-  flowApi.requestFilter(new LoggingFilter)
-  flowApi.requestFilter(new DetailedLoggingFilter)
-
   "Input port creation / update / deletion" must "be valid" taggedAs IT in {
     validateInputPortCreationDeletion(ioPortApi, flowApi)
   }
@@ -35,7 +29,6 @@ class IOPortApiISpec extends IOPortApiBehaviours {
   "Output port creation / update / deletion" must "be valid" taggedAs IT in {
     validateOutputPortCreationDeletion(ioPortApi, flowApi)
   }
-
 }
 
 trait IOPortApiBehaviours extends FlowUnitSpec {
@@ -60,9 +53,15 @@ trait IOPortApiBehaviours extends FlowUnitSpec {
     assert(ioPortApi.start(rootInputPort.id, rootInputPort.`type`, ClientId).futureValue)
     assert(ioPortApi.stop(rootInputPort.id, rootInputPort.`type`, ClientId).futureValue)
 
+    blocking { Thread.sleep(2000) }
+
     assert(connectionApi.removeRootInputPortConnection(iconn,
       ClientId).
       futureValue)
+
+    val currentFlow = flowClient.instance(flow.id, ClientId).futureValue
+
+    flowClient.remove(currentFlow.id, currentFlow.version, ClientId)
 
   }
 
@@ -84,11 +83,15 @@ trait IOPortApiBehaviours extends FlowUnitSpec {
     assert(ioPortApi.start(rootOutputPort.id, rootOutputPort.`type`, ClientId).futureValue)
     assert(ioPortApi.stop(rootOutputPort.id, rootOutputPort.`type`, ClientId).futureValue)
 
+    blocking { Thread.sleep(2000) }
+
     assert(connectionApi.removeRootOutputPortConnection(oconn,
       ClientId).
       futureValue)
 
+    val currentFlow = flowClient.instance(flow.id, ClientId).futureValue
 
+    flowClient.remove(currentFlow.id, currentFlow.version, ClientId)
   }
 
 }

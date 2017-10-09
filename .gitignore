@@ -178,3 +178,4 @@ tramp
 # Misc
 .cache-main
 .cache-tests
+log
