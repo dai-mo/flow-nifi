@@ -6,7 +6,7 @@ import org.dcs.api.processor.{CoreProperties, ExternalProcessorProperties, Remot
 import org.dcs.api.service._
 import org.dcs.commons.error.HttpException
 import org.dcs.flow._
-import org.dcs.flow.nifi.{ProcessorInstance => _, _}
+import org.dcs.flow.nifi.{ProcessorInstanceAdapter => _, _}
 import org.glassfish.jersey.filter.LoggingFilter
 import org.scalatest.Assertion
 
@@ -87,7 +87,11 @@ class ExternalProcessorISpec extends ExternalProcessorBehaviour {
       sbsP.id,
       ReadSchemaId)
 
-    val version = flowApi.instance(flowInstance.id, ClientId).futureValue.version
+    val updatedFlowInstance = flowApi.instance(flowInstance.id, ClientId).futureValue
+
+    validateFlowInstanceWithExternalProcessor(flowApi, updatedFlowInstance, flowInstance.name)
+
+    val version = updatedFlowInstance.version
 
     val dgPToSbsPConnection =
       Connection("", "", version, dgPToSbsPConnectionConfig, "", "", -1, List(), Set(outputPortConnection))

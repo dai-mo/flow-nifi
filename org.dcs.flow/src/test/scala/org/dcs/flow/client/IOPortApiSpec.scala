@@ -6,6 +6,8 @@ import org.dcs.api.service.{FlowApiService, IOPortApiService}
 import org.dcs.flow.nifi._
 import org.dcs.flow.{FlowUnitSpec, IT}
 
+import scala.concurrent.blocking
+
 object IOPortApiSpec {
   val ClientId = UUID.randomUUID().toString
 
@@ -20,7 +22,6 @@ class IOPortApiSpec {
 
 class IOPortApiISpec extends IOPortApiBehaviours {
   import IOPortApiSpec._
-
   "Input port creation / update / deletion" must "be valid" taggedAs IT in {
     validateInputPortCreationDeletion(ioPortApi, flowApi)
   }
@@ -28,7 +29,6 @@ class IOPortApiISpec extends IOPortApiBehaviours {
   "Output port creation / update / deletion" must "be valid" taggedAs IT in {
     validateOutputPortCreationDeletion(ioPortApi, flowApi)
   }
-
 }
 
 trait IOPortApiBehaviours extends FlowUnitSpec {
@@ -52,6 +52,8 @@ trait IOPortApiBehaviours extends FlowUnitSpec {
 
     assert(ioPortApi.start(rootInputPort.id, rootInputPort.`type`, ClientId).futureValue)
     assert(ioPortApi.stop(rootInputPort.id, rootInputPort.`type`, ClientId).futureValue)
+
+    blocking { Thread.sleep(2000) }
 
     assert(connectionApi.removeRootInputPortConnection(iconn,
       ClientId).
@@ -80,6 +82,8 @@ trait IOPortApiBehaviours extends FlowUnitSpec {
 
     assert(ioPortApi.start(rootOutputPort.id, rootOutputPort.`type`, ClientId).futureValue)
     assert(ioPortApi.stop(rootOutputPort.id, rootOutputPort.`type`, ClientId).futureValue)
+
+    blocking { Thread.sleep(2000) }
 
     assert(connectionApi.removeRootOutputPortConnection(oconn,
       ClientId).

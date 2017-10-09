@@ -5,7 +5,7 @@ import java.util.UUID
 import org.dcs.api.processor.{CoreProperties, RemoteProcessor}
 import org.dcs.api.service._
 import org.dcs.commons.error.HttpException
-import org.dcs.flow.nifi.{FlowInstance => _, ProcessorInstance => _, _}
+import org.dcs.flow.nifi.{FlowInstance => _, ProcessorInstanceAdapter => _, _}
 import org.dcs.flow.{FlowUnitSpec, IT}
 
 

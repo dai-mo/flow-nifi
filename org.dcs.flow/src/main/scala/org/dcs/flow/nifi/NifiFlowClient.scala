@@ -154,7 +154,7 @@ trait NifiFlowClient extends FlowApiService with JerseyRestClient {
     flowInstance
       .flatMap { fi =>
         val cps: List[(Connection, ProcessorInstance, String)] = externalConnections
-          .flatMap(c => fi.processors.filter(p => p.processorType == RemoteProcessor.ExternalProcessorType)
+          .flatMap(c => fi.externalProcessors
             .map(p => (c, p, clientId)))
         Control.serialiseFutures(cps)(updatePortName)
           .flatMap(pis => updateName(NameId(flowInstanceName), fi.id, fi.version, clientId))
@@ -162,22 +162,21 @@ trait NifiFlowClient extends FlowApiService with JerseyRestClient {
       }
   }
 
-  def hasExternal(flowInstance: FlowInstance): Boolean =
-    flowInstance.processors.exists(_.processorType == RemoteProcessor.ExternalProcessorType)
+
 
   override def instance(flowInstanceId: String, clientId: String): Future[FlowInstance] = {
     instance(flowInstanceId)
       .flatMap { flowInstance =>
-        if(hasExternal(flowInstance)) {
+        if(flowInstance.hasExternalProcessors) {
           var rootConnections: List[Future[Connection]] = Nil
-          flowInstance.processors.filter(_.processorType == RemoteProcessor.ExternalProcessorType)
+          flowInstance.externalProcessors
             .foreach { p =>
-              val rootInputConnectionId = p.properties(ExternalProcessorProperties.RootInputConnectionIdKey)
-              val rootOutputConnectionId = p.properties(ExternalProcessorProperties.RootOutputConnectionIdKey)
-              if (rootInputConnectionId.nonEmpty)
-                rootConnections = connectionApi.find(rootInputConnectionId, clientId) :: rootConnections
-              if(rootOutputConnectionId.nonEmpty)
-                rootConnections = connectionApi.find(rootOutputConnectionId, clientId) :: rootConnections
+              p.properties.get(ExternalProcessorProperties.RootInputConnectionIdKey)
+                .filter(_.trim.nonEmpty)
+                .foreach(ricid => rootConnections = connectionApi.find(ricid, clientId) :: rootConnections)
+              p.properties.get(ExternalProcessorProperties.RootOutputConnectionIdKey)
+                .filter(_.trim.nonEmpty)
+                .foreach(rocid => rootConnections = connectionApi.find(rocid, clientId) :: rootConnections)
             }
           Future.sequence(rootConnections)
             .map(cs => FlowInstanceWithExternalConnections(flowInstance, cs))
