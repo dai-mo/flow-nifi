@@ -25,6 +25,9 @@ object Dependencies {
   lazy val flywayVersion          = "4.0.3"
   lazy val apacheCommonsVersion   = "1.3.2"
 
+  lazy val avroVersion 						= "1.8.1"
+  lazy val kaaVersion             = "0.10.1"
+
   lazy val mockitoVersion         = "1.10.19"
   lazy val scalaTestVersion       = "3.0.0"
   lazy val juiVersion             = "0.11"
@@ -53,6 +56,15 @@ object Dependencies {
   val slf4jSimple     = "org.slf4j"                  			 % "slf4j-simple"                				% slf4jVersion
   val logbackCore     = "ch.qos.logback"                   % "logback-core"                       % logbackVersion
   val logbackClassic  =	"ch.qos.logback"                   % "logback-classic"                    % logbackVersion
+
+  val avro            = "org.apache.avro"                  % "avro"                               % avroVersion
+  val kaaLog          = "org.kaaproject.kaa.server.common" % "log-shared"                         % kaaVersion
+  val kaaUtils        = "org.kaaproject.kaa.server.common" % "utils"                              % kaaVersion
+  val nifiS2S         = "org.apache.nifi"                  % "nifi-site-to-site-client"           % nifiVersion
+
+  val sl4japi         = "org.slf4j"                        % "slf4j-api"                          % slf4jVersion
+  val log4josl4j      = "org.slf4j"                        % "log4j-over-slf4j"                   % slf4jVersion
+
 
   val quillCassandra  = "io.getquill"                      %% "quill-cassandra"                   % quillVersion
   val quillJdbc       = "io.getquill"                      %% "quill-jdbc"                        % quillJdbcVersion
@@ -147,6 +159,21 @@ object Dependencies {
     mockitoAll       % "test",
     scalaTest        % "test",
     junitInterface   % "test"
+  )
+
+  val kaaDependencies = Seq(
+    nifiS2S,
+    kaaLog           % "provided",
+    kaaUtils         % "provided",
+    sl4japi          % "provided",
+    log4josl4j       % "provided",
+
+    logbackCore      % "provided",
+    logbackClassic   % "provided",
+
+    mockitoCore      % "test",
+    mockitoAll       % "test",
+    scalaTest        % "test"
   )
 
 }
