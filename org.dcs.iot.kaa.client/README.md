@@ -33,5 +33,6 @@ This client corresponds to the [Data Collection](http://kaaproject.github.io/kaa
 
 To run this client,
  * Add an SDK Profile to the target application and generate / download the SDK as described [here](http://kaaproject.github.io/kaa/docs/v0.10.0/Programming-guide/Your-first-Kaa-application/#generate-sdk)
- * Copy the downloaded jar to the lib folder of this project
+ * Create _lib_ directory in this project and copy the downloaded jar to this directory
+ * Copy the _DataCollectionClient.scala_ file to the _src/main/scala/org/dcs/iot/kaa/client_ directory
  * Execute `sbt "kaaiot-client/runMain org.dcs.iot.kaa.client.DataCollectionClient"` in the root directory of the parent dcs_nifi project.
