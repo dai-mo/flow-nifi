@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>org.dcs</groupId>
-    <artifactId>org.dcs.oit.kaa.avro</artifactId>
+    <artifactId>org.dcs.iot.kaa</artifactId>
     <version>0.1.0</version>
 
     <name>DCS Kaa IoT Avro Compilation</name>
