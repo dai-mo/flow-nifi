@@ -24,6 +24,7 @@ object Dependencies {
   lazy val mysqlConnectorVersion  = "5.1.38"
   lazy val flywayVersion          = "4.0.3"
   lazy val apacheCommonsVersion   = "1.3.2"
+  lazy val jerseyVersion  				= "2.22.1"
 
   lazy val avroVersion 						= "1.8.1"
   lazy val kaaVersion             = "0.10.1"
@@ -56,6 +57,7 @@ object Dependencies {
   val slf4jSimple     = "org.slf4j"                  			 % "slf4j-simple"                				% slf4jVersion
   val logbackCore     = "ch.qos.logback"                   % "logback-core"                       % logbackVersion
   val logbackClassic  =	"ch.qos.logback"                   % "logback-classic"                    % logbackVersion
+  val jerseyMultipart = "org.glassfish.jersey.media"       % "jersey-media-multipart"             % jerseyVersion
 
   val avro            = "org.apache.avro"                  % "avro"                               % avroVersion
   val kaaLog          = "org.kaaproject.kaa.server.common" % "log-shared"                         % kaaVersion
@@ -127,6 +129,7 @@ object Dependencies {
 
   // Collect Rest Client Dependencies
   val flowDependencies = Seq(
+    jerseyMultipart,
     dcsCommons,
     dcsApi,
     nifiClientDTO,
