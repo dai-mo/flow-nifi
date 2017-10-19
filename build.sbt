@@ -11,7 +11,7 @@ lazy val dcsnifi = (project in file(".")).
   settings(commonSettings: _*).
   settings(
     name := projectName
-  ).aggregate(servicesapi, services, processors, flow, repo)
+  ).aggregate(servicesapi, services, processors, flow, repo, kaaiot, kaaiotClient)
 
 
 
@@ -20,12 +20,12 @@ lazy val servicesApiProjectID   = "servicesapi"
 
 lazy val servicesapi =
   BaseProject(servicesApiProjectID, servicesApiProjectName).
-  settings(commonSettings: _*).
-  settings(
-    name := servicesApiProjectName,
-    moduleName := servicesApiProjectName,
-    libraryDependencies ++= servicesApiDependencies
-  )
+    settings(commonSettings: _*).
+    settings(
+      name := servicesApiProjectName,
+      moduleName := servicesApiProjectName,
+      libraryDependencies ++= servicesApiDependencies
+    )
 
 
 lazy val servicesProjectName = "org.dcs.nifi.services"
@@ -33,13 +33,13 @@ lazy val servicesProjectID   = "services"
 
 lazy val services =
   BaseProject(servicesProjectID, servicesProjectName).
-  settings(commonSettings: _*).
-  dependsOn(servicesapi).
-  settings(
-    name := servicesProjectName,
-    moduleName := servicesProjectName,
-    libraryDependencies ++= (Seq(dcsNifiServApi % version.value) ++ servicesDependencies)
-  )
+    settings(commonSettings: _*).
+    dependsOn(servicesapi).
+    settings(
+      name := servicesProjectName,
+      moduleName := servicesProjectName,
+      libraryDependencies ++= (Seq(dcsNifiServApi % version.value) ++ servicesDependencies)
+    )
 
 
 lazy val flowProjectName = "org.dcs.flow"
@@ -47,12 +47,12 @@ lazy val flowProjectID   = "flow"
 
 lazy val flow =
   BaseProject(flowProjectID, flowProjectName).
-  settings(commonSettings: _*).
-  settings(
-    name := flowProjectName,
-    moduleName := flowProjectName,
-    libraryDependencies ++= flowDependencies
-  )
+    settings(commonSettings: _*).
+    settings(
+      name := flowProjectName,
+      moduleName := flowProjectName,
+      libraryDependencies ++= flowDependencies
+    )
 
 
 
@@ -61,13 +61,13 @@ lazy val processorsProjectID   = "processors"
 
 lazy val processors =
   BaseProject(processorsProjectID, processorsProjectName).
-  settings(commonSettings: _*).
-  dependsOn(services).
-  settings(
-    name := processorsProjectName,
-    moduleName := processorsProjectName,
-    libraryDependencies ++= (Seq(dcsNifiServices % version.value % "provided") ++ processorsDependencies)
-  )
+    settings(commonSettings: _*).
+    dependsOn(services).
+    settings(
+      name := processorsProjectName,
+      moduleName := processorsProjectName,
+      libraryDependencies ++= (Seq(dcsNifiServices % version.value % "provided") ++ processorsDependencies)
+    )
 
 
 lazy val repoProjectName = "org.dcs.nifi.repo"
@@ -82,7 +82,48 @@ lazy val repo =
       libraryDependencies ++= repoDependencies
     )
 
+lazy val kaaProjectName = "org.dcs.iot.kaa"
+lazy val kaaProjectID   = "kaaiot"
 
+lazy val kaaiot =
+  BaseProject(kaaProjectID, kaaProjectName).
+    settings(commonSettings: _*).
+    settings(
+      name := kaaProjectName,
+      moduleName := kaaProjectName,
+      libraryDependencies ++= kaaDependencies
+    ).
+    settings(resolvers += "Kaa IoT Repository" at "http://repository.kaaproject.org/repository/internal/").
+    settings(resolvers += "Twitter Twttr Repository" at "http://maven.twttr.com/").
+    settings(
+      Seq
+      (
+        unmanagedSourceDirectories in Compile += baseDirectory.value / "generated" / "src" / "main" / "java",
+        unmanagedSourceDirectories in Test += baseDirectory.value / "generated" / "src" / "test" / "java"
+      )
+    ).
+    settings(test in assembly := {}).
+    settings(publishArtifact in (Compile, assembly) := true).
+    // FIXME: This creates a jar in the target dir. as,
+    //        'name'-assembly-'version'.jar
+    //        but publishes it as,
+    //        'name'-'version'-assembly.jar
+    settings(artifact in (Compile, assembly) ~= { art =>
+      art.copy(`classifier` = Some("assembly"))
+    }).
+    settings(addArtifact(artifact in (Compile, assembly), assembly).settings: _*)
+
+lazy val kaaClientProjectName = "org.dcs.iot.kaa.client"
+lazy val kaaClientProjectID   = "kaaiot-client"
+
+lazy val kaaiotClient =
+  BaseProject(kaaClientProjectID , kaaClientProjectName).
+    settings(commonSettings: _*).
+    settings(
+      name := kaaClientProjectName,
+      moduleName := kaaClientProjectName,
+      libraryDependencies ++= kaaClientDependencies
+    )
 
 // ------- Versioning , Release Section --------
 

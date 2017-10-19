@@ -1,0 +1,28 @@
+{
+  "namespace":"org.dcs.iot.kaa",
+  "type":"record",
+  "name":"NifiS2SConfiguration",
+  "fields":[
+    {
+      "name":"baseUrl",
+      "displayName":"Base Url",
+      "weight":0.75,
+      "default":"http://dcs-nifi",
+      "type":"string"
+    },
+    {
+      "name":"port",
+      "displayName":"Port",
+      "weight":0.25,
+      "default":8090,
+      "type":"int"
+    },
+    {
+      "name":"inputPortId",
+      "displayName":"Input Port Id",
+      "weight":0.75,
+      "default":"",
+      "type":"string"
+    }
+  ]
+}
