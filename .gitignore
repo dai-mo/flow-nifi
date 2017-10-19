@@ -180,3 +180,6 @@ tramp
 .cache-tests
 log
 generated
+key.private
+key.public
+state.properties

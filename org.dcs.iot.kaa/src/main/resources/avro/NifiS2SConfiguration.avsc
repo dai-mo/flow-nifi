@@ -4,41 +4,25 @@
   "name":"NifiS2SConfiguration",
   "fields":[
     {
-      "name":"nifiServers",
-      "displayName":"Nifi Server List",
-      "minRowCount":1,
-      "type":{
-        "type":"array",
-        "items":{
-          "namespace":"org.dcs.iot.kaa",
-          "type":"record",
-          "name":"NifiServer",
-          "fields":[
-            {
-              "name":"host",
-              "displayName":"Host",
-              "weight":0.75,
-              "default":"localhost",
-              "type":"string"
-            },
-            {
-              "name":"port",
-              "displayName":"Port",
-              "weight":0.25,
-              "default":8090,
-              "type":"int"
-            },
-            {
-              "name":"inputPortName",
-              "displayName":"Input Port Name",
-              "weight":0.75,
-              "default":"",
-              "type":"string"
-            }
-
-          ]
-        }
-      }
+      "name":"baseUrl",
+      "displayName":"Base Url",
+      "weight":0.75,
+      "default":"http://dcs-nifi",
+      "type":"string"
+    },
+    {
+      "name":"port",
+      "displayName":"Port",
+      "weight":0.25,
+      "default":8090,
+      "type":"int"
+    },
+    {
+      "name":"inputPortId",
+      "displayName":"Input Port Id",
+      "weight":0.75,
+      "default":"",
+      "type":"string"
     }
   ]
 }

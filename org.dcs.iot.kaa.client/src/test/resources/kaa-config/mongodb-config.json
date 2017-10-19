@@ -1,0 +1,31 @@
+{
+  "mongoServers": [
+    {
+      "host": "dcs-mongodb",
+      "port": 27017
+    }
+  ],
+  "mongoCredentials": [],
+  "dbName": "kaa",
+  "connectionsPerHost": {
+    "int": 30
+  },
+  "maxWaitTime": {
+    "int": 120000
+  },
+  "connectionTimeout": {
+    "int": 5000
+  },
+  "socketTimeout": {
+    "int": 0
+  },
+  "socketKeepalive": {
+    "boolean": false
+  },
+  "includeClientProfile": {
+    "boolean": false
+  },
+  "includeServerProfile": {
+    "boolean": false
+  }
+}

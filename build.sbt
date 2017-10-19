@@ -11,7 +11,7 @@ lazy val dcsnifi = (project in file(".")).
   settings(commonSettings: _*).
   settings(
     name := projectName
-  ).aggregate(servicesapi, services, processors, flow, repo, kaaiot)
+  ).aggregate(servicesapi, services, processors, flow, repo, kaaiot, kaaiotClient)
 
 
 
@@ -113,7 +113,17 @@ lazy val kaaiot =
     }).
     settings(addArtifact(artifact in (Compile, assembly), assembly).settings: _*)
 
+lazy val kaaClientProjectName = "org.dcs.iot.kaa.client"
+lazy val kaaClientProjectID   = "kaaiot-client"
 
+lazy val kaaiotClient =
+  BaseProject(kaaClientProjectID , kaaClientProjectName).
+    settings(commonSettings: _*).
+    settings(
+      name := kaaClientProjectName,
+      moduleName := kaaClientProjectName,
+      libraryDependencies ++= kaaClientDependencies
+    )
 
 // ------- Versioning , Release Section --------
 

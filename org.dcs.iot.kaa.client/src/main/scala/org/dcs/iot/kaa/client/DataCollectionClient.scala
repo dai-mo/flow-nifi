@@ -1,4 +1,4 @@
-package org.dcs.iot.kaa
+package org.dcs.iot.kaa.client
 
 import java.io.IOException
 

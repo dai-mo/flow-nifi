@@ -171,9 +171,21 @@ object Dependencies {
     logbackCore      % "provided",
     logbackClassic   % "provided",
 
+    dcsCommons       % "test",
     mockitoCore      % "test",
     mockitoAll       % "test",
     scalaTest        % "test"
   )
 
+  val kaaClientDependencies = Seq(
+
+    logbackCore      ,
+    logbackClassic   ,
+
+    dcsCommons       ,
+
+    mockitoCore      % "test",
+    mockitoAll       % "test",
+    scalaTest        % "test"
+  )
 }
