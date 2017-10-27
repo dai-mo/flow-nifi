@@ -18,8 +18,8 @@
       "type":"int"
     },
     {
-      "name":"inputPortId",
-      "displayName":"Input Port Id",
+      "name":"inputPortName",
+      "displayName":"Input Port Name",
       "weight":0.75,
       "default":"",
       "type":"string"

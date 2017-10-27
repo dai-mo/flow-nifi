@@ -1,0 +1,5 @@
+{
+  "baseUrl": "http://dcs-nifi",
+  "port": 8090,
+  "inputPortId":""
+}

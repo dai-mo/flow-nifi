@@ -102,7 +102,9 @@ trait InputPortIngestionBehaviour extends AsyncFlowUnitSpec {
     assert(rootPortConnection.id ==
       inputPortIngestionProcessor.properties(ExternalProcessorProperties.RootInputConnectionIdKey))
     assert(inputPortConnection.config.source.name ==
-    inputPortIngestionProcessor.properties(ExternalProcessorProperties.InputPortNameKey))
+      inputPortIngestionProcessor.properties(ExternalProcessorProperties.InputPortNameKey))
+    assert(rootPortConnection.config.source.id ==
+      inputPortIngestionProcessor.properties(ExternalProcessorProperties.RootInputPortIdKey))
     flowInstance
   }
 

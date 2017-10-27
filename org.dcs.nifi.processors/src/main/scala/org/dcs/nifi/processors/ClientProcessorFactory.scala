@@ -80,9 +80,7 @@ object RemoteProperty {
       propertyDescriptor.isDynamic,
       propertyDescriptor.getValidators.asScala.map(v => v.getClass.getName).asJava,
       PropertyType.String,
-      PropertyLevel.Open)
-
-
+      PropertyLevel.ClosedProperty.id)
   }
 }
 

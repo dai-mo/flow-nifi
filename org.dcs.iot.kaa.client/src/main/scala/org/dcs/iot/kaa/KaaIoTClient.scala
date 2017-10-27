@@ -58,15 +58,16 @@ case class TenantSchema(@BeanProperty id: String,
   def this()  = this("", "", "", "", Nil)
 }
 
-case class ApplicationSchema(@BeanProperty version: String,
+case class ApplicationSchema(@BeanProperty version: Int,
                              @BeanProperty applicationId: String,
                              @BeanProperty name: String,
                              @BeanProperty description: String,
                              @BeanProperty ctlSchemaId: String) {
-  def this() = this("", "", "", "", "")
+  def this() = this(0, "", "", "", "")
 }
 
-case class LogAppender(@BeanProperty pluginClassName: String,
+case class LogAppender(@BeanProperty id: String,
+                       @BeanProperty pluginClassName: String,
                        @BeanProperty pluginTypeName: String,
                        @BeanProperty name: String,
                        @BeanProperty description: String,
@@ -78,39 +79,46 @@ case class LogAppender(@BeanProperty pluginClassName: String,
                        @BeanProperty jsonConfiguration: String,
                        @BeanProperty minLogSchemaVersion: Int = 1,
                        @BeanProperty maxLogSchemaVersion: Int = Int.MaxValue) {
-  def this() = this("", "", "", "", "", "", "", Nil, true, "")
+  def this() = this("","", "", "", "", "", "", "", Nil, true, "")
+
+  def withSettings(settings: String): LogAppender =
+    LogAppender(id,
+      pluginClassName,
+      pluginTypeName,
+      name,
+      description,
+      applicationId,
+      applicationToken,
+      tenantId,
+      headerStructure,
+      confirmDelivery,
+      settings,
+      minLogSchemaVersion,
+      maxLogSchemaVersion)
+}
+
+case class LogAppenderSettings(@BeanProperty id: String,
+                               @BeanProperty pluginClassName: String,
+                               @BeanProperty applicationId: String,
+                               @BeanProperty jsonConfiguration: String) {
+  def this() = this("", "", "", "")
 }
 
 
 object KaaIoTClient {
-  val KaaAdminRole = "KAA_ADMIN"
-  val TenantAdminRole = "TENANT_ADMIN"
-  val TenantDevRole = "TENANT_DEVELOPER"
-  val TenantUserRole = "TENANT_USER"
 
-  val createKaaAdminPath: String = "/auth/createKaaAdmin"
-  val changeUserPasswordPath: String = "/auth/changePassword"
-  val applicationPath: String = "/application"
   val getApplicationsPath: String = "/applications"
-  val uploadSchemaPath: String = "/CTL/saveSchema"
-  val deleteSchemaPath: String = "/CTL/deleteSchema"
-  val createLogSchemaPath: String = "/saveLogSchema"
-  val createConfigSchemaPath: String = "/saveConfigurationSchema"
-  val createLogAppender:String = "/logAppender"
-  val tenantSchemasPath: String = "/CTL/getTenantSchemas"
-  val tenantPath: String = "/tenant"
-  val tenantsPath: String = "/tenants"
-  val userPath: String = "/user"
+  def applicationTokenPath(applicationToken: String): String = "/application/" + applicationToken
+
+  def logAppendersPath(applicationToken: String) :String = "/logAppenders/" + applicationToken
+  val logAppenderPath:String = "/logAppender"
+  val deleteLogAppenderPath: String = "/delLogAppender"
+
+  def applicationLogSchemaPath(applicationToken: String): String = "/logSchemas/" + applicationToken
+  val flatCtlSchemaPath: String = "/CTL/getFlatSchemaByCtlSchemaId"
 
   val kaaClientConfig = KaaClientConfig()
-  val credentials = kaaClientConfig.credentials match {
-    case Some(value) => value
-    case None => throw new IllegalArgumentException("Credentials not available")
-  }
-  val applicationConfig = kaaClientConfig.applicationConfig match {
-    case Some(value) => value
-    case None => throw new IllegalArgumentException("Application config not available")
-  }
+  val credentials = kaaClientConfig.credentials
 
   object KaaAdminClient extends JerseyRestClient with KaaApiConfig
   object KaaTenantAdminClient extends JerseyRestClient with KaaApiConfig
@@ -126,133 +134,90 @@ object KaaIoTClient {
     new KaaIoTClient()
   }
 
-  def main(args: Array[String]): Unit = {
-    val kaaIoTClient = KaaIoTClient()
-    Await.ready(kaaIoTClient.setupCredentials()
-      .flatMap(response => kaaIoTClient.createApplication()),
-      Duration.Inf)
-  }
-
 }
 
 class KaaIoTClient {
   import KaaIoTClient._
 
-  def setupCredentials(): Future[Boolean] = {
-    object BaseClient extends JerseyRestClient with KaaApiConfig
+  def applications(): Future[List[Application]] = {
+    KaaTenantDevClient.getAsJson(path = getApplicationsPath)
+      .map { response =>
+        response.toObject[List[Application]]
+      }
+  }
 
-    BaseClient.postAsJson(path = createKaaAdminPath,
-      queryParams = List(
-        ("username", credentials.admin.userName),
-        ("password", credentials.admin.password)))
-      .flatMap { response =>
-        KaaAdminClient.postAsJson(path = tenantPath,
-          body = Tenant("", credentials.tenant.name))
-      }
-      .flatMap { response =>
-        val dcsTenant = response.toObject[Tenant]
-        KaaAdminClient.postAsJson(path = userPath,
-          body = User(credentials.tenant.admin.userName,
-            dcsTenant.id,
-            TenantAdminRole,
-            credentials.tenant.admin.firstName,
-            credentials.tenant.admin.lastName,
-            credentials.tenant.admin.email,
-            credentials.tenant.admin.password))
-          .flatMap { response =>
-            val tempPassword = response.toObject[User].tempPassword
-            KaaAdminClient.postAsJson(path = changeUserPasswordPath,
-              queryParams = List(
-                ("username", credentials.tenant.admin.userName),
-                ("oldPassword", tempPassword),
-                ("newPassword", credentials.tenant.admin.password))
-            )
-          }
-          .flatMap { response =>
-            KaaTenantAdminClient.postAsJson(path = userPath,
-              body = User(credentials.tenant.dev.userName,
-                dcsTenant.id,
-                TenantDevRole,
-                credentials.tenant.dev.firstName,
-                credentials.tenant.dev.lastName,
-                credentials.tenant.dev.email,
-                credentials.tenant.dev.password))
-              .flatMap { response =>
-                val tempPassword = response.toObject[User].tempPassword
-                KaaTenantAdminClient.postAsJson(path = changeUserPasswordPath,
-                  queryParams = List(
-                    ("username", credentials.tenant.dev.userName),
-                    ("oldPassword", tempPassword),
-                    ("newPassword", credentials.tenant.dev.password))
-                )
-              }
-          }
-      }
+  def application(applicationToken: String): Future[Application] =
+    KaaTenantDevClient.getAsJson(path = applicationTokenPath(applicationToken))
+    .map(_.toObject[Application])
+
+  def createLogAppender(application: Application, logAppender: LogAppenderConfig): Future[LogAppender] = {
+    createLogAppender(application,
+      logAppender.name,
+      logAppender.pluginClassName,
+      logAppender.pluginTypeName,
+      logAppender.settings)
+  }
+
+
+  def createLogAppender(application: Application,
+                        name: String,
+                        pluginClassName: String,
+                        pluginTypeName: String,
+                        settings: String): Future[LogAppender] = {
+    KaaTenantDevClient.postAsJson(path = logAppenderPath,
+      body = LogAppender("",
+        pluginClassName,
+        pluginTypeName,
+        name,
+        name,
+        application.id,
+        application.applicationToken,
+        application.tenantId,
+        List("KEYHASH", "VERSION", "TIMESTAMP", "TOKEN", "LSVERSION"),
+        true,
+        settings))
+      .map(_.toObject[LogAppender])
+  }
+
+  def updateLogAppenderSettings(logAppender: LogAppender,
+                                settings: String): Future[LogAppender] =
+    KaaTenantDevClient.postAsJson(path = logAppenderPath,
+      body = logAppender.withSettings(settings))
+      .map(_.toObject[LogAppender])
+
+
+  def removeLogAppender(logAppenderId: String): Future[Boolean] = {
+    KaaTenantDevClient.postAsJson(path = deleteLogAppenderPath,
+      queryParams = List(("logAppenderId", logAppenderId)))
       .map(response => true)
   }
 
-  def createApplication(): Future[Boolean] = {
+  def logAppenderWithRootInputPortId(applicationToken: String, rootInputPortId: String): Future[Option[LogAppender]] = {
+    KaaTenantDevClient.getAsJson(path = logAppendersPath(applicationToken))
+      .map(response => {
+        val las = response.toObject[List[LogAppender]]
+        las.find(la => la.jsonConfiguration.toObject[NifiS2SConfig].inputPortName == rootInputPortId)
+      })
+  }
 
-    KaaAdminClient.getAsJson(path = tenantsPath)
-      .flatMap { response =>
-        val tenants = response.asList[Tenant]
-        tenants.find(_.name == credentials.tenant.name)
-          .map { tenant =>
-            KaaTenantAdminClient.postAsJson(path = applicationPath,
-              body = Application("",
-                "",
-                applicationConfig.name,
-                tenant.id))
-              .map(response => response.toObject[Application])
-              .flatMap { application =>
-                KaaTenantDevClient.postAsJson(path = uploadSchemaPath,
-                  queryParams = List(
-                    ("body", URLEncoder.encode(kaaClientConfig.logSchema(), "UTF-8")),
-                    ("tenantId", tenant.id)))
-                  .map(response => response.toObject[CTLSchema])
-                  .flatMap {  ctlLogSchema =>
-                    KaaTenantDevClient.postAsJson(path = createLogSchemaPath,
-                      body = ApplicationSchema("",
-                        application.id,
-                        applicationConfig.logSchema.name,
-                        applicationConfig.logSchema.name,
-                        ctlLogSchema.id))
-                  }
-                  .flatMap { response =>
-                    KaaTenantDevClient.postAsJson(path = uploadSchemaPath,
-                      queryParams = List(
-                        ("body", URLEncoder.encode(kaaClientConfig.configSchema(), "UTF-8")),
-                        ("tenantId", tenant.id)))
-                      .map(response => response.toObject[CTLSchema])
-                      .flatMap { ctlConfigSchema =>
-                        KaaTenantDevClient.postAsJson(path = createConfigSchemaPath,
-                          body = ApplicationSchema("",
-                            application.id,
-                            applicationConfig.configSchema.name,
-                            applicationConfig.configSchema.name,
-                            ctlConfigSchema.id))
-                      }
-                  }
-                  .flatMap { response =>
-                    KaaTenantDevClient.postAsJson(path = createLogAppender,
-                      body = LogAppender(applicationConfig.logAppender.pluginClassName,
-                        applicationConfig.logAppender.pluginTypeName,
-                        applicationConfig.logAppender.name,
-                        applicationConfig.logAppender.name,
-                        application.id,
-                        application.applicationToken,
-                        application.tenantId,
-                        List("KEYHASH", "VERSION", "TIMESTAMP", "TOKEN", "LSVERSION"),
-                        true,
-                        kaaClientConfig.logAppenderConfig()))
-                  }
-              }
-              .map(response => true)
-          }
-          .getOrElse(Future(false))
-      }
+  def removeLogAppenderWithRootInputPortId(applicationToken: String, rootInputPortId: String): Future[Boolean] = {
+    logAppenderWithRootInputPortId(applicationToken, rootInputPortId)
+      .flatMap(_.map(la => removeLogAppender(la.id)).getOrElse(Future(false)))
+  }
 
+  def logSchemaWithMaxVersion(applicationToken: String): Future[ApplicationSchema] = {
+    KaaTenantDevClient.getAsJson(path = applicationLogSchemaPath(applicationToken))
+      .map(_.toObject[List[ApplicationSchema]].maxBy(_.version))
+  }
 
+  def ctlSchema(schemaId: String): Future[String] = {
+    KaaTenantDevClient.getAsJson(path = flatCtlSchemaPath,
+      queryParams = List(("id", schemaId)))
+  }
+
+  def maxApplicationLogSchema(applicationToken: String): Future[String] = {
+    logSchemaWithMaxVersion(applicationToken)
+      .flatMap(s => ctlSchema(s.ctlSchemaId))
   }
 
 }

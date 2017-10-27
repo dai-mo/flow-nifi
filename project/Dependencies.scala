@@ -129,7 +129,6 @@ object Dependencies {
 
   // Collect Rest Client Dependencies
   val flowDependencies = Seq(
-    jerseyMultipart,
     dcsCommons,
     dcsApi,
     nifiClientDTO,

@@ -3,7 +3,7 @@ package org.dcs.flow.nifi
 import java.util.UUID
 
 import org.apache.nifi.web.api.entity._
-import org.dcs.api.processor.{ExternalProcessorProperties, RemoteProcessor}
+import org.dcs.api.processor.{CoreProperties, ExternalProcessorProperties, RemoteProcessor}
 import org.dcs.api.service.{Connection, FlowApiService, FlowInstance, FlowTemplate, ProcessorInstance}
 import org.dcs.api.util.NameId
 import org.dcs.commons.Control
@@ -115,35 +115,47 @@ trait NifiFlowClient extends FlowApiService with JerseyRestClient {
 
 
 
-  def updatePortName(c_fi_cid: (Connection, ProcessorInstance, String)): Future[ProcessorInstance] = {
-    if (c_fi_cid._2.properties(ExternalProcessorProperties.InputPortNameKey) == c_fi_cid._1.config.destination.name) {
+  def updateExternalConnectionProperties(c_fi_cid: (Connection, ProcessorInstance, String)): Future[ProcessorInstance] = {
+    val connection = c_fi_cid._1
+    val processor = c_fi_cid._2
+    val clientId = c_fi_cid._3
+
+    if (processor.properties(ExternalProcessorProperties.InputPortNameKey) == connection.config.destination.name) {
       val inputPortName = UUID.randomUUID().toString
       ioPortApi.updateInputPortName(inputPortName,
-        c_fi_cid._1.config.source.id,
-        c_fi_cid._3)
-        .flatMap(port =>
-          processorApi.updateProperties(c_fi_cid._2.id,
-            Map(
-              ExternalProcessorProperties.RootInputConnectionIdKey -> c_fi_cid._1.id,
+        connection.config.source.id,
+        clientId)
+        .flatMap(port => {
+          val properties = processor.properties(CoreProperties.ProcessorTypeKey) match {
+            case RemoteProcessor.InputPortIngestionType => Map(
+              ExternalProcessorProperties.RootInputConnectionIdKey -> connection.id,
+              ExternalProcessorProperties.RootInputPortIdKey -> connection.config.source.id
+            )
+            case _ => Map(
+              ExternalProcessorProperties.RootInputConnectionIdKey -> connection.id,
               ExternalProcessorProperties.SenderKey ->
                 ExternalProcessorProperties.nifiSenderWithArgs(NifiApiConfig.BaseUiUrl, inputPortName)
-            ),
-            c_fi_cid._3))
-    } else if(c_fi_cid._2.properties(ExternalProcessorProperties.OutputPortNameKey) == c_fi_cid._1.config.source.name) {
+            )
+          }
+          processorApi.updateProperties(processor.id,
+            properties,
+            clientId)
+        })
+    } else if(processor.properties(ExternalProcessorProperties.OutputPortNameKey) == connection.config.source.name) {
       val outputPortName = UUID.randomUUID().toString
       ioPortApi.updateOutputPortName(outputPortName,
-        c_fi_cid._1.config.destination.id,
-        c_fi_cid._3)
+        connection.config.destination.id,
+        clientId)
         .flatMap(port =>
-          processorApi.updateProperties(c_fi_cid._2.id,
+          processorApi.updateProperties(processor.id,
             Map(
-              ExternalProcessorProperties.RootOutputConnectionIdKey -> c_fi_cid._1.id,
+              ExternalProcessorProperties.RootOutputConnectionIdKey -> connection.id,
               ExternalProcessorProperties.ReceiverKey ->
                 ExternalProcessorProperties.nifiReceiverWithArgs(NifiApiConfig.BaseUiUrl, outputPortName)
             ),
-            c_fi_cid._3))
+            clientId))
     } else
-      Future(c_fi_cid._2)
+      Future(processor)
   }
 
   override def instance(flowInstanceId: String,
@@ -156,7 +168,7 @@ trait NifiFlowClient extends FlowApiService with JerseyRestClient {
         val cps: List[(Connection, ProcessorInstance, String)] = externalConnections
           .flatMap(c => fi.externalProcessors
             .map(p => (c, p, clientId)))
-        Control.serialiseFutures(cps)(updatePortName)
+        Control.serialiseFutures(cps)(updateExternalConnectionProperties)
           .flatMap(pis => updateName(NameId(flowInstanceName), fi.id, fi.version, clientId))
           .map(fi => FlowInstanceWithExternalConnections(fi, externalConnections))
       }
