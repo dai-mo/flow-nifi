@@ -8,6 +8,7 @@ import org.dcs.api.service.{FlowApiService, FlowComponent, FlowInstance, FlowTem
 import org.dcs.commons.error.HttpException
 import org.dcs.flow.nifi._
 import org.dcs.flow.{FlowUnitSpec, IT}
+import org.dcs.remote.ZkRemoteService
 import org.mockito.Matchers
 import org.mockito.Mockito._
 import org.slf4j.{Logger, LoggerFactory}
@@ -159,6 +160,8 @@ class FlowApiISpec extends FlowApiBehaviors
   val provenanceClient = new NifiProvenanceApi
 
   val ClientId: String = UUID.randomUUID().toString
+
+  ZkRemoteService.loadServiceCaches()
 
   "Flow Instantiation" must "be valid  for existing template id" taggedAs IT in {
     val templateId = flowClient.templates().futureValue.find(t => t.name == FlowName).get.getId

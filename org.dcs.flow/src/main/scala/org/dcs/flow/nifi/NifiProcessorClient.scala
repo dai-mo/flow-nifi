@@ -80,7 +80,7 @@ trait NifiProcessorClient extends ProcessorApiService with JerseyRestClient {
               processorEntity.getId,
               processorEntity.getComponent.getName),
               clientId)
-              .map(c => processorEntity)
+              .flatMap(c => nifiInstance(processorEntity.getId))
           case _ => Future(processorEntity)
       }.getOrElse(Future(processorEntity))
 
@@ -137,6 +137,14 @@ trait NifiProcessorClient extends ProcessorApiService with JerseyRestClient {
       })
   }
 
+  override def updateSchemaProperty(processorId: String, schemaPropertyKey: String, schema: String, clientId : String): Future[ProcessorInstance] = {
+    instance(processorId, false)
+      .flatMap(p => {
+        p.setProperties(p.properties + (schemaPropertyKey -> schema))
+        update(p, clientId)
+      })
+  }
+
   override def updateSchema(flowInstanceId: String,
                             processorInstanceId: String,
                             schemaActions: List[SchemaAction],
@@ -160,10 +168,15 @@ trait NifiProcessorClient extends ProcessorApiService with JerseyRestClient {
       })
   }
 
-  override def instance(processorId: String): Future[ProcessorInstance] =
+  def nifiInstance(processorId: String): Future[ProcessorEntity] = {
+    getAsJson(processorsPath(processorId))
+      .map ( _.toObject[ProcessorEntity])
+  }
+
+  override def instance(processorId: String, validate: Boolean = true): Future[ProcessorInstance] =
     getAsJson(processorsPath(processorId))
       .map { response =>
-        ProcessorInstanceAdapter(response.toObject[ProcessorEntity])
+        ProcessorInstanceAdapter(response.toObject[ProcessorEntity], validate)
       }
 
   override def start(processorId: String, version: Long, clientId: String): Future[ProcessorInstance] =

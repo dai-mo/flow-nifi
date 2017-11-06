@@ -80,7 +80,7 @@ class NifiS2SAppender extends AbstractLogAppender(classOf[NifiS2SConfiguration])
   override def initFromConfiguration(appender: LogAppenderDto, configuration: NifiS2SConfiguration): Unit = {
     LOG.debug("Initialising Nifi Site-to-Site Client")
     client = new SiteToSiteClient.Builder()
-      .url(configuration.getBaseUrl.toString + configuration.getPort.toString)
+      .url(configuration.getBaseUrl.toString + ":" + configuration.getPort.toString + "/nifi")
       .portIdentifier(configuration.getInputPortName.toString)
       .requestBatchCount(5)
       .build

@@ -81,7 +81,7 @@ case class ApplicationConfig(@BeanProperty name: String,
 
 object NifiS2SConfig {
 
-  val DefaultBaseUrl = "http://dcs-nifi"
+  val DefaultBaseUrl = "http://dcs-flow"
   val DefaultPort = 8090
 
   def apply(): NifiS2SConfig =

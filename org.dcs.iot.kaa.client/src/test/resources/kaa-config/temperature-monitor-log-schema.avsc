@@ -1,6 +1,6 @@
 {
   "type": "record",
-  "name": "Temperature",
+  "name": "TemperatureLog",
   "namespace": "org.dcs.iot.kaa.schema.log",
   "fields": [
     {

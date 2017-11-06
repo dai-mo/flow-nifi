@@ -131,6 +131,7 @@ object Dependencies {
   val flowDependencies = Seq(
     dcsCommons,
     dcsApi,
+    dcsRemote       % "provided",
     nifiClientDTO,
 
     logbackCore     % "provided",

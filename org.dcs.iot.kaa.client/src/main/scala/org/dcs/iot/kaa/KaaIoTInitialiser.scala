@@ -30,6 +30,8 @@ object KaaIoTInitialiser  extends KaaIoTClient {
   val createLogSchemaPath: String = "/saveLogSchema"
   val createConfigSchemaPath: String = "/saveConfigurationSchema"
 
+  val createSdkProfilePath = "/createSdkProfile"
+
   val tenantSchemasPath: String = "/CTL/getTenantSchemas"
   val tenantPath: String = "/tenant"
   val tenantsPath: String = "/tenants"
@@ -47,6 +49,12 @@ object KaaIoTInitialiser  extends KaaIoTClient {
     Await.ready(kaaIoTInitialiser.setupCredentials()
       .flatMap(response => kaaIoTInitialiser.createApplications()),
       Duration.Inf)
+
+// FIXME: Creating SDK Profile does not seem to work
+//    Await.ready(applications()
+//      .map(_.find(_.name == "Heartbeat Monitor"))
+//      .flatMap(app => kaaIoTInitialiser.createSdkProfile("Default SDK", app.get.id, app.get.applicationToken)),
+//      Duration.Inf)
   }
 }
 
@@ -161,6 +169,15 @@ class KaaIoTInitialiser {
           }
           .getOrElse(Future(false))
       }
+  }
+
+
+  def createSdkProfile(name: String,
+                       applicationId: String,
+                       applicationToken: String): Future[SDKProfile] = {
+    KaaTenantDevClient.postAsJson(path = createSdkProfilePath,
+      body = SDKProfile("", name, applicationId, applicationToken))
+      .map(_.toObject[SDKProfile])
   }
 
 }

@@ -7,7 +7,8 @@ import org.dcs.api.service._
 import org.dcs.commons.error.HttpException
 import org.dcs.flow.nifi.{NifiFlowApi, NifiIOPortApi, NifiProcessorApi}
 import org.dcs.flow.{AsyncFlowUnitSpec, IT}
-import org.scalatest.Assertion
+import org.dcs.remote.ZkRemoteService
+import org.scalatest.{Assertion, Ignore}
 
 import scala.concurrent.Future
 
@@ -17,7 +18,8 @@ object InputPortIngestionSpec {
   val ServiceClassPrefix = "org.dcs.core.service."
   val KaaIngestionProcessorService = "KaaIngestionProcessorService"
 
-  val FlowTemplateName = "KaaTest"
+  val InputPortIngestionFlowTemplateName = "KaaTest"
+  val MultipleExternalFlowTemplateName = "KaaSparkTest"
 
   val kaaPsd = ProcessorServiceDefinition(
     ServiceClassPrefix + KaaIngestionProcessorService,
@@ -36,10 +38,12 @@ class InputPortIngestionProcessorSpec extends InputPortIngestionBehaviour {
 class InputPortIngestionProcessorISpec extends InputPortIngestionBehaviour {
   import InputPortIngestionSpec._
 
+  ZkRemoteService.loadServiceCaches()
+
   "Creation / Deletion of Input Ingestion Processor" should "be valid" taggedAs IT in {
     var flowInstance = flowApi.create(FlowInstanceName, ClientId).futureValue
     var processor = validateCreateInputPortIngestionProcessor(processorApi, kaaPsd, flowInstance.id)
-    flowInstance = validateFlowInstanceWithInputPortIngestionProcessor(flowApi, flowInstance.id, FlowInstanceName)
+    flowInstance = validateFlowInstanceWithInputPortIngestionProcessor(flowApi, flowInstance.id, FlowInstanceName, 1)
     processor = processorApi.instance(processor.id).futureValue
     validateDeleteInputPortIngestionProcessor(processorApi,
       ioPortApi,
@@ -55,7 +59,7 @@ class InputPortIngestionProcessorISpec extends InputPortIngestionBehaviour {
   "Deletion of Flow Instance with  Input Ingestion Processor" should "be valid" taggedAs IT in {
     var flowInstance = flowApi.create(FlowInstanceName, ClientId).futureValue
     var processor = validateCreateInputPortIngestionProcessor(processorApi, kaaPsd, flowInstance.id)
-    flowInstance = validateFlowInstanceWithInputPortIngestionProcessor(flowApi, flowInstance.id, FlowInstanceName)
+    flowInstance = validateFlowInstanceWithInputPortIngestionProcessor(flowApi, flowInstance.id, FlowInstanceName, 1)
     processor = processorApi.instance(processor.id).futureValue
 
     flowApi.remove(flowInstance.id, flowInstance.version, ClientId, hasExternal = true)
@@ -63,12 +67,29 @@ class InputPortIngestionProcessorISpec extends InputPortIngestionBehaviour {
 
   }
 
-  "Instantiation of Flow with an Input Ingestion Processor" should "be valid" taggedAs IT in {
-    val flowTemplate = flowApi.templates().futureValue.find(_.name == FlowTemplateName).get
+  // FIXME: This test requires the move of update properties logic from the web project to flow,
+  //        so that we can resolve the read schema dynamically
+  "Instantiation / Lifecycle of Flow with an Input Ingestion Processor" should "be valid" taggedAs IT ignore {
+    val flowTemplate = flowApi.templates().futureValue.find(_.name == InputPortIngestionFlowTemplateName).get
     val flowInstance = flowApi.instantiate(flowTemplate.id, ClientId).futureValue
-    validateFlowInstanceWithInputPortIngestionProcessor(flowApi, flowInstance.id, FlowTemplateName)
+    validateFlowInstanceWithInputPortIngestionProcessor(flowApi, flowInstance.id, InputPortIngestionFlowTemplateName, 1)
+//    val kaaApplicationProperty = flowInstance.processors
+//      .find(_.name == "Kaa Ingestion Processor").get
+//        .propertyDefinitions
+      //.properties.find(_._1 == "kaa-application").get._2
+    flowApi.start(flowInstance.id, ClientId).futureValue
+    //Thread.sleep(5000)
+    flowApi.stop(flowInstance.id, ClientId).futureValue
     flowApi.remove(flowInstance.id, flowInstance.version, ClientId, true).map(deleteOk => assert(deleteOk))
   }
+
+  "Instantiation  / Lifecycle of Flow with multiple external connections" should "be valid" taggedAs IT in {
+    val flowTemplate = flowApi.templates().futureValue.find(_.name == MultipleExternalFlowTemplateName).get
+    val flowInstance = flowApi.instantiate(flowTemplate.id, ClientId).futureValue
+    validateFlowInstanceWithInputPortIngestionProcessor(flowApi, flowInstance.id, MultipleExternalFlowTemplateName, 3)
+    flowApi.remove(flowInstance.id, flowInstance.version, ClientId, true).map(deleteOk => assert(deleteOk))
+  }
+
 }
 
 trait InputPortIngestionBehaviour extends AsyncFlowUnitSpec {
@@ -84,15 +105,19 @@ trait InputPortIngestionBehaviour extends AsyncFlowUnitSpec {
 
   def validateFlowInstanceWithInputPortIngestionProcessor(flowApi: FlowApiService,
                                                           flowInstanceId: String,
-                                                          flowName: String): FlowInstance = {
+                                                          flowName: String,
+                                                          noOfConnections: Int): FlowInstance = {
     val flowInstance = flowApi.instance(flowInstanceId, ClientId).futureValue
     assert(flowInstance.name == flowName)
     val inputPortIngestionProcessor =
       flowInstance.processors.find(_.processorType == RemoteProcessor.InputPortIngestionType).get
-    assert(flowInstance.connections.size == 1)
-    val inputPortConnection = flowInstance.connections.head
-    assert(inputPortConnection.config.source.componentType == FlowComponent.InputPortType)
-    assert(inputPortConnection.config.destination.componentType == FlowComponent.InputPortIngestionType)
+    assert(flowInstance.connections.size == noOfConnections)
+    val inputPortConnections = flowInstance.connections.filter(c => {
+      c.config.source.componentType == FlowComponent.InputPortType &&
+      c.config.destination.componentType == FlowComponent.InputPortIngestionType
+    })
+    assert(inputPortConnections.size == 1)
+    val inputPortConnection = inputPortConnections.head
 
     assert(inputPortConnection.relatedConnections.size == 1)
     val rootPortConnection = inputPortConnection.relatedConnections.head

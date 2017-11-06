@@ -104,6 +104,11 @@ case class LogAppenderSettings(@BeanProperty id: String,
   def this() = this("", "", "", "")
 }
 
+case class SDKProfile(@BeanProperty id: String,
+                      @BeanProperty name: String,
+                      @BeanProperty applicationId: String,
+                      @BeanProperty applicationToken: String)
+
 
 object KaaIoTClient {
 
@@ -219,5 +224,7 @@ class KaaIoTClient {
     logSchemaWithMaxVersion(applicationToken)
       .flatMap(s => ctlSchema(s.ctlSchemaId))
   }
+
+
 
 }

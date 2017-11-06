@@ -156,8 +156,11 @@ object FlowGraphTraversal {
     if (fgn.processorInstance.id != processorId) {
       val currentCoreProperties = CoreProperties(fgn.processorInstance.properties)
 
-      val readSchemaId = coreProperties.writeSchemaId.getOrElse(coreProperties.readSchemaId.getOrElse(""))
-      val readSchema = coreProperties.writeSchema.getOrElse(coreProperties.writeSchema.getOrElse("")).toString
+      val (readSchemaId, readSchema) =
+        if(coreProperties.writeSchemaId.isDefined || coreProperties.writeSchema.isDefined)
+          (coreProperties.writeSchemaId.getOrElse(""), coreProperties.writeSchema.getOrElse("").toString)
+        else
+          (coreProperties.readSchemaId.getOrElse(""), coreProperties.readSchema.getOrElse("").toString)
 
       val writeSchemaId = currentCoreProperties.writeSchemaId.getOrElse("")
       val writeSchema =

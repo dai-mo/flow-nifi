@@ -4,14 +4,16 @@ import java.util.UUID
 
 import org.apache.nifi.web.api.entity._
 import org.dcs.api.processor.{CoreProperties, ExternalProcessorProperties, RemoteProcessor}
-import org.dcs.api.service.{Connection, FlowApiService, FlowInstance, FlowTemplate, ProcessorInstance}
+import org.dcs.api.service.{Connection, FlowApiService, FlowInstance, FlowTemplate, ProcessorInstance, RemoteProcessorService}
 import org.dcs.api.util.NameId
 import org.dcs.commons.Control
 import org.dcs.commons.error.{ErrorConstants, HttpException}
 import org.dcs.commons.serde.JsonSerializerImplicits._
 import org.dcs.commons.ws.JerseyRestClient
+import org.dcs.flow.FlowGraph
+import org.dcs.flow.FlowGraph.FlowGraphNode
 import org.dcs.flow.nifi.internal.ProcessGroup
-import org.glassfish.jersey.filter.LoggingFilter
+import org.dcs.remote.{RemoteService, ZkRemoteService}
 
 import scala.collection.JavaConverters._
 import scala.concurrent.ExecutionContext.Implicits._
@@ -46,6 +48,8 @@ object NifiFlowClient {
 
   val flowStatusPath = "/flow/status"
 
+  val remoteService: RemoteService = ZkRemoteService
+
 }
 
 trait NifiFlowClient extends FlowApiService with JerseyRestClient {
@@ -78,13 +82,13 @@ trait NifiFlowClient extends FlowApiService with JerseyRestClient {
     // to persist individual flow instances. The workaround creates a process group
     // under the user process group which isolates the flow instance
     def templateOrError() =
-    template(flowTemplateId)
-      .map { template =>
-        if(template.isDefined)
-          template.get
-        else
-          throw new HttpException(ErrorConstants.DCS301.http(400))
-      }
+      template(flowTemplateId)
+        .map { template =>
+          if(template.isDefined)
+            template.get
+          else
+            throw new HttpException(ErrorConstants.DCS301.http(400))
+        }
 
     for {
       t <- templateOrError()
@@ -120,7 +124,10 @@ trait NifiFlowClient extends FlowApiService with JerseyRestClient {
     val processor = c_fi_cid._2
     val clientId = c_fi_cid._3
 
-    if (processor.properties(ExternalProcessorProperties.InputPortNameKey) == connection.config.destination.name) {
+    val inputPortName = processor.properties.get(ExternalProcessorProperties.InputPortNameKey)
+    val outputPortName = processor.properties.get(ExternalProcessorProperties.OutputPortNameKey)
+
+    if (inputPortName.isDefined && inputPortName.get == connection.config.destination.name) {
       val inputPortName = UUID.randomUUID().toString
       ioPortApi.updateInputPortName(inputPortName,
         connection.config.source.id,
@@ -141,7 +148,7 @@ trait NifiFlowClient extends FlowApiService with JerseyRestClient {
             properties,
             clientId)
         })
-    } else if(processor.properties(ExternalProcessorProperties.OutputPortNameKey) == connection.config.source.name) {
+    } else if(outputPortName.isDefined && outputPortName.get == connection.config.source.name) {
       val outputPortName = UUID.randomUUID().toString
       ioPortApi.updateOutputPortName(outputPortName,
         connection.config.destination.id,
@@ -243,6 +250,7 @@ trait NifiFlowClient extends FlowApiService with JerseyRestClient {
 
   override def start(flowInstanceId: String, clientId: String): Future[FlowInstance] = {
     instance(flowInstanceId, clientId)
+      .map(preStart)
       .flatMap(fi => Future.sequence(fi.rootPortIdVersions.map(rpiv => ioPortApi.start(rpiv._1, rpiv._2, clientId)))
         .map(_.forall(identity)))
       .flatMap { _ =>
@@ -256,6 +264,7 @@ trait NifiFlowClient extends FlowApiService with JerseyRestClient {
 
   override def stop(flowInstanceId: String, clientId: String): Future[FlowInstance] = {
     instance(flowInstanceId, clientId)
+      .map(preStop)
       .flatMap(fi => Future.sequence(fi.rootPortIdVersions.map(rpiv => ioPortApi.stop(rpiv._1, rpiv._2, clientId)))
         .map(_.forall(identity)))
       .flatMap { _ =>
@@ -333,6 +342,36 @@ trait NifiFlowClient extends FlowApiService with JerseyRestClient {
       .map { _ =>
         true
       }
+  }
+
+  def preStart(flowInstance: FlowInstance): FlowInstance = {
+    FlowGraph.executeBreadthFirst(flowInstance,
+      (flowGraphNode: FlowGraphNode) => {
+        val processorServiceClassName = flowGraphNode.processorInstance.properties(CoreProperties.ProcessorClassKey)
+        val remoteProcessorService =  remoteService.service(processorServiceClassName)
+        (processorServiceClassName, remoteProcessorService.preStart(flowGraphNode.processorInstance.properties.asJava))
+      })
+      .map { result =>
+        if(result._2)
+          result
+        else {
+          preStop(flowInstance)
+          throw new IllegalStateException("Could not execute pre start for " + result._1)
+        }
+      }
+    flowInstance
+  }
+
+  def preStop(flowInstance: FlowInstance): FlowInstance = {
+    FlowGraph.executeBreadthFirst(flowInstance,
+      (flowGraphNode: FlowGraphNode) => {
+        val processorServiceClassName = flowGraphNode.processorInstance.properties(CoreProperties.ProcessorClassKey)
+        val remoteProcessorService = remoteService.service(processorServiceClassName)
+        remoteProcessorService.preStop(flowGraphNode.processorInstance.properties.asJava)
+      })
+      .forall(identity)
+    // FIXME: Do we need to care if any of the processors preStop methods fail
+    flowInstance
   }
 
 }
