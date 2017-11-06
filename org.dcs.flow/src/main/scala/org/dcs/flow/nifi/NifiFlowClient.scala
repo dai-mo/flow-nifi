@@ -48,8 +48,6 @@ object NifiFlowClient {
 
   val flowStatusPath = "/flow/status"
 
-  val remoteService: RemoteService = ZkRemoteService
-
 }
 
 trait NifiFlowClient extends FlowApiService with JerseyRestClient {
@@ -345,6 +343,7 @@ trait NifiFlowClient extends FlowApiService with JerseyRestClient {
   }
 
   def preStart(flowInstance: FlowInstance): FlowInstance = {
+    val remoteService: RemoteService = ZkRemoteService
     FlowGraph.executeBreadthFirst(flowInstance,
       (flowGraphNode: FlowGraphNode) => {
         val processorServiceClassName = flowGraphNode.processorInstance.properties(CoreProperties.ProcessorClassKey)
@@ -363,6 +362,7 @@ trait NifiFlowClient extends FlowApiService with JerseyRestClient {
   }
 
   def preStop(flowInstance: FlowInstance): FlowInstance = {
+    val remoteService: RemoteService = ZkRemoteService
     FlowGraph.executeBreadthFirst(flowInstance,
       (flowGraphNode: FlowGraphNode) => {
         val processorServiceClassName = flowGraphNode.processorInstance.properties(CoreProperties.ProcessorClassKey)
