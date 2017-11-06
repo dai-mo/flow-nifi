@@ -5,9 +5,10 @@ import java.io.IOException
 import org.kaaproject.kaa.client.{DesktopKaaPlatformContext, Kaa, KaaClient, SimpleKaaClientStateListener}
 import java.util.concurrent.{Executors, ScheduledExecutorService, ScheduledFuture, TimeUnit}
 
+import org.dcs.iot.kaa.schema.config.HeartbeatConfiguration
+import org.dcs.iot.kaa.schema.log.HeartbeatLog
 import org.kaaproject.kaa.client.configuration.base.{ConfigurationListener, SimpleConfigurationStorage}
 import org.kaaproject.kaa.client.logging.strategies.RecordCountLogUploadStrategy
-import org.kaaproject.kaa.schema.sample.{Configuration, DataCollection}
 import org.slf4j.LoggerFactory
 
 import scala.util.Random
@@ -17,7 +18,7 @@ import scala.util.Random
   * @author cmathew
   * @constructor
   */
-object DataCollectionClient {
+object HeartbeatMonitorClient {
 
   val LOG = LoggerFactory.getLogger(classOf[HeartbeatMonitorClient])
 
@@ -28,8 +29,8 @@ object DataCollectionClient {
   var scheduledFuture: ScheduledFuture[_] = _
   var scheduledExecutorService: ScheduledExecutorService = _
 
-  def temperatureRand(): Int = {
-    new Random().nextInt(10) + 25
+  def heartbeatRand(): Int = {
+    new Random().nextInt(20)*2 - 20 + 80
   }
 
   def onKaaStarted(time: Long) {
@@ -43,9 +44,9 @@ object DataCollectionClient {
       new Runnable() {
         @Override
         def run() {
-          val temperature = temperatureRand()
-          kaaClient.addLogRecord(new DataCollection(temperature))
-          LOG.info("Sampled Temperature: {}", temperature)
+          val heartbeat = heartbeatRand()
+          kaaClient.addLogRecord(new HeartbeatLog(heartbeat.toLong))
+          LOG.info("Sampled Temperature: {}", heartbeat)
         }
       }, 0, time, TimeUnit.MILLISECONDS)
   }
@@ -61,19 +62,19 @@ object DataCollectionClient {
       new Runnable() {
         @Override
         def run() {
-          val temperature = temperatureRand()
-          kaaClient.addLogRecord(new DataCollection(temperature))
-          LOG.info("Sampled Temperature: {}", temperature)
+          val heartbeat = heartbeatRand()
+          kaaClient.addLogRecord(new HeartbeatLog(heartbeat.toLong))
+          LOG.info("Sampled Temperature: {}", heartbeat)
         }
       }, 0, time, TimeUnit.MILLISECONDS)
   }
   
-  class DataCollectionClientStateListener extends SimpleKaaClientStateListener {
+  class HeartbeatMonitorClientStateListener extends SimpleKaaClientStateListener {
 
     override def onStarted() {
       super.onStarted()
       LOG.info("Kaa client started")
-      val configuration: Configuration  = kaaClient.getConfiguration()
+      val configuration: HeartbeatConfiguration  = kaaClient.getConfiguration()
       LOG.info("Default sample period: {}", configuration.getSamplePeriod())
       onKaaStarted(TimeUnit.SECONDS.toMillis(configuration.getSamplePeriod().toLong))
     }
@@ -96,7 +97,7 @@ object DataCollectionClient {
      * Create a Kaa client and add a listener which displays the Kaa client
      * configuration as soon as the Kaa client is started.
      */
-    kaaClient = Kaa.newClient(desktopKaaPlatformContext, new DataCollectionClientStateListener(), true)
+    kaaClient = Kaa.newClient(desktopKaaPlatformContext, new HeartbeatMonitorClientStateListener(), true)
 
     /*
      *  Used by log collector on each adding of the new log record in order to check whether to send logs to server.
@@ -113,7 +114,7 @@ object DataCollectionClient {
     kaaClient.setConfigurationStorage(new SimpleConfigurationStorage(desktopKaaPlatformContext, "saved_config.cfg"))
 
     kaaClient.addConfigurationListener(new ConfigurationListener() {
-      override def onConfigurationUpdate(configuration: Configuration) {
+      override def onConfigurationUpdate(configuration: HeartbeatConfiguration) {
         LOG.info("Received configuration data. New sample period: {}", configuration.getSamplePeriod())
         onChangedConfiguration(TimeUnit.SECONDS.toMillis(configuration.getSamplePeriod().toLong))
       }
@@ -134,5 +135,5 @@ object DataCollectionClient {
   }
 }
 
-class DataCollectionClient
+class HeartbeatMonitorClient
 

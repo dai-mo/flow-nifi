@@ -11,18 +11,19 @@ The automated setup of a blank Kaa IoT Platform includes,
 * creation of DCS Superuser
 * creation of DCS Tenant user
 * creation of DCS Tenant Admin and Tenant Dev users
-* creation of [sample](http://kaaproject.github.io/kaa/docs/v0.10.0/Programming-guide/Your-first-Kaa-application/) application along with corresponding log / configuration schema as well as log appender  
+* creation of [sample](http://kaaproject.github.io/kaa/docs/v0.10.0/Programming-guide/Your-first-Kaa-application/) application along with corresponding log / configuration schema as well as log appender
+* creation of a Heartbeat Monitor application with no log appender  
 
 
-The setup requires a directory containing the following files,
-* _credentials.json_ : containing credentials for the different users
-* _application.json_ : containing application configuration details
+The setup requires a credentials file - _kaaCredentials.yaml_ and a directory containing the following files,
+* _applications.yaml_ : containing application configuration details
 * other files (log / configuration schema, log appender config) which are referenced from the above files
 
+A sample credentials file is available at _src/test/resources/kaaCredentials.yaml_
 A sample directory is available at _src/test/resources/kaa-config_
 
 To execute the setup run,  
-`sbt -DkaaConfigDir=</path/to/DCS Kaa Config Directory> "kaaiot-client/runMain org.dcs.iot.kaa.KaaIoTClient"`  
+`sbt -DkaaCredentials=</path/to/DCS Kaa Credentials File> -DkaaConfigDir=</path/to/DCS Kaa Config Directory> "kaaiot-client/runMain org.dcs.iot.kaa.KaaIoTInitialiser"`  
 in the root directory of the parent _dcs_nifi_ project
 
 Client Applications

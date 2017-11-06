@@ -2,5 +2,5 @@
   "name": "Mongo Db Appender",
   "pluginClassName": "org.kaaproject.kaa.server.appenders.mongo.appender.MongoDbLogAppender",
   "pluginTypeName": "MongoDB",
-  "appenderConfigFilePath": ""
+  "configFile": "mongodb-config.json"
 }

@@ -1,7 +1,7 @@
 {
   "type": "record",
-  "name": "DataCollection",
-  "namespace": "org.kaaproject.kaa.schema.sample",
+  "name": "TemperatureLog",
+  "namespace": "org.dcs.iot.kaa.schema.log",
   "fields": [
     {
       "name": "temperature",

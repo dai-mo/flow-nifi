@@ -29,7 +29,7 @@ import scala.util.control.NonFatal
   * @author cmathew
   * @constructor
   */
-class NifiS2SAppender(configurationClass: Class[NifiS2SConfiguration] ) extends AbstractLogAppender(configurationClass) {
+class NifiS2SAppender extends AbstractLogAppender(classOf[NifiS2SConfiguration]) {
 
   val LOG: Logger = LoggerFactory.getLogger(classOf[NifiS2SAppender])
 
@@ -80,8 +80,8 @@ class NifiS2SAppender(configurationClass: Class[NifiS2SConfiguration] ) extends 
   override def initFromConfiguration(appender: LogAppenderDto, configuration: NifiS2SConfiguration): Unit = {
     LOG.debug("Initialising Nifi Site-to-Site Client")
     client = new SiteToSiteClient.Builder()
-      .url(configuration.getBaseUrl.toString + configuration.getPort.toString)
-      .portIdentifier(configuration.getInputPortId.toString)
+      .url(configuration.getBaseUrl.toString + ":" + configuration.getPort.toString + "/nifi")
+      .portIdentifier(configuration.getInputPortName.toString)
       .requestBatchCount(5)
       .build
   }
@@ -89,5 +89,7 @@ class NifiS2SAppender(configurationClass: Class[NifiS2SConfiguration] ) extends 
   /**
     *
     */
-  override def close(): Unit = ???
+  override def close(): Unit = {
+    client.close()
+  }
 }

@@ -8,6 +8,7 @@ import org.dcs.api.service.{FlowApiService, FlowComponent, FlowInstance, FlowTem
 import org.dcs.commons.error.HttpException
 import org.dcs.flow.nifi._
 import org.dcs.flow.{FlowUnitSpec, IT}
+import org.dcs.remote.ZkRemoteService
 import org.mockito.Matchers
 import org.mockito.Mockito._
 import org.slf4j.{Logger, LoggerFactory}
@@ -160,7 +161,12 @@ class FlowApiISpec extends FlowApiBehaviors
 
   val ClientId: String = UUID.randomUUID().toString
 
+
+
   "Flow Instantiation" must "be valid  for existing template id" taggedAs IT in {
+    // FIXME: Bad Idea to initialise service caches in one (first) test
+    //        when running tests in parallel
+    ZkRemoteService.loadServiceCaches()
     val templateId = flowClient.templates().futureValue.find(t => t.name == FlowName).get.getId
     var fi = validateFlowInstantiation(flowClient, FlowName, templateId, ClientId)
     fi = validateFlowRetrieval(flowClient, fi.getId, ClientId)

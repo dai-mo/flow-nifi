@@ -1,0 +1,11 @@
+{
+  "type": "record",
+  "name": "HeartbeatLog",
+  "namespace": "org.dcs.iot.kaa.schema.log",
+  "fields": [
+    {
+      "name": "heartbeat",
+      "type": "long"
+    }
+  ]
+}

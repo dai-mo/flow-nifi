@@ -129,9 +129,9 @@ object Dependencies {
 
   // Collect Rest Client Dependencies
   val flowDependencies = Seq(
-    jerseyMultipart,
     dcsCommons,
     dcsApi,
+    dcsRemote       % "provided",
     nifiClientDTO,
 
     logbackCore     % "provided",

@@ -66,7 +66,7 @@ object FlowInstance {
     f.setNameId(nameId._2)
     f.setState(NifiProcessorClient.StateNotStarted)
     if(contents != null) {
-      f.setProcessors(contents.getProcessors.map(p => ProcessorInstanceAdapter(p)).toList)
+      f.setProcessors(contents.getProcessors.map(p => ProcessorInstanceAdapter(p, true)).toList)
       f.setConnections(contents.getConnections.map(c => ConnectionAdapter(c, processGroupEntity.getRevision.getVersion)).toList)
     }
 
@@ -109,7 +109,7 @@ object FlowInstance {
     f.setName(nameId._1)
     f.setNameId(nameId._2)
     f.setState(NifiProcessorClient.StateNotStarted)
-    f.setProcessors(contents.getProcessors.map(p => ProcessorInstanceAdapter(p)).toList)
+    f.setProcessors(contents.getProcessors.map(p => ProcessorInstanceAdapter(p, true)).toList)
     f.setConnections(contents.getConnections.map(c => ConnectionAdapter(c, Revision.DefaultVersion)).toList)
 
     f
@@ -154,7 +154,7 @@ object FlowInstance {
     f.setId(processGroupDTO.getId)
     f.setName(nameId._1)
     f.setNameId(nameId._2)
-    f.setProcessors(snippet.getProcessors.map(p => ProcessorInstanceAdapter(p)).toList)
+    f.setProcessors(snippet.getProcessors.map(p => ProcessorInstanceAdapter(p, true)).toList)
     f.setConnections(snippet.getConnections.map(c => ConnectionAdapter(c, Revision.DefaultVersion)).toList)
     f
   }
@@ -228,11 +228,11 @@ object FlowInstanceWithExternalConnections {
 
 object ProcessorInstanceAdapter {
 
-  def toPossibleValues(allowableValues: util.List[AllowableValueDTO]): util.Set[PossibleValue] =
+  def toPossibleValues(allowableValues: util.List[AllowableValueDTO]): Set[PossibleValue] =
     if(allowableValues == null || allowableValues.isEmpty)
-      null
+      Set()
     else
-      allowableValues.asScala.to[Set].map(av => PossibleValue(av.getValue, av.getDisplayName, av.getDescription)).asJava
+      allowableValues.asScala.to[Set].map(av => PossibleValue(av.getValue, av.getDisplayName, av.getDescription))
 
 
   def toRemoteProperty(processorDescriptorDTO: PropertyDescriptorDTO): RemoteProperty = {
@@ -258,7 +258,7 @@ object ProcessorInstanceAdapter {
       processorConfigDTO.getYieldDuration)
 
 
-  def apply(processorDTO: ProcessorDTO): ProcessorInstance = {
+  def apply(processorDTO: ProcessorDTO, validate: Boolean): ProcessorInstance = {
     val processorInstance = new ProcessorInstance
 
     processorInstance.setId(processorDTO.getId)
@@ -274,18 +274,19 @@ object ProcessorInstanceAdapter {
     processorInstance.setProperties(valuesOrDefaults(processorDTO.getConfig))
     processorInstance.setPropertyDefinitions(Option(processorDTO.getConfig.getDescriptors).map(_.asScala.map(pd => toRemoteProperty(pd._2)).toList).getOrElse(Nil))
 
-    ProcessorValidation
-      .validate(processorInstance.id,
-        processorInstance.properties,
-        processorInstance.propertyDefinitions)
-      .foreach(ver => processorInstance.setValidationErrors(ver))
+    if(validate)
+      ProcessorValidation
+        .validate(processorInstance.id,
+          processorInstance.properties,
+          processorInstance.propertyDefinitions)
+        .foreach(ver => processorInstance.setValidationErrors(ver))
 
     processorInstance.setConfig(config(processorDTO.getConfig))
     processorInstance
   }
 
-  def apply(processorEntity: ProcessorEntity): ProcessorInstance = {
-    val processorInstance = apply(processorEntity.getComponent)
+  def apply(processorEntity: ProcessorEntity, validate: Boolean = true): ProcessorInstance = {
+    val processorInstance = apply(processorEntity.getComponent, validate)
     processorInstance.setVersion(processorEntity.getRevision.getVersion)
     processorInstance
   }

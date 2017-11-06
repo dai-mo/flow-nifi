@@ -5,12 +5,14 @@ import java.io.{File, FileInputStream, InputStream}
 import org.apache.avro.Schema
 import org.apache.commons.io.IOUtils
 import org.dcs.commons.Control
-import org.dcs.commons.serde.JsonSerializerImplicits._
+import org.dcs.commons.config.{Configurator, GlobalConfigurator}
+import org.dcs.commons.serde.YamlSerializerImplicits._
+import org.dcs.iot.kaa.KaaClientConfig.ConfigDirPath
 
 import scala.beans.BeanProperty
 
 /**
-  * Handles configuration for the [[org.dcs.commons.iot.kaa.KaaIoTClient Kaa IoT Client]].
+  * Handles configuration for the [[org.dcs.iot.kaa.KaaIoTClient Kaa IoT Client]].
   *
   * @author cmathew
   */
@@ -42,6 +44,10 @@ case class ApplicationSchemaConfig(@BeanProperty name: String,
   def schemaFilePath(configDirPath: String): String =
     configDirPath + File.separator + schemaFile
 
+  def schema: String =
+    new Schema.Parser()
+      .parse(new File(schemaFilePath(ConfigDirPath))).toString()
+
 }
 
 case class LogAppenderConfig(@BeanProperty name: String,
@@ -50,8 +56,16 @@ case class LogAppenderConfig(@BeanProperty name: String,
                              @BeanProperty configFile: String) {
   def this() = this("", "", "", "")
 
-  def configFilePath(configDirPath: String): String =
+  def settingsFilePath(configDirPath: String): String =
     configDirPath + File.separator + configFile
+
+  def settings: String =
+    Control
+      .using(new FileInputStream(settingsFilePath(KaaClientConfig.ConfigDirPath)))
+      { configIS =>
+        IOUtils.toString(configIS)
+          .replace(System.getProperty("line.separator"), "")
+      }
 }
 
 case class ApplicationConfig(@BeanProperty name: String,
@@ -65,56 +79,76 @@ case class ApplicationConfig(@BeanProperty name: String,
 }
 
 
+object NifiS2SConfig {
+
+  val DefaultBaseUrl = "http://dcs-flow"
+  val DefaultPort = 8090
+
+  def apply(): NifiS2SConfig =
+    new NifiS2SConfig(DefaultBaseUrl, DefaultPort, "")
+
+  def apply(inputPortName: String): NifiS2SConfig =
+    new NifiS2SConfig(DefaultBaseUrl, DefaultPort, inputPortName)
+}
+
+case class NifiS2SConfig(@BeanProperty baseUrl: String,
+                         @BeanProperty port: Int,
+                         @BeanProperty inputPortName: String) {
+  def this() = this("", -1, "")
+}
+
+
 
 object KaaClientConfig {
 
   val ConfigDirPath: String = System.getProperty("kaaConfigDir")
-  val credentialsFilePath: Option[String] =
-    Option(ConfigDirPath).map(_ + File.separator + "credentials.json")
-  val applicationConfigFilePath: Option[String] =
-    Option(ConfigDirPath).map(_ + File.separator + "application.json")
+//  val credentialsFilePath: Option[String] =
+//    Option(ConfigDirPath).map(_ + File.separator + "credentials.json")
+  val KaaCredentialsConfigKey = "kaaCredentials"
+  val applicationsConfigFilePath: Option[String] =
+    Option(ConfigDirPath).map(_ + File.separator + "applications.yaml")
 
 
-  val credentials: Option[File] =
-    credentialsFilePath
+//  val credentials: Option[File] =
+//    credentialsFilePath
+//      .map { filePath => {
+//        val file = new File(filePath)
+//        if(file.exists() && file.isFile)
+//          file
+//        else
+//          throw new IllegalArgumentException("Credentials file : " + filePath + "does not exist")
+//      }}
+
+  val applicationsConfig: Option[File] =
+    applicationsConfigFilePath
       .map { filePath => {
         val file = new File(filePath)
         if(file.exists() && file.isFile)
           file
         else
-          throw new IllegalArgumentException("Credentials file : " + filePath + "does not exist")
-      }}
-
-  val applicationConfig: Option[File] =
-    applicationConfigFilePath
-      .map { filePath => {
-        val file = new File(filePath)
-        if(file.exists() && file.isFile)
-          file
-        else
-          throw new IllegalArgumentException("Application config file : " + filePath + "does not exist")
+          throw new IllegalArgumentException("Applications config file : " + filePath + "does not exist")
       }}
 
 
   def apply(): KaaClientConfig = {
 
-    new KaaClientConfig(credentials.map(f => new FileInputStream(f)),
-      applicationConfig.map(f => new FileInputStream(f)))
+    new KaaClientConfig(applicationsConfig.map(f => new FileInputStream(f)))
   }
 }
 
 /**
   * Encapsulates the DCS Kaa IoT Platform configuration.
   *
-  * This class requires the VM property,
-  * -DkaaConfigDir=/path/to/DCS Kaa Config Directory>
+  * This class requires the VM properties,
+  * -DkaaCredentials=/path/to/DCS Kaa Credentials
+  * -DkaaConfigDir=/path/to/DCS Kaa Config Directory> [optional]
   * to be set
   *
-  * The directory should contain the following files,
-  *  - credentials.json : which contains the credentials for
-  *                       kaa superuser, tenant admin and tenant dev
-  *  - application.json : which contains the configuration for setting up
-  *                       the application, log / config schemas and log
+  * A sample credentials file is available at src/test/resources/kaaCredentials
+  *
+  * The Kaa config directory should contain the following files,
+  *  - applications.yaml : which contains the configuration for setting up
+  *                       the applications, log / config schemas and log
   *                       appender
   *
   *  Any files referenced within the above two config files should also be
@@ -122,45 +156,19 @@ object KaaClientConfig {
   *
   *  A sample directory is available at src/test/resources/kaa-config
   *
-  * @param credentialsIS
   * @param applicationConfigIS
   */
-class KaaClientConfig(credentialsIS: Option[InputStream],
-                      applicationConfigIS: Option[InputStream]) {
+class KaaClientConfig(applicationConfigIS: Option[InputStream]) {
   import KaaClientConfig._
 
-  val credentials: Option[KaaCredentials] =
-    credentialsIS.map { credentialsIS =>
-      Control.using(credentialsIS) { is =>
-        IOUtils.toString(is).toObject[KaaCredentials]
-      }
-    }
+  val credentials: KaaCredentials =
+    Configurator(KaaCredentialsConfigKey).config().toObject[KaaCredentials]
 
-  val applicationConfig: Option[ApplicationConfig] =
+  val applicationsConfig: Option[List[ApplicationConfig]] =
     applicationConfigIS.map { applicationConfigIS =>
       Control.using(applicationConfigIS) { is =>
-        IOUtils.toString(is).toObject[ApplicationConfig]
+        IOUtils.toString(is).toObject[List[ApplicationConfig]]
       }
     }
 
-
-  def logSchema(): String =
-    applicationConfig.map(ac =>
-      new Schema.Parser().parse(new File(ac.logSchema.schemaFilePath(ConfigDirPath))).toString())
-      .getOrElse(throw new IllegalArgumentException("Log Schema file not available"))
-
-  def configSchema():String =
-    applicationConfig.map(ac =>
-      new Schema.Parser().parse(new File(ac.configSchema.schemaFilePath(ConfigDirPath))).toString())
-      .getOrElse(throw new IllegalArgumentException("Config Schema file not available"))
-
-  def logAppenderConfig(): String =
-    applicationConfig.map(ac =>
-      Control
-        .using(new FileInputStream(ac.logAppender.configFilePath(ConfigDirPath))) { mongoDbConfigIS =>
-          IOUtils.toString(mongoDbConfigIS)
-            .replace(System.getProperty("line.separator"), "")
-        }
-    )
-      .getOrElse(throw new IllegalArgumentException("Log Appender Config file not available"))
 }

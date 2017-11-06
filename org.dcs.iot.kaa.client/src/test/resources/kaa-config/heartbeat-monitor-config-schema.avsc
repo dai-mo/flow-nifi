@@ -1,7 +1,7 @@
 {
   "type": "record",
-  "name": "Configuration",
-  "namespace": "org.kaaproject.kaa.schema.sample",
+  "name": "HeartbeatConfiguration",
+  "namespace": "org.dcs.iot.kaa.schema.config",
   "fields": [
     {
       "name": "samplePeriod",

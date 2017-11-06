@@ -1,0 +1,12 @@
+{
+  "type": "record",
+  "name": "TemperatureConfiguration",
+  "namespace": "org.dcs.iot.kaa.schema.config",
+  "fields": [
+    {
+      "name": "samplePeriod",
+      "type": "int",
+      "by_default": 1
+    }
+  ]
+}

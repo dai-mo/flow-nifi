@@ -1,0 +1,24 @@
+- name: "Temperature Monitor"
+  logSchema:
+    name: "Temperature Monitor Log Schema"
+    description: "Temperature Monitor Log Schema"
+    schemaFile: "temperature-monitor-log-schema.avsc"
+  configSchema:
+    name: "Temperature Monitor Config Schema"
+    description: "Temperature Monitor Config Schema"
+    schemaFile: "temperature-monitor-config-schema.avsc"
+  logAppender:
+    name: "Mongo Db Appender"
+    pluginClassName: "org.kaaproject.kaa.server.appenders.mongo.appender.MongoDbLogAppender"
+    pluginTypeName: "MongoDB"
+    configFile: "mongodb-config.json"
+- name: "Heartbeat Monitor"
+  logSchema:
+    name: "Heartbeat Monitor Log Schema"
+    description: "Heartbeat Monitor Log Schema"
+    schemaFile: "heartbeat-monitor-log-schema.avsc"
+  configSchema:
+    name: "Heartbeat Monitor Config Schema"
+    description: "Heartbeat Monitor Config Schema"
+    schemaFile: "heartbeat-monitor-config-schema.avsc"
+  logAppender:

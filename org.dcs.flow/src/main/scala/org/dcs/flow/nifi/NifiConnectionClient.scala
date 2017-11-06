@@ -161,11 +161,10 @@ trait NifiConnectionClient extends ConnectionApiService with JerseyRestClient {
           .flatMap { c =>
             processorApi.updateProperties(connectionConfig.destination.id,
               Map(ExternalProcessorProperties.RootInputConnectionIdKey -> iconn.id,
-                ExternalProcessorProperties.InputPortNameKey -> c.config.source.name),
+                ExternalProcessorProperties.InputPortNameKey -> c.config.source.name,
+                ExternalProcessorProperties.RootInputPortIdKey -> iconn.config.source.id),
               clientId)
-              .flatMap (p => propagateSchema(connectionConfig.destination.id, c.config.flowInstanceId, clientId)
-                .map(pis => c.withConnection(iconn))
-              )
+              .map(p => c.withConnection(iconn))
           }
       }
   }
@@ -195,8 +194,10 @@ trait NifiConnectionClient extends ConnectionApiService with JerseyRestClient {
           case (FlowComponent.ProcessorType, FlowComponent.ExternalProcessorType) |
                (FlowComponent.ExternalProcessorType, FlowComponent.ProcessorType) =>
             removeExternalProcessorConnection(connection, clientId)
-          case ( _ , FlowComponent.InputPortIngestionType) =>
-            removeInputPortIngestionProcessorConnection(connection, clientId)
+          case ( FlowComponent.InputPortType , FlowComponent.InputPortIngestionType) =>
+            //removeInputPortIngestionProcessorConnection(connection, clientId)
+            emptyQueue(connection.id)
+              .flatMap(_ => removeStdConnection(connection, clientId))
           case (FlowComponent.InputPortType, FlowComponent.InputPortType) =>
             emptyQueue(connection.id)
               .flatMap ( _=> removeRootInputPortConnection(connection, clientId))
