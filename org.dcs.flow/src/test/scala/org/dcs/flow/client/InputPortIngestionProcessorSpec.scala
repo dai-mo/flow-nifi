@@ -37,10 +37,12 @@ class InputPortIngestionProcessorSpec extends InputPortIngestionBehaviour {
 
 class InputPortIngestionProcessorISpec extends InputPortIngestionBehaviour {
   import InputPortIngestionSpec._
-
-  ZkRemoteService.loadServiceCaches()
+  
 
   "Creation / Deletion of Input Ingestion Processor" should "be valid" taggedAs IT in {
+    // FIXME: Bad Idea to initialise service caches in one (first) test
+    //        when running tests in parallel
+    ZkRemoteService.loadServiceCaches()
     var flowInstance = flowApi.create(FlowInstanceName, ClientId).futureValue
     var processor = validateCreateInputPortIngestionProcessor(processorApi, kaaPsd, flowInstance.id)
     flowInstance = validateFlowInstanceWithInputPortIngestionProcessor(flowApi, flowInstance.id, FlowInstanceName, 1)
