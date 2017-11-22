@@ -11,7 +11,7 @@ import scala.collection.JavaConverters._
 /**
   * Created by cmathew on 07/09/16.
   */
-abstract class StatefulClientProcessor extends ClientProcessor {
+trait StatefulClientProcessor extends ClientProcessor {
 
   var statefulRemoteProcessorService: StatefulRemoteProcessorService = _
   var processorStateId: String = _
