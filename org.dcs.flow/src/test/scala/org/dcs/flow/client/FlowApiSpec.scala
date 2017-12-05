@@ -162,9 +162,13 @@ class FlowApiISpec extends FlowApiBehaviors
   val ClientId: String = UUID.randomUUID().toString
 
 
-  ZkRemoteService.loadServiceCaches()
 
   "Flow Instantiation" must "be valid  for existing template id" taggedAs IT in {
+    // FIXME: Bad Idea to initialise service caches in one (first) test
+    //        when running tests in parallel. This is workaround for putting this
+    //        call at test suite initiation because it will run even if it tests
+    //        are not run. Ideal solution is to tag the entire suite
+    ZkRemoteService.loadServiceCaches()
     val templateId = flowClient.templates().futureValue.find(t => t.name == FlowName).get.getId
     var fi = validateFlowInstantiation(flowClient, FlowName, templateId, ClientId)
     fi = validateFlowRetrieval(flowClient, fi.getId, ClientId)
