@@ -137,12 +137,16 @@ trait NifiProcessorClient extends ProcessorApiService with JerseyRestClient {
       })
   }
 
-  override def updateSchemaProperty(processorId: String, schemaPropertyKey: String, schema: String, clientId : String): Future[ProcessorInstance] = {
+  override def updateSchemaProperty(processorId: String, schemaPropertyKey: String, schema: String, flowInstanceId: String, clientId : String): Future[ProcessorInstance] = {
     instance(processorId, false)
       .flatMap(p => {
         p.setProperties(p.properties + (schemaPropertyKey -> schema))
         update(p, clientId)
       })
+      .flatMap(pi =>
+        connectionApi.propagateSchema(pi.id, flowInstanceId, clientId)
+        .map(pis => pi)
+      )
   }
 
   override def updateSchema(flowInstanceId: String,

@@ -46,7 +46,7 @@ object HeartbeatMonitorClient {
         def run() {
           val heartbeat = heartbeatRand()
           kaaClient.addLogRecord(new HeartbeatLog(heartbeat.toLong))
-          LOG.info("Sampled Temperature: {}", heartbeat)
+          LOG.info("Sampled Heartbeat: {}", heartbeat)
         }
       }, 0, time, TimeUnit.MILLISECONDS)
   }
@@ -64,7 +64,7 @@ object HeartbeatMonitorClient {
         def run() {
           val heartbeat = heartbeatRand()
           kaaClient.addLogRecord(new HeartbeatLog(heartbeat.toLong))
-          LOG.info("Sampled Temperature: {}", heartbeat)
+          LOG.info("Sampled Heartbeat: {}", heartbeat)
         }
       }, 0, time, TimeUnit.MILLISECONDS)
   }

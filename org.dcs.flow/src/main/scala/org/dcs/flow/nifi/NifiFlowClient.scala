@@ -276,17 +276,11 @@ trait NifiFlowClient extends FlowApiService with JerseyRestClient {
 
   private def remove(flowInstanceId: String, version: Long, clientId: String): Future[Boolean] = {
 
-    instance(flowInstanceId)
-      .map(fi => fi.connections)
-      .flatMap(cs => Future.sequence(cs.map(c => connectionApi.remove(c, clientId)))
-        .map(_.forall(identity)))
-      .flatMap( _ =>
-        deleteAsJson(path = processGroupsPath(flowInstanceId),
-          queryParams = Revision.params(version, clientId))
-          .map { response =>
-            response != null
-          }
-      )
+    deleteAsJson(path = processGroupsPath(flowInstanceId),
+      queryParams = Revision.params(version, clientId))
+      .map { response =>
+        response != null
+      }
   }
 
   override def remove(flowInstanceId: String, version: Long, clientId: String, hasExternal: Boolean = false): Future[Boolean] = {

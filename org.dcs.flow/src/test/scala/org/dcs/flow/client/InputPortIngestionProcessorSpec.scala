@@ -37,11 +37,12 @@ class InputPortIngestionProcessorSpec extends InputPortIngestionBehaviour {
 
 class InputPortIngestionProcessorISpec extends InputPortIngestionBehaviour {
   import InputPortIngestionSpec._
-  
 
   "Creation / Deletion of Input Ingestion Processor" should "be valid" taggedAs IT in {
     // FIXME: Bad Idea to initialise service caches in one (first) test
-    //        when running tests in parallel
+    //        when running tests in parallel. This is workaround for putting this
+    //        call at test suite initiation because it will run even if it tests
+    //        are not run. Ideal solution is to tag the entire suite
     ZkRemoteService.loadServiceCaches()
     var flowInstance = flowApi.create(FlowInstanceName, ClientId).futureValue
     var processor = validateCreateInputPortIngestionProcessor(processorApi, kaaPsd, flowInstance.id)
@@ -71,17 +72,11 @@ class InputPortIngestionProcessorISpec extends InputPortIngestionBehaviour {
 
   // FIXME: This test requires the move of update properties logic from the web project to flow,
   //        so that we can resolve the read schema dynamically
-  "Instantiation / Lifecycle of Flow with an Input Ingestion Processor" should "be valid" taggedAs IT ignore {
+
+  "Instantiation / Lifecycle of Flow with an Input Ingestion Processor" should "be valid" taggedAs IT in {
     val flowTemplate = flowApi.templates().futureValue.find(_.name == InputPortIngestionFlowTemplateName).get
     val flowInstance = flowApi.instantiate(flowTemplate.id, ClientId).futureValue
-    validateFlowInstanceWithInputPortIngestionProcessor(flowApi, flowInstance.id, InputPortIngestionFlowTemplateName, 1)
-//    val kaaApplicationProperty = flowInstance.processors
-//      .find(_.name == "Kaa Ingestion Processor").get
-//        .propertyDefinitions
-      //.properties.find(_._1 == "kaa-application").get._2
-    flowApi.start(flowInstance.id, ClientId).futureValue
-    //Thread.sleep(5000)
-    flowApi.stop(flowInstance.id, ClientId).futureValue
+    validateFlowInstanceWithInputPortIngestionProcessor(flowApi, flowInstance.id, InputPortIngestionFlowTemplateName, 2)
     flowApi.remove(flowInstance.id, flowInstance.version, ClientId, true).map(deleteOk => assert(deleteOk))
   }
 
