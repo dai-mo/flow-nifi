@@ -5,11 +5,11 @@ object Dependencies {
 
   // Versions
 
-  lazy val dcsCommonsVersion      = "0.3.0-SNAPSHOT"
-  lazy val dcsApiVersion          = "0.4.0-SNAPSHOT"
-  lazy val dcsRemoteVersion       = "0.4.0-SNAPSHOT"
-  lazy val dcsCoreVersion         = "0.3.0-SNAPSHOT"
-  lazy val dcsDataVersion         = "0.3.0-SNAPSHOT"
+  lazy val dcsCommonsVersion      = "0.3.0"
+  lazy val dcsApiVersion          = "0.4.0"
+  lazy val dcsRemoteVersion       = "0.4.0"
+  lazy val dcsCoreVersion         = "0.3.0"
+  lazy val dcsDataVersion         = "0.3.0"
   lazy val playVersion			      = "2.5.3"
   lazy val nifiVersion			      = "1.0.0-BETA"
   lazy val slf4jVersion			      = "1.7.12"
