@@ -1,0 +1,44 @@
+
+pipeline:
+  restore-cache:
+    image: drillster/drone-volume-cache
+    restore: true
+    mount:      
+      - .ivy2
+      - .m2
+    volumes:
+      - /tmp/cache:/cache
+  nifi-build:
+    image: bigtruedata/sbt:0.13.15-2.11.8
+    commands:
+      - mkdir -p ~/.sbt/0.13
+      - cp global.sbt ~/.sbt/0.13
+      - sbt -Dsbt.ivy.home=./.ivy2 clean unit:test compile
+    secrets: [ artifactory_host, artifactory_url, artifactory_username, artifactory_password ]
+  nifi-publish:
+    image: bigtruedata/sbt:0.13.15-2.11.8
+    commands:
+      - mkdir -p ~/.sbt/0.13
+      - cp global.sbt ~/.sbt/0.13
+      - sbt -Dsbt.ivy.home=./.ivy2 publishM2 publish
+    secrets: [ artifactory_host, artifactory_url, artifactory_username, artifactory_password ]
+    when:
+      branch: master
+      status: [ success ]
+  rebuild-cache:
+    image: drillster/drone-volume-cache
+    rebuild: true
+    mount:
+      - .ivy2
+      - .m2
+    volumes:
+      - /tmp/cache:/cache
+  slack:
+    image: plugins/slack
+    channel: builds
+    secrets: [ slack_webhook ]
+    when:
+      branch: master
+      status: [ success, failure ]
+
+
