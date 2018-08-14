@@ -14,7 +14,7 @@ object Common {
 
 	lazy val commonSettings = Seq(
 			organization := "org.dcs",
-			scalaVersion := "2.11.7",
+			scalaVersion := scVersion,
 			crossPaths := false,
 			checksums in update := Nil,
 			javacOptions ++= Seq("-source", "1.8", "-target", "1.8", "-Xlint:unchecked"),

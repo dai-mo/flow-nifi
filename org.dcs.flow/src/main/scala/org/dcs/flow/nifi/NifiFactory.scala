@@ -299,11 +299,11 @@ object ProcessorInstanceAdapter {
   }
 
   def getProcessorType(config: ProcessorConfigDTO): String = {
-    val ptype = config.getDescriptors.get(CoreProperties.ProcessorTypeKey)
+    val ptype = config.getProperties.get(CoreProperties.ProcessorTypeKey)
     if(ptype == null)
       RemoteProcessor.WorkerProcessorType
     else
-      ptype.getDefaultValue
+      ptype
   }
 
   def valuesOrDefaults(config: ProcessorConfigDTO): Map[String, String] = {
