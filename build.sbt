@@ -82,6 +82,7 @@ lazy val repo =
       libraryDependencies ++= repoDependencies
     )
 
+resolvers += Resolver.mavenLocal
 
 // ------- Versioning , Release Section --------
 
