@@ -1,6 +1,17 @@
-# Alambeek Flow Engine (Nifi) Project
+# Daimo Flow Engine (Nifi) Project
+
+This project provides wrappers and extensions to manage [Apache Nifi](https://nifi.apache.org/) - the flow engine of choice in the Daimo platform.
+
+## Features
+
+The main features of this project include,
+
+- Custom designed Apache Nifi REST Api client
+- Remote processor service invocation
+- Apache Nifi Data Repository implementations
 
 # License
+
 Copyright (c) 2017-2018 brewlabs SAS
 
 Licensed under the Apache License, Version 2.0 (the "License");
